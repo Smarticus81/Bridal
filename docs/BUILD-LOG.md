@@ -257,3 +257,13 @@ The full inventory→readiness path now works from the console: add a dress → 
 ## Toward production — leads console view
 
 Added `LeadsPage` at `/leads` (OrgGate, light data surface): a read-only table of brides captured from the remote flow (`useListLeads`) — email, name, phone, captured date — with an inviting empty state. Completes the shop-visible commercial-instrumentation UI (§6.5). `typecheck` ✅ · `smoke:security` ✅ · `build` ✅. Frontend surfaces: bride `/try` + consultant `/catalog` + `/lookbooks` + `/leads`.
+
+## Toward production — try-on prompt builder (generation core, live-validated)
+
+Added `lib/tryonPrompt.ts` (unit test `test:tryon-prompt`, 7/7) — the generation prompt assembly (§5.4 priority 1):
+- `buildTryonPrompt(dress, {retryGuidance})` — three locks mirroring the quality-gate axes: IDENTITY (preserve face + **body proportions**, invariant 4), GARMENT (reproduce the exact dress, naming every known facet — silhouette/neckline/sleeve/train/fabric/color — so nothing is invented), COMPOSITE (exactly one person, plain studio, no text). Appends adaptive retry guidance; clamped to 1800 chars.
+- `dressSummary(dress)` — the gate-facing description; omits unknown facets (never emits null).
+
+**Live validation (with the provided key):** ran `buildTryonPrompt`'s actual output through `gemini-3-pro-image` with the probe bride + dress → produced a faithful try-on (same bride, exact dress, single subject, plain studio, no text). The production prompt — not a hand-written one — is proven end-to-end. (Synthetic probe images; not a fidelity scorecard, which still needs real consented fixtures — B1.)
+
+**Verification:** `test:tryon-prompt` 7/7 · live generation ✓ · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅. Port unit-test total: **69**. This is the generation core the per-look /try generate action will call (alongside the already-built garment-fidelity gate).
