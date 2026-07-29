@@ -21,12 +21,18 @@ import type {
   BillingCheckoutBody,
   BillingCheckoutResponse,
   BillingPortalResponse,
+  CreateDressBody,
   CreateSessionBody,
   CreateVenueBody,
   DeleteSessionResponse,
+  DressResponse,
   ErrorEnvelope,
   GetStorageObjectParams,
   HealthStatus,
+  ImportDressesBody,
+  ImportDressesDiffResponse,
+  ListDressesParams,
+  ListDressesResponse,
   ListGalleryStylesResponse,
   ListSessionsResponse,
   ListVenueMediaResponse,
@@ -2101,6 +2107,273 @@ export function useListGalleryStyles<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary List the caller's organization catalog
+ */
+export const getListDressesUrl = (params?: ListDressesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/dresses?${stringifiedParams}`
+    : `/api/dresses`;
+};
+
+export const listDresses = async (
+  params?: ListDressesParams,
+  options?: RequestInit,
+): Promise<ListDressesResponse> => {
+  return customFetch<ListDressesResponse>(getListDressesUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListDressesQueryKey = (params?: ListDressesParams) => {
+  return [`/api/dresses`, ...(params ? [params] : [])] as const;
+};
+
+export const getListDressesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listDresses>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: ListDressesParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listDresses>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListDressesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listDresses>>> = ({
+    signal,
+  }) => listDresses(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listDresses>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListDressesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listDresses>>
+>;
+export type ListDressesQueryError = ErrorType<ErrorEnvelope>;
+
+/**
+ * @summary List the caller's organization catalog
+ */
+
+export function useListDresses<
+  TData = Awaited<ReturnType<typeof listDresses>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: ListDressesParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listDresses>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListDressesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Add a dress to the catalog
+ */
+export const getCreateDressUrl = () => {
+  return `/api/dresses`;
+};
+
+export const createDress = async (
+  createDressBody: CreateDressBody,
+  options?: RequestInit,
+): Promise<DressResponse> => {
+  return customFetch<DressResponse>(getCreateDressUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createDressBody),
+  });
+};
+
+export const getCreateDressMutationOptions = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createDress>>,
+    TError,
+    { data: BodyType<CreateDressBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createDress>>,
+  TError,
+  { data: BodyType<CreateDressBody> },
+  TContext
+> => {
+  const mutationKey = ["createDress"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createDress>>,
+    { data: BodyType<CreateDressBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createDress(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateDressMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createDress>>
+>;
+export type CreateDressMutationBody = BodyType<CreateDressBody>;
+export type CreateDressMutationError = ErrorType<ErrorEnvelope>;
+
+/**
+ * @summary Add a dress to the catalog
+ */
+export const useCreateDress = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createDress>>,
+    TError,
+    { data: BodyType<CreateDressBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createDress>>,
+  TError,
+  { data: BodyType<CreateDressBody> },
+  TContext
+> => {
+  return useMutation(getCreateDressMutationOptions(options));
+};
+
+/**
+ * Returns "will create N, update M, archive K" for the supplied rows against the caller's existing catalog. This is a dry run: it never writes. Commit is a separate, explicit step.
+ * @summary Dry-run diff of a bulk catalog import
+ */
+export const getImportDressesUrl = () => {
+  return `/api/dresses/import`;
+};
+
+export const importDresses = async (
+  importDressesBody: ImportDressesBody,
+  options?: RequestInit,
+): Promise<ImportDressesDiffResponse> => {
+  return customFetch<ImportDressesDiffResponse>(getImportDressesUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(importDressesBody),
+  });
+};
+
+export const getImportDressesMutationOptions = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof importDresses>>,
+    TError,
+    { data: BodyType<ImportDressesBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof importDresses>>,
+  TError,
+  { data: BodyType<ImportDressesBody> },
+  TContext
+> => {
+  const mutationKey = ["importDresses"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof importDresses>>,
+    { data: BodyType<ImportDressesBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return importDresses(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ImportDressesMutationResult = NonNullable<
+  Awaited<ReturnType<typeof importDresses>>
+>;
+export type ImportDressesMutationBody = BodyType<ImportDressesBody>;
+export type ImportDressesMutationError = ErrorType<ErrorEnvelope>;
+
+/**
+ * @summary Dry-run diff of a bulk catalog import
+ */
+export const useImportDresses = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof importDresses>>,
+    TError,
+    { data: BodyType<ImportDressesBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof importDresses>>,
+  TError,
+  { data: BodyType<ImportDressesBody> },
+  TContext
+> => {
+  return useMutation(getImportDressesMutationOptions(options));
+};
 
 /**
  * @summary Request a presigned URL for file upload

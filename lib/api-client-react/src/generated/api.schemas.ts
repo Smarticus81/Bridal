@@ -503,6 +503,120 @@ export interface UploadUrlResponse {
   metadata?: UploadUrlRequest;
 }
 
+export type DressStatus = (typeof DressStatus)[keyof typeof DressStatus];
+
+export const DressStatus = {
+  in_stock: "in_stock",
+  special_order: "special_order",
+  discontinued: "discontinued",
+} as const;
+
+export type DressMediaCoverage =
+  (typeof DressMediaCoverage)[keyof typeof DressMediaCoverage];
+
+export const DressMediaCoverage = {
+  front: "front",
+  back: "back",
+  detail: "detail",
+  fabric: "fabric",
+  on_model: "on_model",
+} as const;
+
+export interface CreateDressBody {
+  /** @minLength 1 */
+  sku: string;
+  /** @minLength 1 */
+  styleName: string;
+  designer?: string;
+  silhouette?: string;
+  neckline?: string;
+  sleeve?: string;
+  trainLength?: string;
+  fabric?: string;
+  color?: string;
+  sizeRange?: string;
+  /** @minimum 0 */
+  priceCents?: number;
+  isConsignment?: boolean;
+  status?: DressStatus;
+  shopIds?: number[];
+}
+
+export interface DressResponse {
+  id: number;
+  sku: string;
+  designer?: string | null;
+  styleName: string;
+  silhouette?: string | null;
+  neckline?: string | null;
+  sleeve?: string | null;
+  trainLength?: string | null;
+  fabric?: string | null;
+  color?: string | null;
+  sizeRange?: string | null;
+  priceCents?: number | null;
+  isConsignment: boolean;
+  status: DressStatus;
+  shopIds: number[];
+  /** True when the dress has a validated front reference image. */
+  tryOnReady: boolean;
+  createdAt: string;
+}
+
+export interface ListDressesResponse {
+  dresses: DressResponse[];
+}
+
+export interface ImportDressRow {
+  sku: string;
+  styleName: string;
+  designer?: string;
+  silhouette?: string;
+  neckline?: string;
+  sleeve?: string;
+  trainLength?: string;
+  fabric?: string;
+  color?: string;
+  sizeRange?: string;
+  priceCents?: number;
+  status?: DressStatus;
+}
+
+export interface ImportDressesBody {
+  rows: ImportDressRow[];
+  /** Mark existing dresses absent from the import as discontinued. */
+  archiveMissing?: boolean;
+}
+
+export type ImportDressesDiffResponseInvalidItem = {
+  rowIndex: number;
+  errors: string[];
+};
+
+export interface ImportDressesDiffResponse {
+  /** Human-readable "will create N, update M, archive K". */
+  summary: string;
+  createCount: number;
+  updateCount: number;
+  archiveCount: number;
+  unchangedCount: number;
+  invalidCount: number;
+  invalid?: ImportDressesDiffResponseInvalidItem[];
+}
+
+export type ListDressesParams = {
+  status?: ListDressesStatus;
+};
+
+export type ListDressesStatus =
+  (typeof ListDressesStatus)[keyof typeof ListDressesStatus];
+
+export const ListDressesStatus = {
+  in_stock: "in_stock",
+  special_order: "special_order",
+  discontinued: "discontinued",
+} as const;
+
 export type GetStorageObjectParams = {
   /**
    * Required to read generated gallery assets from a public share page.

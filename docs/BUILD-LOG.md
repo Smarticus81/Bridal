@@ -149,3 +149,16 @@ Added `artifacts/api-server/src/lib/retentionPurge.ts` (unit test `test:retentio
 Selection is pure so the "what to delete" is testable without storage; the route performs and verifies the actual Supabase + DB deletes.
 
 **Verification:** `test:retention-purge` 5/5 · full unit sweep **52** · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅.
+
+## Toward production — dresses catalog API (OpenAPI-first integration)
+
+Turned the tested inventory logic into a real, deployable API surface. OpenAPI-first per the standing rule: edited `lib/api-spec/openapi.yaml`, ran codegen (deterministic — verified identical output across two runs), then wired the route.
+
+New endpoints in `artifacts/api-server/src/routes/dresses.ts` (mounted in `routes/index.ts`), all org-isolated via `requireOrg` (invariant 6):
+- `GET /dresses` — the caller's org catalog, each dress carrying a `tryOnReady` flag computed from `dressCoverageStatus` (front image present). Optional `?status=` filter. Never leaks `organizationId`.
+- `POST /dresses` — add a dress; SKU unique per org (409 on duplicate), Clerk mutation-origin guarded.
+- `POST /dresses/import` — **dry-run diff** of a bulk import via `diffInventory`/`summarizeDiff`, returning "will create N, update M, archive K" + counts. Never writes.
+
+OpenAPI schemas added: `DressStatus`, `DressMediaCoverage`, `CreateDressBody`, `DressResponse`, `ListDressesResponse`, `ImportDressRow`, `ImportDressesBody`, `ImportDressesDiffResponse`. Codegen produced the Zod validators (`CreateDressBody`, `ImportDressesBody`, `ListDressesQueryParams`) and React Query hooks (`useListDresses`, `useCreateDress`, `useImportDresses`) the console UI will consume.
+
+**Verification:** codegen deterministic ✓ · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅ · 52 unit tests green. First real API integration of the bridal logic core; additive, so glimpse routes and the smoke contract are untouched.

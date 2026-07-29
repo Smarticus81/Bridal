@@ -828,6 +828,110 @@ export const ListGalleryStylesResponse = zod.object({
 });
 
 /**
+ * @summary List the caller's organization catalog
+ */
+export const ListDressesQueryParams = zod.object({
+  status: zod.enum(["in_stock", "special_order", "discontinued"]).optional(),
+});
+
+export const ListDressesResponse = zod.object({
+  dresses: zod.array(
+    zod.object({
+      id: zod.number(),
+      sku: zod.string(),
+      designer: zod.string().nullish(),
+      styleName: zod.string(),
+      silhouette: zod.string().nullish(),
+      neckline: zod.string().nullish(),
+      sleeve: zod.string().nullish(),
+      trainLength: zod.string().nullish(),
+      fabric: zod.string().nullish(),
+      color: zod.string().nullish(),
+      sizeRange: zod.string().nullish(),
+      priceCents: zod.number().nullish(),
+      isConsignment: zod.boolean(),
+      status: zod.enum(["in_stock", "special_order", "discontinued"]),
+      shopIds: zod.array(zod.number()),
+      tryOnReady: zod
+        .boolean()
+        .describe("True when the dress has a validated front reference image."),
+      createdAt: zod.coerce.date(),
+    }),
+  ),
+});
+
+/**
+ * @summary Add a dress to the catalog
+ */
+
+export const createDressBodyPriceCentsMin = 0;
+
+export const CreateDressBody = zod.object({
+  sku: zod.string().min(1),
+  styleName: zod.string().min(1),
+  designer: zod.string().optional(),
+  silhouette: zod.string().optional(),
+  neckline: zod.string().optional(),
+  sleeve: zod.string().optional(),
+  trainLength: zod.string().optional(),
+  fabric: zod.string().optional(),
+  color: zod.string().optional(),
+  sizeRange: zod.string().optional(),
+  priceCents: zod.number().min(createDressBodyPriceCentsMin).optional(),
+  isConsignment: zod.boolean().optional(),
+  status: zod.enum(["in_stock", "special_order", "discontinued"]).optional(),
+  shopIds: zod.array(zod.number()).optional(),
+});
+
+/**
+ * Returns "will create N, update M, archive K" for the supplied rows against the caller's existing catalog. This is a dry run: it never writes. Commit is a separate, explicit step.
+ * @summary Dry-run diff of a bulk catalog import
+ */
+export const ImportDressesBody = zod.object({
+  rows: zod.array(
+    zod.object({
+      sku: zod.string(),
+      styleName: zod.string(),
+      designer: zod.string().optional(),
+      silhouette: zod.string().optional(),
+      neckline: zod.string().optional(),
+      sleeve: zod.string().optional(),
+      trainLength: zod.string().optional(),
+      fabric: zod.string().optional(),
+      color: zod.string().optional(),
+      sizeRange: zod.string().optional(),
+      priceCents: zod.number().optional(),
+      status: zod
+        .enum(["in_stock", "special_order", "discontinued"])
+        .optional(),
+    }),
+  ),
+  archiveMissing: zod
+    .boolean()
+    .optional()
+    .describe("Mark existing dresses absent from the import as discontinued."),
+});
+
+export const ImportDressesResponse = zod.object({
+  summary: zod
+    .string()
+    .describe('Human-readable \"will create N, update M, archive K\".'),
+  createCount: zod.number(),
+  updateCount: zod.number(),
+  archiveCount: zod.number(),
+  unchangedCount: zod.number(),
+  invalidCount: zod.number(),
+  invalid: zod
+    .array(
+      zod.object({
+        rowIndex: zod.number(),
+        errors: zod.array(zod.string()),
+      }),
+    )
+    .optional(),
+});
+
+/**
  * @summary Request a presigned URL for file upload
  */
 

@@ -743,6 +743,90 @@ paths:
               schema:
                 $ref: "#/components/schemas/ListGalleryStylesResponse"
 
+  /dresses:
+    get:
+      operationId: listDresses
+      tags: [dresses]
+      summary: List the caller's organization catalog
+      parameters:
+        - in: query
+          name: status
+          required: false
+          schema:
+            type: string
+            enum: [in_stock, special_order, discontinued]
+      responses:
+        "200":
+          description: Catalog list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListDressesResponse"
+        "403":
+          description: No active organization
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    post:
+      operationId: createDress
+      tags: [dresses]
+      summary: Add a dress to the catalog
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDressBody"
+      responses:
+        "201":
+          description: Dress created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DressResponse"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: SKU already exists in this organization
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /dresses/import:
+    post:
+      operationId: importDresses
+      tags: [dresses]
+      summary: Dry-run diff of a bulk catalog import
+      description: >-
+        Returns "will create N, update M, archive K" for the supplied rows
+        against the caller's existing catalog. This is a dry run: it never
+        writes. Commit is a separate, explicit step.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImportDressesBody"
+      responses:
+        "200":
+          description: Dry-run diff
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportDressesDiffResponse"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
   /storage/uploads/request-url:
     post:
       tags: [storage]
@@ -1559,3 +1643,181 @@ components:
         metadata:
           $ref: "#/components/schemas/UploadUrlRequest"
 
+
+    DressStatus:
+      type: string
+      enum: [in_stock, special_order, discontinued]
+
+    DressMediaCoverage:
+      type: string
+      enum: [front, back, detail, fabric, on_model]
+
+    CreateDressBody:
+      type: object
+      required: [sku, styleName]
+      properties:
+        sku:
+          type: string
+          minLength: 1
+        styleName:
+          type: string
+          minLength: 1
+        designer:
+          type: string
+        silhouette:
+          type: string
+        neckline:
+          type: string
+        sleeve:
+          type: string
+        trainLength:
+          type: string
+        fabric:
+          type: string
+        color:
+          type: string
+        sizeRange:
+          type: string
+        priceCents:
+          type: integer
+          minimum: 0
+        isConsignment:
+          type: boolean
+        status:
+          $ref: "#/components/schemas/DressStatus"
+        shopIds:
+          type: array
+          items:
+            type: integer
+
+    DressResponse:
+      type: object
+      required: [id, sku, styleName, status, isConsignment, shopIds, tryOnReady, createdAt]
+      properties:
+        id:
+          type: integer
+        sku:
+          type: string
+        designer:
+          type: string
+          nullable: true
+        styleName:
+          type: string
+        silhouette:
+          type: string
+          nullable: true
+        neckline:
+          type: string
+          nullable: true
+        sleeve:
+          type: string
+          nullable: true
+        trainLength:
+          type: string
+          nullable: true
+        fabric:
+          type: string
+          nullable: true
+        color:
+          type: string
+          nullable: true
+        sizeRange:
+          type: string
+          nullable: true
+        priceCents:
+          type: integer
+          nullable: true
+        isConsignment:
+          type: boolean
+        status:
+          $ref: "#/components/schemas/DressStatus"
+        shopIds:
+          type: array
+          items:
+            type: integer
+        tryOnReady:
+          type: boolean
+          description: True when the dress has a validated front reference image.
+        createdAt:
+          type: string
+          format: date-time
+
+    ListDressesResponse:
+      type: object
+      required: [dresses]
+      properties:
+        dresses:
+          type: array
+          items:
+            $ref: "#/components/schemas/DressResponse"
+
+    ImportDressRow:
+      type: object
+      required: [sku, styleName]
+      properties:
+        sku:
+          type: string
+        styleName:
+          type: string
+        designer:
+          type: string
+        silhouette:
+          type: string
+        neckline:
+          type: string
+        sleeve:
+          type: string
+        trainLength:
+          type: string
+        fabric:
+          type: string
+        color:
+          type: string
+        sizeRange:
+          type: string
+        priceCents:
+          type: integer
+        status:
+          $ref: "#/components/schemas/DressStatus"
+
+    ImportDressesBody:
+      type: object
+      required: [rows]
+      properties:
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImportDressRow"
+        archiveMissing:
+          type: boolean
+          description: Mark existing dresses absent from the import as discontinued.
+
+    ImportDressesDiffResponse:
+      type: object
+      required: [summary, createCount, updateCount, archiveCount, unchangedCount, invalidCount]
+      properties:
+        summary:
+          type: string
+          description: Human-readable "will create N, update M, archive K".
+        createCount:
+          type: integer
+        updateCount:
+          type: integer
+        archiveCount:
+          type: integer
+        unchangedCount:
+          type: integer
+        invalidCount:
+          type: integer
+        invalid:
+          type: array
+          items:
+            type: object
+            required: [rowIndex, errors]
+            properties:
+              rowIndex:
+                type: integer
+              errors:
+                type: array
+                items:
+                  type: string
