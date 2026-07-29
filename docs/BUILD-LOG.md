@@ -224,3 +224,11 @@ Added `CatalogPage` at `/catalog` (OrgGate-wrapped, Clerk org-isolated), the sho
 ## Toward production — catalog browse filter bar (UI)
 
 Wired the browse filters into `CatalogPage`: a status dropdown, silhouette input, and "try-on ready only" checkbox drive `useListDresses(params)` (query key varies with the filters; stable when none are set), with a Clear action. The server-side `dressFilters` logic is now usable end-to-end from the console. `typecheck` ✅ · `smoke:security` ✅ · `build` ✅.
+
+## Toward production — lookbooks console page (closes consultant→bride loop)
+
+Added `LookbooksPage` at `/lookbooks` (OrgGate, light surface) — the consultant creates a curated `/try` link and watches the burn meter:
+- Create form: shop (from `useGetOrganization().venues`), purpose (pre/post-appointment/open), tries (cap ≥1), days (expiry 1–365), and a dress multi-select from `useListDresses`. Enforces "always capped, always expiring" (§6.1). On success surfaces the copyable `/try/:token` URL; "Send lookbook" → "Lookbook sent" (§8 voice).
+- Sent-lookbooks list from `useListLookbooks`: per link the shop-visible burn meter (remaining/cap), expiry, and an Active/expired/exhausted status chip (§6.5).
+
+Loop now closes: consultant sends a lookbook → gets the `/try` link → bride opens `/try/:token` (the page already shipped). `typecheck` ✅ · `smoke:security` ✅ · `build` ✅. 62 unit tests green. Frontend surfaces: bride `/try` + consultant `/catalog` + `/lookbooks`.

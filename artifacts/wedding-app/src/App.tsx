@@ -41,6 +41,7 @@ const CouplePage = lazyRoute(() => import("@/pages/CouplePage"));
 const GallerySharePage = lazyRoute(() => import("@/pages/GallerySharePage"));
 const TryLookbookPage = lazyRoute(() => import("@/pages/TryLookbookPage"));
 const CatalogPage = lazyRoute(() => import("@/pages/CatalogPage"));
+const LookbooksPage = lazyRoute(() => import("@/pages/LookbooksPage"));
 const FindMyGalleryPage = lazyRoute(() => import("@/pages/FindMyGalleryPage"));
 const OwnerLoginPage = lazyRoute(() => import("@/pages/OwnerLoginPage"));
 const NotFound = lazyRoute(() => import("@/pages/not-found"));
@@ -78,6 +79,7 @@ function Router() {
         {/* Owner profile/dashboard */}
         <Route path="/dashboard">{() => <VenueOwnerPage />}</Route>
         <Route path="/catalog">{() => <CatalogPage />}</Route>
+        <Route path="/lookbooks">{() => <LookbooksPage />}</Route>
         <Route path="/dashboard/:slug">{() => <Redirect to="/dashboard" />}</Route>
         <Route path="/profile/:slug">{() => <Redirect to="/dashboard" />}</Route>
         <Route path="/venue/:slug/owner">{() => <Redirect to="/dashboard" />}</Route>
