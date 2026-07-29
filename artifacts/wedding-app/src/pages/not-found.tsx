@@ -1,0 +1,56 @@
+import { useLocation } from "wouter";
+import { Button } from "@/components/ui/button";
+import { AlertCircle, Home, Search, Building2 } from "lucide-react";
+import { GlimpseLogo } from "@/components/brand/GlimpseLogo";
+
+export default function NotFound() {
+  const [, setLocation] = useLocation();
+
+  return (
+    <div className="min-h-screen w-full flex flex-col bg-background text-foreground font-sans">
+      <header className="p-6 sm:p-10 flex items-center justify-center">
+        <GlimpseLogo href="/" />
+      </header>
+
+      <main className="flex-1 flex items-center justify-center p-6 pb-24">
+        <div className="w-full max-w-md bg-card rounded-xl border border-card-border p-8 sm:p-10 shadow-xl shadow-black/40 text-center">
+          <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto text-red-400 border border-red-500/20 mb-6">
+            <AlertCircle className="h-8 w-8" />
+          </div>
+
+          <h1 className="font-display text-3xl mb-3 text-foreground">Page Not Found</h1>
+          <p className="text-muted-foreground font-light leading-relaxed mb-8">
+            The page you're looking for doesn't exist or has moved.
+          </p>
+          
+          <div className="flex flex-col gap-3">
+            <Button
+              variant="rose"
+              onClick={() => setLocation("/")}
+              className="w-full h-12 font-medium"
+              data-testid="notfound-home"
+            >
+              <Home className="mr-2 h-4 w-4" /> Main site
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setLocation("/find-my-gallery")}
+              className="w-full h-12 font-medium"
+              data-testid="notfound-find-gallery"
+            >
+              <Search className="mr-2 h-4 w-4" /> Find my gallery
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => setLocation("/create-venue")}
+              className="w-full h-12 text-muted-foreground hover:text-foreground"
+              data-testid="notfound-venues"
+            >
+              <Building2 className="mr-2 h-4 w-4" /> Venue sign up
+            </Button>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
