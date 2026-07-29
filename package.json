@@ -14,6 +14,7 @@
     "test:mobile-reel": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/byteRange.test.ts",
     "test:lookbook-policy": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/lookbookPolicy.test.ts",
     "test:dress-coverage": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/dressCoverage.test.ts",
+    "test:tryon-quality": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/tryonQuality.test.ts",
     "setup:db": "node scripts/setup-database.cjs",
     "setup:storage": "node scripts/setup-supabase-storage.cjs",
     "generate:secrets": "node scripts/generate-secrets.cjs",

@@ -39,6 +39,16 @@ const MIN_PRODUCTION_GENERATED_IMAGE_EDGE_PX = 1024;
 const MIN_PRODUCTION_GENERATED_IMAGE_CONTRAST = 8;
 const MIN_PRODUCTION_GENERATED_IMAGE_SHARPNESS = 6;
 
+// Garment-fidelity gate floors (bridal, §5.1 / invariant 2). Garment fidelity
+// sits above the venue 0.80, and body-proportion preservation is non-negotiable.
+// Defaults equal the minimum, so an unset var passes; only a lowered value errors.
+const MIN_PRODUCTION_TRYON_THRESHOLDS = {
+  TRYON_MIN_LIKENESS_SCORE: 0.82,
+  TRYON_MIN_GARMENT_SCORE: 0.88,
+  TRYON_MIN_BODY_PROPORTION_SCORE: 0.85,
+  TRYON_MIN_COMPOSITION_SCORE: 0.74,
+} as const;
+
 function hasRealValue(env: EnvLike, key: string): boolean {
   const value = env[key]?.trim() ?? "";
   if (!value || PLACEHOLDER_VALUES.has(value)) return false;
@@ -254,6 +264,15 @@ export function validateProductionEnvironment(env: EnvLike = process.env): strin
   }
 
   for (const [key, minimum] of Object.entries(MIN_PRODUCTION_QUALITY_THRESHOLDS)) {
+    const error = numericEnvAtLeast(env, key, minimum, minimum);
+    if (error) errors.push(error);
+  }
+
+  if ((env.TRYON_QUALITY_GATE ?? "on").toLowerCase() === "off") {
+    errors.push("TRYON_QUALITY_GATE must stay enabled in production");
+  }
+
+  for (const [key, minimum] of Object.entries(MIN_PRODUCTION_TRYON_THRESHOLDS)) {
     const error = numericEnvAtLeast(env, key, minimum, minimum);
     if (error) errors.push(error);
   }

@@ -87,3 +87,23 @@ Imports coverage constants from `@workspace/db/schema` (deep export, no pool).
 - `POST /v1beta/models/gemini-3-pro-image:generateContent` with `responseModalities:["IMAGE"]` — returned a real ~721 KB JPEG. Generation works end-to-end.
 
 Impact: the production model chain the startup guard enforces is real and reachable — Phase 3 is technically viable. The credential half of BLOCKERS B1 is cleared. Remaining for the §5.4 live scorecard: (1) build the `tryon:qa` harness + garment-fidelity gate (buildable), (2) real consented bride×dress fixtures (needed from the operator). Key kept in env only — never committed.
+
+## Phase 3 — Generation / garment-fidelity gate (code, no live run)
+
+Per operator decision (added Gemini key, then chose "just build the code, no live run"), built the garment-fidelity gate as an additive translation of glimpse's gallery gate — glimpse's `galleryQuality.ts` stays intact so `smoke:security` stays green.
+
+Before writing code, verified the core product hypothesis live with the new key (synthetic stand-ins, 3 images): `gemini-3-pro-image` performed identity-preserving, garment-faithful try-on (same face/skin/proportions, exact dress silhouette/neckline/lace/train). Mechanism proven; the pipeline design is sound.
+
+New `artifacts/api-server/src/lib/tryonQuality.ts` (unit test `test:tryon-quality`, 11/11):
+- Axis translation (§5.3): bride likeness **0.82**, garment fidelity **0.88** (above venue's 0.80), composition **0.74**, body-proportion preservation **0.85**; per-partner likeness collapses; `exactlyTwoPartners` → `exactlyOnePerson`; face/extra-people/text integrity unchanged.
+- `lookQualityScore` weights garment fidelity highest (0.40) — the wrong dress is what churns a shop.
+- `tryonAcceptanceFloorFailures` — best-effort delivery routes to the **consultant**, never the bride (§5.2 step 3); **body-proportion 0.85 is enforced even at the floor** (invariant 4: no toggle, no exception).
+- `garmentRetryGuidanceForError` — adaptive retry feeds garment-detail / body-proportion corrections into the next prompt; never suggests altering the body.
+- `VISUALIZATION_DISCLAIMER = "Visualization only — not a representation of fit, size, or exact fabric."` (invariant 5; frontend surfaces + smoke assertion land with the UI in Phase 4).
+- `assertTryonLookQuality` — the live judge (parallel to `assertGalleryFrameQuality`), typed and built; not exercised on the no-live-run path.
+
+Production startup guard (`envValidation.ts`) extended (§5.1 / invariant 2): floors `TRYON_MIN_GARMENT_SCORE ≥ 0.88`, `TRYON_MIN_BODY_PROPORTION_SCORE ≥ 0.85`, likeness/composition, and refuses `TRYON_QUALITY_GATE=off`. Defaults equal the minimum, so an unset var passes (smoke fixtures untouched) and only a lowered value errors — verified: guard is silent with defaults and emits exactly the three expected errors when the gate is disabled / thresholds lowered.
+
+**Verification:** `test:tryon-quality` 11/11 · `test:dress-coverage` 6/6 · `test:lookbook-policy` 7/7 · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅.
+
+**Remaining Phase 3 (needs real fixtures — BLOCKERS B1):** the `tryon:qa` harness (`--no-fallback`/`--fixtures`), wiring the gate into a per-look pipeline, and the live §5.4 fidelity scorecard. The gate logic, thresholds, guard, retry, and disclaimer are done and tested.
