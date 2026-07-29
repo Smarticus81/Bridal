@@ -1427,6 +1427,19 @@ try {
     "couple preview page uses neutral availability language when the venue cannot start sessions",
   );
 
+  // Invariant 5: the visualization disclaimer renders on every surface showing a
+  // look. The bride's remote try-on entry is one such surface.
+  const tryLookbookSource = fs.readFileSync(
+    new URL("../../artifacts/wedding-app/src/pages/TryLookbookPage.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.ok(
+    tryLookbookSource.includes(
+      "Visualization only — not a representation of fit, size, or exact fabric.",
+    ),
+    "bride try-on page renders the visualization-only disclaimer",
+  );
+
   const createdAt = new Date("2026-06-20T12:00:00.000Z");
   const billingPeriodEnd = new Date("2026-07-20T12:00:00.000Z");
   assert.deepEqual(

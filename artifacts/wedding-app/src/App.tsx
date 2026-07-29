@@ -39,6 +39,7 @@ const CreateVenuePage = lazyRoute(() => import("@/pages/CreateVenuePage"));
 const VenueOwnerPage = lazyRoute(() => import("@/pages/VenueOwnerPage"));
 const CouplePage = lazyRoute(() => import("@/pages/CouplePage"));
 const GallerySharePage = lazyRoute(() => import("@/pages/GallerySharePage"));
+const TryLookbookPage = lazyRoute(() => import("@/pages/TryLookbookPage"));
 const FindMyGalleryPage = lazyRoute(() => import("@/pages/FindMyGalleryPage"));
 const OwnerLoginPage = lazyRoute(() => import("@/pages/OwnerLoginPage"));
 const NotFound = lazyRoute(() => import("@/pages/not-found"));
@@ -85,6 +86,9 @@ function Router() {
 
         {/* Session share links (couple-facing) */}
         <Route path="/v/:shareToken">{() => <GallerySharePage />}</Route>
+
+        {/* Bride remote try-on entry (no account) */}
+        <Route path="/try/:lookbookToken">{() => <TryLookbookPage />}</Route>
 
         {/* Legacy integer-id routes */}
         <Route path="/session/:id/processing">
