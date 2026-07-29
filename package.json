@@ -20,7 +20,8 @@
     "setup:storage": "node scripts/setup-supabase-storage.cjs",
     "generate:secrets": "node scripts/generate-secrets.cjs",
     "db:push": "pnpm --filter @workspace/db run push",
-    "start": "node --enable-source-maps artifacts/api-server/dist/index.mjs"
+    "start": "node --enable-source-maps artifacts/api-server/dist/index.mjs",
+    "test:engagement": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/engagementMetrics.test.ts"
   },
   "engines": {
     "node": ">=24"

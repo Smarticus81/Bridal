@@ -116,3 +116,13 @@ Added `artifacts/api-server/src/lib/photoGate.ts` (unit test `test:photo-gate`, 
 - `photoGatePrecedesBilling` documents + tests the ordering invariant: the gate runs before any credit debit, so photo retries are free (§6.2).
 
 **Verification:** `test:photo-gate` 9/9 · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅. Unit-test total across the port: 33 (tryon-quality 11, photo-gate 9, lookbook-policy 7, dress-coverage 6).
+
+## Phase 4 (cont.) — share-to-party votes + commercial funnel
+
+Added `artifacts/api-server/src/lib/engagementMetrics.ts` (unit test `test:engagement`, 6/6): pure instrumentation for §6.4-6.5.
+- `dedupeReactionsByVoter` / `tallyLookVotes` — one vote per viewer per look (mirrors the `reactions` unique index), a viewer's latest reaction wins; live per-look tally sorted by total, broken down by kind.
+- `BOOK_FITTING_VOTE_THRESHOLD = 3` + `shouldSurfaceBookFitting` — surface "Book a fitting" once a look crosses 3 votes (§6.5).
+- `topLookByVotes` — the most-loved look (ties to lower id).
+- `funnelConversion` — link opens → photos cleared → looks generated → shares → votes → fittings booked, divide-by-zero-guarded.
+
+**Verification:** `test:engagement` 6/6 · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅. Port unit-test total: 39.
