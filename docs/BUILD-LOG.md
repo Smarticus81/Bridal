@@ -253,3 +253,7 @@ Wired the front-photo upload into `CatalogPage`, closing the try-on-readiness lo
 The full inventory→readiness path now works from the console: add a dress → attach a front photo → it becomes try-on ready and eligible for lookbooks.
 
 **Verification:** `typecheck` ✅ (incl. libs) · `smoke:security` ✅ · `build` ✅. 62 unit tests green. Frontend surfaces: bride `/try` + consultant `/catalog` (now with photo upload) + `/lookbooks`.
+
+## Toward production — leads console view
+
+Added `LeadsPage` at `/leads` (OrgGate, light data surface): a read-only table of brides captured from the remote flow (`useListLeads`) — email, name, phone, captured date — with an inviting empty state. Completes the shop-visible commercial-instrumentation UI (§6.5). `typecheck` ✅ · `smoke:security` ✅ · `build` ✅. Frontend surfaces: bride `/try` + consultant `/catalog` + `/lookbooks` + `/leads`.
