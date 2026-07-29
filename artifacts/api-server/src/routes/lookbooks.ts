@@ -3,6 +3,7 @@ import { and, desc, eq, inArray } from "drizzle-orm";
 import {
   db,
   dressesTable,
+  dressMediaTable,
   lookbooksTable,
   lookbookDressesTable,
   venuesTable,
@@ -10,8 +11,9 @@ import {
 import { CreateLookbookBody } from "@workspace/api-zod";
 import { requireOrg, requireOwnerMutationOrigin } from "../lib/orgAuth.js";
 import { getAppBaseUrl } from "../lib/appUrl.js";
-import { mintLookbookToken } from "../lib/lookbookToken.js";
+import { isWellFormedLookbookToken, mintLookbookToken } from "../lib/lookbookToken.js";
 import { lookbookRemainingCredits, lookbookUsability } from "../lib/lookbookPolicy.js";
+import { VISUALIZATION_DISCLAIMER } from "../lib/tryonQuality.js";
 
 const router: IRouter = Router();
 
@@ -118,6 +120,76 @@ router.post("/lookbooks", async (req, res): Promise<void> => {
     expiresAt: created!.expiresAt,
     status: created!.status,
     dressCount: uniqueDressIds.length,
+  });
+});
+
+// GET /try/:lookbookToken — public bride entry. No account. Calm state when unusable.
+router.get("/try/:lookbookToken", async (req, res): Promise<void> => {
+  const token = req.params.lookbookToken;
+  if (!isWellFormedLookbookToken(token)) {
+    res.status(404).json({ error: "This link isn't valid." });
+    return;
+  }
+
+  const [lookbook] = await db
+    .select()
+    .from(lookbooksTable)
+    .where(eq(lookbooksTable.token, token))
+    .limit(1);
+  if (!lookbook) {
+    res.status(404).json({ error: "This link isn't valid." });
+    return;
+  }
+
+  const usability = lookbookUsability(lookbook, new Date());
+
+  const [shop] = await db
+    .select({ name: venuesTable.name })
+    .from(venuesTable)
+    .where(eq(venuesTable.id, lookbook.shopId))
+    .limit(1);
+
+  const dressRows = await db
+    .select({
+      id: dressesTable.id,
+      styleName: dressesTable.styleName,
+      designer: dressesTable.designer,
+      silhouette: dressesTable.silhouette,
+      neckline: dressesTable.neckline,
+      displayOrder: lookbookDressesTable.displayOrder,
+    })
+    .from(lookbookDressesTable)
+    .innerJoin(dressesTable, eq(lookbookDressesTable.dressId, dressesTable.id))
+    .where(eq(lookbookDressesTable.lookbookId, lookbook.id))
+    .orderBy(lookbookDressesTable.displayOrder);
+
+  const dressIds = dressRows.map((row) => row.id);
+  const fronts = dressIds.length
+    ? await db
+        .select({ dressId: dressMediaTable.dressId, objectKey: dressMediaTable.objectKey })
+        .from(dressMediaTable)
+        .where(and(inArray(dressMediaTable.dressId, dressIds), eq(dressMediaTable.coverage, "front")))
+    : [];
+  const frontByDress = new Map<number, string>();
+  for (const front of fronts) {
+    if (!frontByDress.has(front.dressId)) frontByDress.set(front.dressId, front.objectKey);
+  }
+
+  res.json({
+    usable: usability.usable,
+    reason: usability.usable ? null : usability.reason,
+    purpose: lookbook.purpose,
+    remainingCredits: lookbookRemainingCredits(lookbook),
+    shopName: shop?.name ?? "",
+    disclaimer: VISUALIZATION_DISCLAIMER,
+    dresses: dressRows.map((row) => ({
+      id: row.id,
+      styleName: row.styleName,
+      designer: row.designer,
+      silhouette: row.silhouette,
+      neckline: row.neckline,
+      frontImageObjectKey: frontByDress.get(row.id) ?? null,
+    })),
   });
 });
 

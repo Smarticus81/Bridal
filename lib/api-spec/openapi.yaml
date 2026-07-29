@@ -869,6 +869,35 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
 
+  /try/{lookbookToken}:
+    get:
+      operationId: getLookbookByToken
+      tags: [lookbooks]
+      summary: Resolve a lookbook for the remote bride flow (public, no account)
+      description: >-
+        Public entry for /try/:lookbookToken. Returns the shop's curated dresses
+        to try. When the link is expired, revoked, or exhausted it returns a calm
+        unusable state rather than an error.
+      parameters:
+        - name: lookbookToken
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lookbook resolved (usable or a calm unusable state)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TryLookbookResponse"
+        "404":
+          description: No such lookbook
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
   /storage/uploads/request-url:
     post:
       tags: [storage]
@@ -1963,3 +1992,50 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/LookbookSummary"
+
+    TryDress:
+      type: object
+      required: [id, styleName]
+      properties:
+        id:
+          type: integer
+        styleName:
+          type: string
+        designer:
+          type: string
+          nullable: true
+        silhouette:
+          type: string
+          nullable: true
+        neckline:
+          type: string
+          nullable: true
+        frontImageObjectKey:
+          type: string
+          nullable: true
+          description: Object key of the dress's front reference image, if present.
+
+    TryLookbookResponse:
+      type: object
+      required: [usable, purpose, remainingCredits, shopName, disclaimer, dresses]
+      properties:
+        usable:
+          type: boolean
+        reason:
+          type: string
+          nullable: true
+          enum: [expired, revoked, exhausted]
+          description: Why the link is not usable, when usable is false.
+        purpose:
+          $ref: "#/components/schemas/LookbookPurpose"
+        remainingCredits:
+          type: integer
+        shopName:
+          type: string
+        disclaimer:
+          type: string
+          description: The visualization-only disclaimer shown on every look surface.
+        dresses:
+          type: array
+          items:
+            $ref: "#/components/schemas/TryDress"

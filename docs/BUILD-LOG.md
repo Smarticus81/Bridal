@@ -177,3 +177,13 @@ Added the lookbook API (OpenAPI-first, deterministic codegen), the second real i
 - OpenAPI schemas: `LookbookPurpose`, `CreateLookbookBody`, `LookbookResponse`, `LookbookSummary`, `ListLookbooksResponse`; codegen produced `useCreateLookbook`/list hooks for the console.
 
 **Verification:** `test:lookbook-token` 2/2 · codegen deterministic ✓ · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅. Port unit-test total: 54. API surface now: dresses (3) + lookbooks (2) endpoints wired to the tested logic, additive.
+
+## Toward production — public GET /try/:lookbookToken (remote-flow entry)
+
+Completed the remote-flow read path. `GET /api/try/:lookbookToken` (public, no account) in `routes/lookbooks.ts`:
+- Rejects malformed tokens before any DB hit (`isWellFormedLookbookToken`), 404 on unknown token.
+- Returns a **calm unusable state** (`usable:false` + reason expired/revoked/exhausted) rather than an error when the link is spent — the bride sees a calm state, per §6.
+- Returns the shop name, purpose, remaining credits, the curated dresses (ordered, each with its `front` image object key), and the `VISUALIZATION_DISCLAIMER` (invariant 5).
+- OpenAPI: `TryLookbookResponse`, `TryDress`; codegen deterministic; query hook generated.
+
+**Verification:** codegen deterministic ✓ · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅. API surface: dresses (3) + lookbooks (3, incl. public /try) endpoints. 54 unit tests green.

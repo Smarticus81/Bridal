@@ -667,6 +667,41 @@ export interface ListLookbooksResponse {
   lookbooks: LookbookSummary[];
 }
 
+export interface TryDress {
+  id: number;
+  styleName: string;
+  designer?: string | null;
+  silhouette?: string | null;
+  neckline?: string | null;
+  /** Object key of the dress's front reference image, if present. */
+  frontImageObjectKey?: string | null;
+}
+
+/**
+ * Why the link is not usable, when usable is false.
+ */
+export type TryLookbookResponseReason =
+  | (typeof TryLookbookResponseReason)[keyof typeof TryLookbookResponseReason]
+  | null;
+
+export const TryLookbookResponseReason = {
+  expired: "expired",
+  revoked: "revoked",
+  exhausted: "exhausted",
+} as const;
+
+export interface TryLookbookResponse {
+  usable: boolean;
+  /** Why the link is not usable, when usable is false. */
+  reason?: TryLookbookResponseReason;
+  purpose: LookbookPurpose;
+  remainingCredits: number;
+  shopName: string;
+  /** The visualization-only disclaimer shown on every look surface. */
+  disclaimer: string;
+  dresses: TryDress[];
+}
+
 export type ListDressesParams = {
   status?: ListDressesStatus;
 };

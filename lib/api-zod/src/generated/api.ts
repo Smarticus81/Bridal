@@ -982,6 +982,43 @@ export const CreateLookbookBody = zod.object({
 });
 
 /**
+ * Public entry for /try/:lookbookToken. Returns the shop's curated dresses to try. When the link is expired, revoked, or exhausted it returns a calm unusable state rather than an error.
+ * @summary Resolve a lookbook for the remote bride flow (public, no account)
+ */
+export const GetLookbookByTokenParams = zod.object({
+  lookbookToken: zod.coerce.string(),
+});
+
+export const GetLookbookByTokenResponse = zod.object({
+  usable: zod.boolean(),
+  reason: zod
+    .enum(["expired", "revoked", "exhausted"])
+    .nullish()
+    .describe("Why the link is not usable, when usable is false."),
+  purpose: zod.enum(["pre_appointment", "post_appointment", "open_catalog"]),
+  remainingCredits: zod.number(),
+  shopName: zod.string(),
+  disclaimer: zod
+    .string()
+    .describe("The visualization-only disclaimer shown on every look surface."),
+  dresses: zod.array(
+    zod.object({
+      id: zod.number(),
+      styleName: zod.string(),
+      designer: zod.string().nullish(),
+      silhouette: zod.string().nullish(),
+      neckline: zod.string().nullish(),
+      frontImageObjectKey: zod
+        .string()
+        .nullish()
+        .describe(
+          "Object key of the dress's front reference image, if present.",
+        ),
+    }),
+  ),
+});
+
+/**
  * @summary Request a presigned URL for file upload
  */
 

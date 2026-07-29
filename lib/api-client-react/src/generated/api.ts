@@ -50,6 +50,7 @@ import type {
   SendSessionEmailResponse,
   SessionDetailResponse,
   SessionResponse,
+  TryLookbookResponse,
   UpdateVenueBody,
   UploadUrlRequest,
   UploadUrlResponse,
@@ -2538,6 +2539,102 @@ export const useCreateLookbook = <
 > => {
   return useMutation(getCreateLookbookMutationOptions(options));
 };
+
+/**
+ * Public entry for /try/:lookbookToken. Returns the shop's curated dresses to try. When the link is expired, revoked, or exhausted it returns a calm unusable state rather than an error.
+ * @summary Resolve a lookbook for the remote bride flow (public, no account)
+ */
+export const getGetLookbookByTokenUrl = (lookbookToken: string) => {
+  return `/api/try/${lookbookToken}`;
+};
+
+export const getLookbookByToken = async (
+  lookbookToken: string,
+  options?: RequestInit,
+): Promise<TryLookbookResponse> => {
+  return customFetch<TryLookbookResponse>(
+    getGetLookbookByTokenUrl(lookbookToken),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetLookbookByTokenQueryKey = (lookbookToken: string) => {
+  return [`/api/try/${lookbookToken}`] as const;
+};
+
+export const getGetLookbookByTokenQueryOptions = <
+  TData = Awaited<ReturnType<typeof getLookbookByToken>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  lookbookToken: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getLookbookByToken>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetLookbookByTokenQueryKey(lookbookToken);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getLookbookByToken>>
+  > = ({ signal }) =>
+    getLookbookByToken(lookbookToken, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!lookbookToken,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getLookbookByToken>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetLookbookByTokenQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getLookbookByToken>>
+>;
+export type GetLookbookByTokenQueryError = ErrorType<ErrorEnvelope>;
+
+/**
+ * @summary Resolve a lookbook for the remote bride flow (public, no account)
+ */
+
+export function useGetLookbookByToken<
+  TData = Awaited<ReturnType<typeof getLookbookByToken>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  lookbookToken: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getLookbookByToken>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetLookbookByTokenQueryOptions(
+    lookbookToken,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * @summary Request a presigned URL for file upload
