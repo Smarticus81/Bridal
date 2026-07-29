@@ -478,6 +478,7 @@ export type UploadUrlRequestPurpose =
 export const UploadUrlRequestPurpose = {
   couple: "couple",
   venue: "venue",
+  dress: "dress",
 } as const;
 
 export interface UploadUrlRequest {
@@ -493,7 +494,7 @@ export interface UploadUrlRequest {
   purpose: UploadUrlRequestPurpose;
   /** @minLength 1 */
   venueSlug: string;
-  /** Required for couple uploads. Venue media uploads use the owner session cookie instead. */
+  /** Required for couple uploads. Venue and dress media uploads use the owner session cookie instead. */
   uploadToken?: string;
 }
 
@@ -770,6 +771,22 @@ export interface LeadSummary {
 
 export interface ListLeadsResponse {
   leads: LeadSummary[];
+}
+
+export interface AddDressMediaBody {
+  objectKey: string;
+  coverage: DressMediaCoverage;
+  /** @minimum 0 */
+  displayOrder?: number;
+}
+
+export interface DressMediaResponse {
+  id: number;
+  dressId: number;
+  objectKey: string;
+  coverage: DressMediaCoverage;
+  displayOrder: number;
+  createdAt: string;
 }
 
 export type ListDressesParams = {

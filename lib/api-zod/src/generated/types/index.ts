@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./addDressMediaBody";
 export * from "./addVenueMediaBody";
 export * from "./billingCheckoutBody";
 export * from "./billingCheckoutBodyProduct";
@@ -19,6 +20,7 @@ export * from "./createSessionBody";
 export * from "./createVenueBody";
 export * from "./deleteSessionResponse";
 export * from "./dressMediaCoverage";
+export * from "./dressMediaResponse";
 export * from "./dressResponse";
 export * from "./dressStatus";
 export * from "./errorEnvelope";

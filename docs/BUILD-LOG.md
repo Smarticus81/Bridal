@@ -232,3 +232,14 @@ Added `LookbooksPage` at `/lookbooks` (OrgGate, light surface) — the consultan
 - Sent-lookbooks list from `useListLookbooks`: per link the shop-visible burn meter (remaining/cap), expiry, and an Active/expired/exhausted status chip (§6.5).
 
 Loop now closes: consultant sends a lookbook → gets the `/try` link → bride opens `/try/:token` (the page already shipped). `typecheck` ✅ · `smoke:security` ✅ · `build` ✅. 62 unit tests green. Frontend surfaces: bride `/try` + consultant `/catalog` + `/lookbooks`.
+
+## Toward production — dress front-photo ingestion (flips readiness)
+
+Added the dress image-ingestion backend (§7) — the piece that makes a dress try-on ready:
+- `POST /storage/uploads/request-url` gained a `dress` purpose (org-authed by the shop via `requireOrgVenue`, so the upload intent records the shop as `venueId` — no schema change; `upload_intents.venueId` stays NOT NULL). Additive branch; smoke source-contract strings untouched.
+- `POST /dresses/:dressId/media` (mutation-origin + org): validates the dress is in the caller's catalog, runs the **same reference-quality path as venue media** (`assertReferenceImageQuality`, §5.3), dedupes `(dressId, objectKey)`, and consumes the `dress` upload intent (scoped to the org's shops, unconsumed, unexpired) in a transaction before inserting `dress_media` with its coverage slot.
+- OpenAPI: `dress` purpose, `AddDressMediaBody`, `DressMediaResponse`; codegen deterministic; `useAddDressMedia` hook generated.
+
+Once a validated `front` photo is attached, `dressCoverageStatus.tryOnReady` flips true and the catalog badge turns green — closing the readiness loop.
+
+**Verification:** codegen deterministic ✓ · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅. API surface now **11 bridal endpoints**. 62 unit tests green. (Frontend upload UI is the remaining user-facing piece.)

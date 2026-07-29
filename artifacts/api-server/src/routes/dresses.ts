@@ -1,10 +1,66 @@
 import { Router, type IRouter } from "express";
-import { and, desc, eq, inArray } from "drizzle-orm";
-import { db, dressesTable, dressMediaTable, type DressStatus } from "@workspace/db";
-import { CreateDressBody, ImportDressesBody, ListDressesQueryParams } from "@workspace/api-zod";
+import { and, desc, eq, gte, inArray, isNull } from "drizzle-orm";
+import {
+  db,
+  dressesTable,
+  dressMediaTable,
+  uploadIntentsTable,
+  venuesTable,
+  type DressStatus,
+} from "@workspace/db";
+import {
+  AddDressMediaBody,
+  AddDressMediaParams,
+  CreateDressBody,
+  ImportDressesBody,
+  ListDressesQueryParams,
+} from "@workspace/api-zod";
 import { requireOrg, requireOwnerMutationOrigin } from "../lib/orgAuth.js";
 import { dressCoverageStatus } from "../lib/dressCoverage.js";
 import { filterDresses } from "../lib/dressFilters.js";
+import {
+  mimeTypeFromObjectPath,
+  ObjectNotFoundError,
+  ObjectStorageService,
+} from "../lib/objectStorage.js";
+import { assertReferenceImageQuality, MIN_REFERENCE_EDGE_PX } from "../lib/referenceImageQuality.js";
+
+const objectStorageService = new ObjectStorageService();
+const ALLOWED_DRESS_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const MAX_DRESS_UPLOAD_BYTES = 50 * 1024 * 1024;
+
+/** Validate an uploaded dress photo with the same reference-quality path as venue media (§5.3). */
+async function validateDressMediaObjectKey(objectKey: string): Promise<void> {
+  if (!objectKey.startsWith("/objects/uploads/")) {
+    throw new Error("Dress photo is not a valid uploaded object.");
+  }
+  try {
+    const file = await objectStorageService.getObjectEntityFile(objectKey);
+    const [buffer] = await file.download();
+    if (buffer.length > MAX_DRESS_UPLOAD_BYTES) {
+      throw new Error("Dress photo is too large. Upload images up to 50MB.");
+    }
+    const metadata = await file.getMetadata().catch(() => null);
+    const contentType =
+      metadata?.contentType && metadata.contentType !== "application/octet-stream"
+        ? metadata.contentType
+        : mimeTypeFromObjectPath(objectKey);
+    if (!ALLOWED_DRESS_IMAGE_TYPES.has(contentType)) {
+      throw new Error("Dress photo must be a JPG, PNG, or WebP image.");
+    }
+    await assertReferenceImageQuality({
+      buffer,
+      label: "Dress photo",
+      minEdgePx: MIN_REFERENCE_EDGE_PX,
+      profile: "venue",
+    });
+  } catch (err) {
+    if (err instanceof ObjectNotFoundError) {
+      throw new Error("Dress photo was not found. Upload it again.");
+    }
+    throw err;
+  }
+}
 import {
   diffInventory,
   summarizeDiff,
@@ -210,6 +266,103 @@ router.post("/dresses/import", async (req, res): Promise<void> => {
     invalidCount: diff.invalid.length,
     invalid: diff.invalid,
   });
+});
+
+// POST /dresses/:dressId/media — attach a coverage-tagged reference photo.
+router.post("/dresses/:dressId/media", async (req, res): Promise<void> => {
+  if (!requireOwnerMutationOrigin(req, res)) return;
+  const ctx = await requireOrg(req, res);
+  if (!ctx) return;
+
+  const params = AddDressMediaParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+  const body = AddDressMediaBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ error: body.error.message });
+    return;
+  }
+
+  // The dress must be in the caller's catalog.
+  const [dress] = await db
+    .select({ id: dressesTable.id })
+    .from(dressesTable)
+    .where(and(eq(dressesTable.id, params.data.dressId), eq(dressesTable.organizationId, ctx.org.id)))
+    .limit(1);
+  if (!dress) {
+    res.status(404).json({ error: "That dress isn't in your catalog." });
+    return;
+  }
+
+  try {
+    await validateDressMediaObjectKey(body.data.objectKey);
+  } catch (err) {
+    res.status(400).json({
+      error:
+        err instanceof Error
+          ? err.message
+          : "Dress photo is invalid. Upload a high-resolution JPG, PNG, or WebP image.",
+    });
+    return;
+  }
+
+  const [duplicate] = await db
+    .select({ id: dressMediaTable.id })
+    .from(dressMediaTable)
+    .where(and(eq(dressMediaTable.dressId, dress.id), eq(dressMediaTable.objectKey, body.data.objectKey)))
+    .limit(1);
+  if (duplicate) {
+    res.status(409).json({ error: "This photo is already attached to the dress." });
+    return;
+  }
+
+  // The dress upload intent is scoped to a shop the org owns.
+  const orgShops = await db
+    .select({ id: venuesTable.id })
+    .from(venuesTable)
+    .where(eq(venuesTable.organizationId, ctx.org.id));
+  const orgShopIds = orgShops.map((s) => s.id);
+  if (orgShopIds.length === 0) {
+    res.status(400).json({ error: "This upload is no longer valid. Upload the photo again." });
+    return;
+  }
+
+  const media = await db.transaction(async (tx) => {
+    const [intent] = await tx
+      .update(uploadIntentsTable)
+      .set({ consumedAt: new Date() })
+      .where(
+        and(
+          eq(uploadIntentsTable.objectKey, body.data.objectKey),
+          inArray(uploadIntentsTable.venueId, orgShopIds),
+          eq(uploadIntentsTable.purpose, "dress"),
+          isNull(uploadIntentsTable.consumedAt),
+          gte(uploadIntentsTable.expiresAt, new Date()),
+        ),
+      )
+      .returning({ id: uploadIntentsTable.id });
+    if (!intent) return null;
+
+    const [created] = await tx
+      .insert(dressMediaTable)
+      .values({
+        dressId: dress.id,
+        objectKey: body.data.objectKey,
+        coverage: body.data.coverage,
+        displayOrder: body.data.displayOrder ?? 0,
+      })
+      .returning();
+    return created ?? null;
+  });
+
+  if (!media) {
+    res.status(409).json({ error: "This upload was already used. Upload the photo again." });
+    return;
+  }
+
+  res.status(201).json(media);
 });
 
 export default router;

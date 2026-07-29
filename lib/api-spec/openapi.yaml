@@ -869,6 +869,52 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
 
+  /dresses/{dressId}/media:
+    post:
+      operationId: addDressMedia
+      tags: [dresses]
+      summary: Attach a coverage-tagged reference photo to a dress
+      description: >-
+        The photo must first be uploaded via /storage/uploads/request-url with
+        purpose "dress". A validated front image makes the dress try-on ready.
+      parameters:
+        - name: dressId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddDressMediaBody"
+      responses:
+        "201":
+          description: Dress media attached
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DressMediaResponse"
+        "400":
+          description: Invalid input or photo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Dress not found in your catalog
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: Duplicate photo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
   /lookbooks:
     get:
       operationId: listLookbooks
@@ -1847,13 +1893,13 @@ components:
           enum: [image/jpeg, image/png, image/webp]
         purpose:
           type: string
-          enum: [couple, venue]
+          enum: [couple, venue, dress]
         venueSlug:
           type: string
           minLength: 1
         uploadToken:
           type: string
-          description: Required for couple uploads. Venue media uploads use the owner session cookie instead.
+          description: Required for couple uploads. Venue and dress media uploads use the owner session cookie instead.
 
     UploadUrlResponse:
       type: object
@@ -2315,3 +2361,33 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/LeadSummary"
+
+    AddDressMediaBody:
+      type: object
+      required: [objectKey, coverage]
+      properties:
+        objectKey:
+          type: string
+        coverage:
+          $ref: "#/components/schemas/DressMediaCoverage"
+        displayOrder:
+          type: integer
+          minimum: 0
+
+    DressMediaResponse:
+      type: object
+      required: [id, dressId, objectKey, coverage, displayOrder, createdAt]
+      properties:
+        id:
+          type: integer
+        dressId:
+          type: integer
+        objectKey:
+          type: string
+        coverage:
+          $ref: "#/components/schemas/DressMediaCoverage"
+        displayOrder:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time

@@ -950,6 +950,22 @@ export const ImportDressesResponse = zod.object({
 });
 
 /**
+ * The photo must first be uploaded via /storage/uploads/request-url with purpose "dress". A validated front image makes the dress try-on ready.
+ * @summary Attach a coverage-tagged reference photo to a dress
+ */
+export const AddDressMediaParams = zod.object({
+  dressId: zod.coerce.number(),
+});
+
+export const addDressMediaBodyDisplayOrderMin = 0;
+
+export const AddDressMediaBody = zod.object({
+  objectKey: zod.string(),
+  coverage: zod.enum(["front", "back", "detail", "fabric", "on_model"]),
+  displayOrder: zod.number().min(addDressMediaBodyDisplayOrderMin).optional(),
+});
+
+/**
  * @summary List the caller's organization lookbooks with burn meter
  */
 export const ListLookbooksResponse = zod.object({
@@ -1130,13 +1146,13 @@ export const RequestUploadUrlBody = zod.object({
     .max(requestUploadUrlBodySizeMax)
     .describe("Maximum upload size is 50MB."),
   contentType: zod.enum(["image/jpeg", "image/png", "image/webp"]),
-  purpose: zod.enum(["couple", "venue"]),
+  purpose: zod.enum(["couple", "venue", "dress"]),
   venueSlug: zod.string().min(1),
   uploadToken: zod
     .string()
     .optional()
     .describe(
-      "Required for couple uploads. Venue media uploads use the owner session cookie instead.",
+      "Required for couple uploads. Venue and dress media uploads use the owner session cookie instead.",
     ),
 });
 
@@ -1154,13 +1170,13 @@ export const RequestUploadUrlResponse = zod.object({
         .max(requestUploadUrlResponseMetadataSizeMax)
         .describe("Maximum upload size is 50MB."),
       contentType: zod.enum(["image/jpeg", "image/png", "image/webp"]),
-      purpose: zod.enum(["couple", "venue"]),
+      purpose: zod.enum(["couple", "venue", "dress"]),
       venueSlug: zod.string().min(1),
       uploadToken: zod
         .string()
         .optional()
         .describe(
-          "Required for couple uploads. Venue media uploads use the owner session cookie instead.",
+          "Required for couple uploads. Venue and dress media uploads use the owner session cookie instead.",
         ),
     })
     .optional(),

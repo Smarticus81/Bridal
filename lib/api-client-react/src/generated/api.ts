@@ -17,6 +17,7 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  AddDressMediaBody,
   AddVenueMediaBody,
   BillingCheckoutBody,
   BillingCheckoutResponse,
@@ -28,6 +29,7 @@ import type {
   CreateSessionBody,
   CreateVenueBody,
   DeleteSessionResponse,
+  DressMediaResponse,
   DressResponse,
   ErrorEnvelope,
   GetStorageObjectParams,
@@ -2383,6 +2385,94 @@ export const useImportDresses = <
   TContext
 > => {
   return useMutation(getImportDressesMutationOptions(options));
+};
+
+/**
+ * The photo must first be uploaded via /storage/uploads/request-url with purpose "dress". A validated front image makes the dress try-on ready.
+ * @summary Attach a coverage-tagged reference photo to a dress
+ */
+export const getAddDressMediaUrl = (dressId: number) => {
+  return `/api/dresses/${dressId}/media`;
+};
+
+export const addDressMedia = async (
+  dressId: number,
+  addDressMediaBody: AddDressMediaBody,
+  options?: RequestInit,
+): Promise<DressMediaResponse> => {
+  return customFetch<DressMediaResponse>(getAddDressMediaUrl(dressId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(addDressMediaBody),
+  });
+};
+
+export const getAddDressMediaMutationOptions = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof addDressMedia>>,
+    TError,
+    { dressId: number; data: BodyType<AddDressMediaBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof addDressMedia>>,
+  TError,
+  { dressId: number; data: BodyType<AddDressMediaBody> },
+  TContext
+> => {
+  const mutationKey = ["addDressMedia"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof addDressMedia>>,
+    { dressId: number; data: BodyType<AddDressMediaBody> }
+  > = (props) => {
+    const { dressId, data } = props ?? {};
+
+    return addDressMedia(dressId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AddDressMediaMutationResult = NonNullable<
+  Awaited<ReturnType<typeof addDressMedia>>
+>;
+export type AddDressMediaMutationBody = BodyType<AddDressMediaBody>;
+export type AddDressMediaMutationError = ErrorType<ErrorEnvelope>;
+
+/**
+ * @summary Attach a coverage-tagged reference photo to a dress
+ */
+export const useAddDressMedia = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof addDressMedia>>,
+    TError,
+    { dressId: number; data: BodyType<AddDressMediaBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof addDressMedia>>,
+  TError,
+  { dressId: number; data: BodyType<AddDressMediaBody> },
+  TContext
+> => {
+  return useMutation(getAddDressMediaMutationOptions(options));
 };
 
 /**

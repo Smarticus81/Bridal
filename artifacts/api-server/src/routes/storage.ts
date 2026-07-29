@@ -72,7 +72,9 @@ router.post("/storage/uploads/request-url", async (req: Request, res: Response) 
       return;
     }
     let venueId: number;
-    if (purpose === "venue") {
+    if (purpose === "venue" || purpose === "dress") {
+      // Dress catalog photos are org-authed by the shop that owns the dress,
+      // exactly like venue media. The upload intent records the shop as venueId.
       const venue = await requireOrgVenue(req, res, venueSlug);
       if (!venue) return;
       venueId = venue.id;
