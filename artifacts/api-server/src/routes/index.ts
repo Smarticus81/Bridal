@@ -7,6 +7,7 @@ import galleryStylesRouter from "./galleryStyles";
 import billingRouter from "./billing";
 import dressesRouter from "./dresses";
 import lookbooksRouter from "./lookbooks";
+import reactionsRouter from "./reactions";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use(galleryStylesRouter);
 router.use(billingRouter);
 router.use(dressesRouter);
 router.use(lookbooksRouter);
+router.use(reactionsRouter);
 
 export default router;

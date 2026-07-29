@@ -187,3 +187,12 @@ Completed the remote-flow read path. `GET /api/try/:lookbookToken` (public, no a
 - OpenAPI: `TryLookbookResponse`, `TryDress`; codegen deterministic; query hook generated.
 
 **Verification:** codegen deterministic ✓ · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅. API surface: dresses (3) + lookbooks (3, incl. public /try) endpoints. 54 unit tests green.
+
+## Toward production — reactions/votes API (share-to-party)
+
+Added `routes/reactions.ts` (mounted), wiring the tested `engagementMetrics`:
+- `POST /reactions` — public, no account. Casts/updates a viewer's reaction on a look; one per viewer per look via an upsert on the `(generated_asset_id, voter_token)` unique index (a repeat vote updates, never duplicates). Returns the live tally + `bookFitting` flag. Optional `voterEmail` captured post-vote only.
+- `GET /sessions/by-token/:shareToken/reactions` — tokenized. Resolves the session by share token, tallies votes across its image looks, surfaces `bookFitting` per look once it crosses 3 votes (§6.5).
+- OpenAPI: `ReactionKind`, `CreateReactionBody`, `ReactionResponse`, `LookTallyItem`, `SessionReactionsResponse`; codegen deterministic; `useCreateReaction` + tally hooks generated.
+
+**Verification:** codegen deterministic ✓ · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅. API surface: dresses (3) + lookbooks (3) + reactions (2) = 8 bridal endpoints wired to the tested logic. 54 unit tests green.

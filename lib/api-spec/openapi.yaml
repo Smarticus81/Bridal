@@ -898,6 +898,66 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
 
+  /reactions:
+    post:
+      operationId: createReaction
+      tags: [reactions]
+      summary: Cast a reaction on a shared look (public, no account)
+      description: >-
+        One reaction per viewer per look. A viewer who reacts again updates their
+        existing reaction. Viewers never sign in; the voterToken is an anonymous
+        per-viewer token minted client-side.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReactionBody"
+      responses:
+        "200":
+          description: Reaction recorded, with the live tally for that look
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReactionResponse"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: No such look
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /sessions/by-token/{shareToken}/reactions:
+    get:
+      operationId: getSessionReactions
+      tags: [reactions]
+      summary: Live per-look vote tally for a shared gallery (tokenized)
+      parameters:
+        - name: shareToken
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Per-look tally
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionReactionsResponse"
+        "404":
+          description: No such share
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
   /storage/uploads/request-url:
     post:
       tags: [storage]
@@ -2039,3 +2099,65 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/TryDress"
+
+    ReactionKind:
+      type: string
+      enum: [love, maybe, pass]
+
+    CreateReactionBody:
+      type: object
+      required: [generatedAssetId, voterToken, kind]
+      properties:
+        generatedAssetId:
+          type: integer
+        voterToken:
+          type: string
+          minLength: 8
+        kind:
+          $ref: "#/components/schemas/ReactionKind"
+        voterEmail:
+          type: string
+          format: email
+          description: Optional, captured post-vote only — never a wall before the gallery.
+
+    LookTallyItem:
+      type: object
+      required: [generatedAssetId, total, byKind, bookFitting]
+      properties:
+        generatedAssetId:
+          type: integer
+        total:
+          type: integer
+        byKind:
+          type: object
+          additionalProperties:
+            type: integer
+        bookFitting:
+          type: boolean
+          description: True once the look crosses the fitting-booking vote threshold.
+
+    ReactionResponse:
+      type: object
+      required: [generatedAssetId, kind, total, byKind, bookFitting]
+      properties:
+        generatedAssetId:
+          type: integer
+        kind:
+          $ref: "#/components/schemas/ReactionKind"
+        total:
+          type: integer
+        byKind:
+          type: object
+          additionalProperties:
+            type: integer
+        bookFitting:
+          type: boolean
+
+    SessionReactionsResponse:
+      type: object
+      required: [looks]
+      properties:
+        looks:
+          type: array
+          items:
+            $ref: "#/components/schemas/LookTallyItem"

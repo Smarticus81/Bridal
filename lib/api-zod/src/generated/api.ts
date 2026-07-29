@@ -1019,6 +1019,55 @@ export const GetLookbookByTokenResponse = zod.object({
 });
 
 /**
+ * One reaction per viewer per look. A viewer who reacts again updates their existing reaction. Viewers never sign in; the voterToken is an anonymous per-viewer token minted client-side.
+ * @summary Cast a reaction on a shared look (public, no account)
+ */
+export const createReactionBodyVoterTokenMin = 8;
+
+export const CreateReactionBody = zod.object({
+  generatedAssetId: zod.number(),
+  voterToken: zod.string().min(createReactionBodyVoterTokenMin),
+  kind: zod.enum(["love", "maybe", "pass"]),
+  voterEmail: zod
+    .string()
+    .email()
+    .optional()
+    .describe(
+      "Optional, captured post-vote only — never a wall before the gallery.",
+    ),
+});
+
+export const CreateReactionResponse = zod.object({
+  generatedAssetId: zod.number(),
+  kind: zod.enum(["love", "maybe", "pass"]),
+  total: zod.number(),
+  byKind: zod.record(zod.string(), zod.number()),
+  bookFitting: zod.boolean(),
+});
+
+/**
+ * @summary Live per-look vote tally for a shared gallery (tokenized)
+ */
+export const GetSessionReactionsParams = zod.object({
+  shareToken: zod.coerce.string(),
+});
+
+export const GetSessionReactionsResponse = zod.object({
+  looks: zod.array(
+    zod.object({
+      generatedAssetId: zod.number(),
+      total: zod.number(),
+      byKind: zod.record(zod.string(), zod.number()),
+      bookFitting: zod
+        .boolean()
+        .describe(
+          "True once the look crosses the fitting-booking vote threshold.",
+        ),
+    }),
+  ),
+});
+
+/**
  * @summary Request a presigned URL for file upload
  */
 

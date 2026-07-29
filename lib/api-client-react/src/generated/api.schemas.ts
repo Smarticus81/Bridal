@@ -702,6 +702,47 @@ export interface TryLookbookResponse {
   dresses: TryDress[];
 }
 
+export type ReactionKind = (typeof ReactionKind)[keyof typeof ReactionKind];
+
+export const ReactionKind = {
+  love: "love",
+  maybe: "maybe",
+  pass: "pass",
+} as const;
+
+export interface CreateReactionBody {
+  generatedAssetId: number;
+  /** @minLength 8 */
+  voterToken: string;
+  kind: ReactionKind;
+  /** Optional, captured post-vote only — never a wall before the gallery. */
+  voterEmail?: string;
+}
+
+export type LookTallyItemByKind = { [key: string]: number };
+
+export interface LookTallyItem {
+  generatedAssetId: number;
+  total: number;
+  byKind: LookTallyItemByKind;
+  /** True once the look crosses the fitting-booking vote threshold. */
+  bookFitting: boolean;
+}
+
+export type ReactionResponseByKind = { [key: string]: number };
+
+export interface ReactionResponse {
+  generatedAssetId: number;
+  kind: ReactionKind;
+  total: number;
+  byKind: ReactionResponseByKind;
+  bookFitting: boolean;
+}
+
+export interface SessionReactionsResponse {
+  looks: LookTallyItem[];
+}
+
 export type ListDressesParams = {
   status?: ListDressesStatus;
 };

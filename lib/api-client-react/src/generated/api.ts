@@ -23,6 +23,7 @@ import type {
   BillingPortalResponse,
   CreateDressBody,
   CreateLookbookBody,
+  CreateReactionBody,
   CreateSessionBody,
   CreateVenueBody,
   DeleteSessionResponse,
@@ -42,6 +43,7 @@ import type {
   OrgCreditHistoryResponse,
   OrganizationResponse,
   OwnerSessionDetailResponse,
+  ReactionResponse,
   ReadinessStatus,
   RecoverSessionsBody,
   RecoverSessionsResponse,
@@ -49,6 +51,7 @@ import type {
   SendSessionEmailByTokenBody,
   SendSessionEmailResponse,
   SessionDetailResponse,
+  SessionReactionsResponse,
   SessionResponse,
   TryLookbookResponse,
   UpdateVenueBody,
@@ -2628,6 +2631,185 @@ export function useGetLookbookByToken<
     lookbookToken,
     options,
   );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * One reaction per viewer per look. A viewer who reacts again updates their existing reaction. Viewers never sign in; the voterToken is an anonymous per-viewer token minted client-side.
+ * @summary Cast a reaction on a shared look (public, no account)
+ */
+export const getCreateReactionUrl = () => {
+  return `/api/reactions`;
+};
+
+export const createReaction = async (
+  createReactionBody: CreateReactionBody,
+  options?: RequestInit,
+): Promise<ReactionResponse> => {
+  return customFetch<ReactionResponse>(getCreateReactionUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createReactionBody),
+  });
+};
+
+export const getCreateReactionMutationOptions = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createReaction>>,
+    TError,
+    { data: BodyType<CreateReactionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createReaction>>,
+  TError,
+  { data: BodyType<CreateReactionBody> },
+  TContext
+> => {
+  const mutationKey = ["createReaction"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createReaction>>,
+    { data: BodyType<CreateReactionBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createReaction(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateReactionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createReaction>>
+>;
+export type CreateReactionMutationBody = BodyType<CreateReactionBody>;
+export type CreateReactionMutationError = ErrorType<ErrorEnvelope>;
+
+/**
+ * @summary Cast a reaction on a shared look (public, no account)
+ */
+export const useCreateReaction = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createReaction>>,
+    TError,
+    { data: BodyType<CreateReactionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createReaction>>,
+  TError,
+  { data: BodyType<CreateReactionBody> },
+  TContext
+> => {
+  return useMutation(getCreateReactionMutationOptions(options));
+};
+
+/**
+ * @summary Live per-look vote tally for a shared gallery (tokenized)
+ */
+export const getGetSessionReactionsUrl = (shareToken: string) => {
+  return `/api/sessions/by-token/${shareToken}/reactions`;
+};
+
+export const getSessionReactions = async (
+  shareToken: string,
+  options?: RequestInit,
+): Promise<SessionReactionsResponse> => {
+  return customFetch<SessionReactionsResponse>(
+    getGetSessionReactionsUrl(shareToken),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetSessionReactionsQueryKey = (shareToken: string) => {
+  return [`/api/sessions/by-token/${shareToken}/reactions`] as const;
+};
+
+export const getGetSessionReactionsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getSessionReactions>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  shareToken: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getSessionReactions>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetSessionReactionsQueryKey(shareToken);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getSessionReactions>>
+  > = ({ signal }) =>
+    getSessionReactions(shareToken, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!shareToken,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getSessionReactions>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetSessionReactionsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getSessionReactions>>
+>;
+export type GetSessionReactionsQueryError = ErrorType<ErrorEnvelope>;
+
+/**
+ * @summary Live per-look vote tally for a shared gallery (tokenized)
+ */
+
+export function useGetSessionReactions<
+  TData = Awaited<ReturnType<typeof getSessionReactions>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  shareToken: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getSessionReactions>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetSessionReactionsQueryOptions(shareToken, options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;
