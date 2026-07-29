@@ -243,3 +243,13 @@ Added the dress image-ingestion backend (§7) — the piece that makes a dress t
 Once a validated `front` photo is attached, `dressCoverageStatus.tryOnReady` flips true and the catalog badge turns green — closing the readiness loop.
 
 **Verification:** codegen deterministic ✓ · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅. API surface now **11 bridal endpoints**. 62 unit tests green. (Frontend upload UI is the remaining user-facing piece.)
+
+## Toward production — dress front-photo upload UI (readiness loop closed in the UI)
+
+Wired the front-photo upload into `CatalogPage`, closing the try-on-readiness loop end-to-end:
+- Added `"dress"` to the shared `useUpload` purpose type (`lib/object-storage-web`), so the hook can request a `dress`-purpose upload URL. Smoke source-contract on the upload hook untouched.
+- Each "Needs front photo" badge is now an "Add front photo" file picker: it uploads via `useUpload({ purpose: "dress", venueSlug: <org's shop> })` → `useAddDressMedia({ dressId, data: { objectKey, coverage: "front" } })` → invalidates the catalog. On success the badge flips to "Try-on ready" ("This dress is now try-on ready.").
+
+The full inventory→readiness path now works from the console: add a dress → attach a front photo → it becomes try-on ready and eligible for lookbooks.
+
+**Verification:** `typecheck` ✅ (incl. libs) · `smoke:security` ✅ · `build` ✅. 62 unit tests green. Frontend surfaces: bride `/try` + consultant `/catalog` (now with photo upload) + `/lookbooks`.

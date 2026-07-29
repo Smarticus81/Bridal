@@ -3,8 +3,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   useListDresses,
   useCreateDress,
+  useAddDressMedia,
+  useGetOrganization,
   getListDressesQueryKey,
 } from "@workspace/api-client-react";
+import { useUpload } from "@workspace/object-storage-web";
 import { OrgGate } from "@/components/auth/OrgGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +43,35 @@ function CatalogContent() {
     query: { queryKey: getListDressesQueryKey(hasFilters ? params : undefined) },
   });
   const createDress = useCreateDress();
+  const addDressMedia = useAddDressMedia();
+  const orgQuery = useGetOrganization();
+  const shopSlug = orgQuery.data?.venues?.[0]?.slug;
+  const { uploadFile } = useUpload({ purpose: "dress", venueSlug: shopSlug });
+
+  const [uploadingId, setUploadingId] = useState<number | null>(null);
+
+  const uploadFront = async (dressId: number, file: File | undefined) => {
+    if (!file || !shopSlug) return;
+    setUploadingId(dressId);
+    try {
+      const result = await uploadFile(file);
+      if (!result) throw new Error("upload failed");
+      await addDressMedia.mutateAsync({
+        dressId,
+        data: { objectKey: result.objectPath, coverage: "front" },
+      });
+      toast({ title: "Front photo added", description: "This dress is now try-on ready." });
+      queryClient.invalidateQueries({ queryKey: getListDressesQueryKey() });
+    } catch {
+      toast({
+        title: "Couldn't add that photo",
+        description: "Use a clear, high-resolution full-length front photo.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingId(null);
+    }
+  };
 
   const [sku, setSku] = useState("");
   const [styleName, setStyleName] = useState("");
@@ -184,9 +216,16 @@ function CatalogContent() {
                   Try-on ready
                 </span>
               ) : (
-                <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800">
-                  Needs front photo
-                </span>
+                <label className="cursor-pointer rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800 hover:bg-amber-200">
+                  {uploadingId === dress.id ? "Uploading…" : "Add front photo"}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    disabled={!shopSlug || uploadingId !== null}
+                    onChange={(e) => uploadFront(dress.id, e.target.files?.[0])}
+                  />
+                </label>
               )}
             </li>
           ))}
