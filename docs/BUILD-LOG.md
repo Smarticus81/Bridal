@@ -138,3 +138,14 @@ Added `artifacts/api-server/src/lib/inventoryImport.ts` (unit test `test:invento
 **Scale check (Phase 5 verification target):** a synthetic **300-row** import diffed against 50 existing dresses ran end-to-end with no operator intervention → "will create 250, update 0, archive 0, 50 unchanged", 300/300 valid.
 
 **Verification:** `test:inventory-import` 8/8 · 300-row scale run ✅ · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅. Port unit-test total: 47.
+
+## Phase 4 (cont.) — consent retention purge selector
+
+Added `artifacts/api-server/src/lib/retentionPurge.ts` (unit test `test:retention-purge`, 5/5) — the pure selection core for the legal-exposure requirement (§6.3, invariant 8): given each bride session's consent state + its source/derived object keys, decide exactly what to hard-delete from Supabase storage.
+- `collectPurgeTargets` — TTL sweep: selects sessions whose consent is revoked or past its retention horizon (builds on `isConsentPurgeable`; a missing horizon is never selected), de-duplicating object keys and recording a per-session reason for the audit trail.
+- `immediateSubjectPurge` — "delete everything about me" from any share link, no account, ignoring the retention horizon.
+- `orgOffboardingPurge` — unconditional per-org bulk purge for offboarding.
+
+Selection is pure so the "what to delete" is testable without storage; the route performs and verifies the actual Supabase + DB deletes.
+
+**Verification:** `test:retention-purge` 5/5 · full unit sweep **52** · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅.
