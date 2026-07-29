@@ -205,3 +205,9 @@ Added `routes/leads.ts` (mounted), the last piece of §6.5 server-side:
 - OpenAPI: `CreateLeadBody`, `LeadResponse`, `LeadSummary`, `ListLeadsResponse`; codegen deterministic.
 
 **Verification:** codegen deterministic ✓ · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅. API surface now **10 bridal endpoints**: dresses (3) + lookbooks (3) + reactions (2) + leads (2). 54 unit tests green. The remote-flow funnel is fully wired server-side: /try resolve → looks → reactions/tally → book-a-fitting → lead capture.
+
+## Toward production — consultant catalog browse filters (§7)
+
+Added `lib/dressFilters.ts` (unit test `test:dress-filters`, 7/7): pure `matchesDressFilters`/`filterDresses` — silhouette/neckline/sleeve (case-insensitive exact), size range (substring), price band (inclusive, excludes price-less), in-stock-at-this-shop (shopIds membership), and try-on-ready-only. Wired into `GET /dresses` over the org-scoped catalog; OpenAPI `listDresses` gained the matching query params (codegen deterministic).
+
+**Verification:** `test:dress-filters` 7/7 · codegen deterministic ✓ · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅. Port unit-test total: **61**.

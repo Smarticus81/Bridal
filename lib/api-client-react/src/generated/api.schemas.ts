@@ -774,6 +774,20 @@ export interface ListLeadsResponse {
 
 export type ListDressesParams = {
   status?: ListDressesStatus;
+  silhouette?: string;
+  neckline?: string;
+  sleeve?: string;
+  sizeRange?: string;
+  /**
+   * @minimum 0
+   */
+  minPriceCents?: number;
+  /**
+   * @minimum 0
+   */
+  maxPriceCents?: number;
+  shopId?: number;
+  tryOnReadyOnly?: boolean;
 };
 
 export type ListDressesStatus =

@@ -755,6 +755,48 @@ paths:
           schema:
             type: string
             enum: [in_stock, special_order, discontinued]
+        - in: query
+          name: silhouette
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: neckline
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: sleeve
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: sizeRange
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: minPriceCents
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+        - in: query
+          name: maxPriceCents
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+        - in: query
+          name: shopId
+          required: false
+          schema:
+            type: integer
+        - in: query
+          name: tryOnReadyOnly
+          required: false
+          schema:
+            type: boolean
       responses:
         "200":
           description: Catalog list

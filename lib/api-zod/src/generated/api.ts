@@ -830,8 +830,26 @@ export const ListGalleryStylesResponse = zod.object({
 /**
  * @summary List the caller's organization catalog
  */
+export const listDressesQueryMinPriceCentsMin = 0;
+
+export const listDressesQueryMaxPriceCentsMin = 0;
+
 export const ListDressesQueryParams = zod.object({
   status: zod.enum(["in_stock", "special_order", "discontinued"]).optional(),
+  silhouette: zod.coerce.string().optional(),
+  neckline: zod.coerce.string().optional(),
+  sleeve: zod.coerce.string().optional(),
+  sizeRange: zod.coerce.string().optional(),
+  minPriceCents: zod.coerce
+    .number()
+    .min(listDressesQueryMinPriceCentsMin)
+    .optional(),
+  maxPriceCents: zod.coerce
+    .number()
+    .min(listDressesQueryMaxPriceCentsMin)
+    .optional(),
+  shopId: zod.coerce.number().optional(),
+  tryOnReadyOnly: zod.coerce.boolean().optional(),
 });
 
 export const ListDressesResponse = zod.object({

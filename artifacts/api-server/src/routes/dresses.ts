@@ -4,6 +4,7 @@ import { db, dressesTable, dressMediaTable, type DressStatus } from "@workspace/
 import { CreateDressBody, ImportDressesBody, ListDressesQueryParams } from "@workspace/api-zod";
 import { requireOrg, requireOwnerMutationOrigin } from "../lib/orgAuth.js";
 import { dressCoverageStatus } from "../lib/dressCoverage.js";
+import { filterDresses } from "../lib/dressFilters.js";
 import {
   diffInventory,
   summarizeDiff,
@@ -72,9 +73,22 @@ router.get("/dresses", async (req, res): Promise<void> => {
     coverageByDress.set(item.dressId, list);
   }
 
-  const dresses = rows.map((row) =>
+  const allDresses = rows.map((row) =>
     toDressResponse(row, dressCoverageStatus(coverageByDress.get(row.id) ?? []).tryOnReady),
   );
+
+  // Consultant browse filters (§7), applied over the org-scoped catalog.
+  const q = query.success ? query.data : {};
+  const dresses = filterDresses(allDresses, {
+    silhouette: q.silhouette,
+    neckline: q.neckline,
+    sleeve: q.sleeve,
+    sizeRange: q.sizeRange,
+    minPriceCents: q.minPriceCents,
+    maxPriceCents: q.maxPriceCents,
+    shopId: q.shopId,
+    tryOnReadyOnly: q.tryOnReadyOnly,
+  });
   res.json({ dresses });
 });
 
