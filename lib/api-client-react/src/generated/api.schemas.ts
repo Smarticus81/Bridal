@@ -743,6 +743,35 @@ export interface SessionReactionsResponse {
   looks: LookTallyItem[];
 }
 
+export interface CreateLeadBody {
+  /** The /try link token; the org and shop are derived from it. */
+  lookbookToken: string;
+  email: string;
+  name?: string;
+  phone?: string;
+}
+
+export interface LeadResponse {
+  id: number;
+  email: string;
+  createdAt: string;
+}
+
+export interface LeadSummary {
+  id: number;
+  email: string;
+  name?: string | null;
+  phone?: string | null;
+  source: string;
+  shopId?: number;
+  lookbookId?: number | null;
+  createdAt: string;
+}
+
+export interface ListLeadsResponse {
+  leads: LeadSummary[];
+}
+
 export type ListDressesParams = {
   status?: ListDressesStatus;
 };

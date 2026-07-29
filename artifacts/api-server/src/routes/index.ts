@@ -8,6 +8,7 @@ import billingRouter from "./billing";
 import dressesRouter from "./dresses";
 import lookbooksRouter from "./lookbooks";
 import reactionsRouter from "./reactions";
+import leadsRouter from "./leads";
 
 const router: IRouter = Router();
 
@@ -20,5 +21,6 @@ router.use(billingRouter);
 router.use(dressesRouter);
 router.use(lookbooksRouter);
 router.use(reactionsRouter);
+router.use(leadsRouter);
 
 export default router;

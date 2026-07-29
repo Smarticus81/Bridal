@@ -958,6 +958,57 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
 
+  /leads:
+    get:
+      operationId: listLeads
+      tags: [leads]
+      summary: List the caller's organization leads (console)
+      responses:
+        "200":
+          description: Lead list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListLeadsResponse"
+        "403":
+          description: No active organization
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    post:
+      operationId: createLead
+      tags: [leads]
+      summary: Capture a lead from the remote flow (public, after first look)
+      description: >-
+        Public. The organization and shop are derived from the lookbook token, so
+        a caller cannot attribute a lead to an org they don't belong to.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLeadBody"
+      responses:
+        "201":
+          description: Lead captured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadResponse"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Unknown lookbook token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
   /storage/uploads/request-url:
     post:
       tags: [storage]
@@ -2161,3 +2212,64 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/LookTallyItem"
+
+    CreateLeadBody:
+      type: object
+      required: [lookbookToken, email]
+      properties:
+        lookbookToken:
+          type: string
+          description: The /try link token; the org and shop are derived from it.
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        phone:
+          type: string
+
+    LeadResponse:
+      type: object
+      required: [id, email, createdAt]
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    LeadSummary:
+      type: object
+      required: [id, email, source, createdAt]
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        name:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        source:
+          type: string
+        shopId:
+          type: integer
+        lookbookId:
+          type: integer
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    ListLeadsResponse:
+      type: object
+      required: [leads]
+      properties:
+        leads:
+          type: array
+          items:
+            $ref: "#/components/schemas/LeadSummary"

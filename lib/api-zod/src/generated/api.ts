@@ -1068,6 +1068,37 @@ export const GetSessionReactionsResponse = zod.object({
 });
 
 /**
+ * @summary List the caller's organization leads (console)
+ */
+export const ListLeadsResponse = zod.object({
+  leads: zod.array(
+    zod.object({
+      id: zod.number(),
+      email: zod.string(),
+      name: zod.string().nullish(),
+      phone: zod.string().nullish(),
+      source: zod.string(),
+      shopId: zod.number().optional(),
+      lookbookId: zod.number().nullish(),
+      createdAt: zod.coerce.date(),
+    }),
+  ),
+});
+
+/**
+ * Public. The organization and shop are derived from the lookbook token, so a caller cannot attribute a lead to an org they don't belong to.
+ * @summary Capture a lead from the remote flow (public, after first look)
+ */
+export const CreateLeadBody = zod.object({
+  lookbookToken: zod
+    .string()
+    .describe("The \/try link token; the org and shop are derived from it."),
+  email: zod.string().email(),
+  name: zod.string().optional(),
+  phone: zod.string().optional(),
+});
+
+/**
  * @summary Request a presigned URL for file upload
  */
 

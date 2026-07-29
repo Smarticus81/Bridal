@@ -196,3 +196,12 @@ Added `routes/reactions.ts` (mounted), wiring the tested `engagementMetrics`:
 - OpenAPI: `ReactionKind`, `CreateReactionBody`, `ReactionResponse`, `LookTallyItem`, `SessionReactionsResponse`; codegen deterministic; `useCreateReaction` + tally hooks generated.
 
 **Verification:** codegen deterministic ✓ · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅. API surface: dresses (3) + lookbooks (3) + reactions (2) = 8 bridal endpoints wired to the tested logic. 54 unit tests green.
+
+## Toward production — leads capture API (commercial instrumentation complete)
+
+Added `routes/leads.ts` (mounted), the last piece of §6.5 server-side:
+- `POST /leads` — public capture from the remote flow (fires after her first look). The **org + shop are derived from the lookbook token**, so a caller can't attribute a lead to an org they don't belong to. IP rate-limited. Normalizes email/name/phone.
+- `GET /leads` — org-isolated list for the console.
+- OpenAPI: `CreateLeadBody`, `LeadResponse`, `LeadSummary`, `ListLeadsResponse`; codegen deterministic.
+
+**Verification:** codegen deterministic ✓ · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅. API surface now **10 bridal endpoints**: dresses (3) + lookbooks (3) + reactions (2) + leads (2). 54 unit tests green. The remote-flow funnel is fully wired server-side: /try resolve → looks → reactions/tally → book-a-fitting → lead capture.
