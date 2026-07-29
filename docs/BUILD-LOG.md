@@ -162,3 +162,7 @@ New endpoints in `artifacts/api-server/src/routes/dresses.ts` (mounted in `route
 OpenAPI schemas added: `DressStatus`, `DressMediaCoverage`, `CreateDressBody`, `DressResponse`, `ListDressesResponse`, `ImportDressRow`, `ImportDressesBody`, `ImportDressesDiffResponse`. Codegen produced the Zod validators (`CreateDressBody`, `ImportDressesBody`, `ListDressesQueryParams`) and React Query hooks (`useListDresses`, `useCreateDress`, `useImportDresses`) the console UI will consume.
 
 **Verification:** codegen deterministic ✓ · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅ · 52 unit tests green. First real API integration of the bridal logic core; additive, so glimpse routes and the smoke contract are untouched.
+
+## Production-readiness checkpoint (verify:production --skip-qa --skip-db)
+
+Ran the production verifier's code-side path. Result: **all code checks green** — build artifacts ✅, security/source-contract smoke ✅, ffmpeg config ✅. The lone failure is `production env`, and every line is a missing **deploy credential** (PORT, DATABASE_URL, the secrets, `STRIPE_*`, RESEND, Supabase/GCS, APP_BASE_URL) — BLOCKERS B2, not a code defect. Faking `sk_live_`/Supabase values to force green is forbidden (§1.4), so the gate correctly stays red on credentials. Concretely: the *code* is production-shaped; provisioning new Supabase/Clerk/Stripe (§2.1) + the live QA scorecard (real fixtures, B1) are the two remaining gates.

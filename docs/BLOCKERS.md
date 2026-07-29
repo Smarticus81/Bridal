@@ -16,7 +16,13 @@ Recorded per §1.3. These are environment/credential/asset blockers, not code de
 
 - **Command that cannot fully pass here:** `pnpm run verify:production` against real production env (§1.2 Phase 6, §2.1).
 - **Why:** §2.1 requires *new* Supabase, Clerk, and Stripe projects (never glimpse's). `checkDatabaseSchema` needs a live `DATABASE_URL`; `checkRemoteReadiness` needs a deployed `/api/readyz`; the production env guard needs live `sk_live_`/Clerk/Supabase values. These are deploy-time credentials, not code.
-- **What proceeds regardless:** `verify:production --skip-qa --skip-db` exercises the built-artifact, security-smoke, and ffmpeg-config checks locally; the schema contract is enforced statically by `smoke:security` + `databaseReadiness`. The live run is a deployment step gated on credentials + the §1.5 human acceptance.
+- **Measured state (2026-07-29) — `verify:production --skip-qa --skip-db`:** the code-side checks all PASS —
+  - ✅ `build artifacts` (both bundles exist)
+  - ✅ `security smoke` (source-contract suite passes)
+  - ✅ `ffmpeg` (Dockerfile installs it; live `--url` re-checks post-deploy)
+  - The only FAIL is `production env`, and every line is a **missing credential** (PORT, DATABASE_URL, UPLOAD_TOKEN_SECRET, SESSION_SECRET, the five `STRIPE_*`, RESEND_API_KEY, EMAIL_FROM, APP_BASE_URL, Supabase/GCS storage). No code defect.
+- **Deliberately NOT faked:** supplying synthetic `sk_live_…`/Supabase values to force a green would be writing fake credentials into a readiness gate (§1.4 / invariant 2-3). The verifier is meant to fail without real ones. Provisioning the new projects + running with their env is the deploy step.
+- **What proceeds regardless:** the schema contract is enforced statically by `smoke:security` + `databaseReadiness`; the build/smoke/ffmpeg checks are green now. The live run is a deployment step gated on credentials + the §1.5 human acceptance.
 
 ## B3 — `manual-acceptance.json` is intentionally unwritable by the agent
 
