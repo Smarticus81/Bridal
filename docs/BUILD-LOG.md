@@ -107,3 +107,12 @@ Production startup guard (`envValidation.ts`) extended (§5.1 / invariant 2): fl
 **Verification:** `test:tryon-quality` 11/11 · `test:dress-coverage` 6/6 · `test:lookbook-policy` 7/7 · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅.
 
 **Remaining Phase 3 (needs real fixtures — BLOCKERS B1):** the `tryon:qa` harness (`--no-fallback`/`--fixtures`), wiring the gate into a per-look pipeline, and the live §5.4 fidelity scorecard. The gate logic, thresholds, guard, retry, and disclaimer are done and tested.
+
+## Phase 4 (start) — remote-flow photo gate
+
+Added `artifacts/api-server/src/lib/photoGate.ts` (unit test `test:photo-gate`, 9/9): pure decision logic that turns a structured bride-photo analysis into an accept or a **specific, bride-facing** rejection (§6.2), never "invalid image". Ordered safety → who's-in-frame → quality → framing:
+- **Mandatory moderation, no override** (invariant 9): hard block on any minor (wins over every other signal) and on disallowed content, before the image can reach Gemini.
+- Distinct reasons: "We can't find you…", "There's more than one person…", too small/dark/washed-out/blurry, "We can't see below your knees…", "Your arms are crossed…". Crossed-arms blocks only when explicitly detected, never when unanalyzed.
+- `photoGatePrecedesBilling` documents + tests the ordering invariant: the gate runs before any credit debit, so photo retries are free (§6.2).
+
+**Verification:** `test:photo-gate` 9/9 · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅. Unit-test total across the port: 33 (tryon-quality 11, photo-gate 9, lookbook-policy 7, dress-coverage 6).

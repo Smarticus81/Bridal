@@ -15,6 +15,7 @@
     "test:lookbook-policy": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/lookbookPolicy.test.ts",
     "test:dress-coverage": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/dressCoverage.test.ts",
     "test:tryon-quality": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/tryonQuality.test.ts",
+    "test:photo-gate": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/photoGate.test.ts",
     "setup:db": "node scripts/setup-database.cjs",
     "setup:storage": "node scripts/setup-supabase-storage.cjs",
     "generate:secrets": "node scripts/generate-secrets.cjs",
