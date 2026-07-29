@@ -827,6 +827,48 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
 
+  /lookbooks:
+    get:
+      operationId: listLookbooks
+      tags: [lookbooks]
+      summary: List the caller's organization lookbooks with burn meter
+      responses:
+        "200":
+          description: Lookbook list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListLookbooksResponse"
+        "403":
+          description: No active organization
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    post:
+      operationId: createLookbook
+      tags: [lookbooks]
+      summary: Create a curated, capped, expiring lookbook link
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLookbookBody"
+      responses:
+        "201":
+          description: Lookbook created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LookbookResponse"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
   /storage/uploads/request-url:
     post:
       tags: [storage]
@@ -1821,3 +1863,103 @@ components:
                 type: array
                 items:
                   type: string
+
+    LookbookPurpose:
+      type: string
+      enum: [pre_appointment, post_appointment, open_catalog]
+
+    CreateLookbookBody:
+      type: object
+      required: [shopId, purpose, creditCap, expiresInDays, dressIds]
+      properties:
+        shopId:
+          type: integer
+          description: The storefront (shop/venue id) this lookbook belongs to.
+        purpose:
+          $ref: "#/components/schemas/LookbookPurpose"
+        brideName:
+          type: string
+        brideEmail:
+          type: string
+          format: email
+        creditCap:
+          type: integer
+          minimum: 1
+          description: Hard cap on looks generated through this link. Never uncapped.
+        expiresInDays:
+          type: integer
+          minimum: 1
+          maximum: 365
+          description: Days until the link expires. Never unexpiring.
+        dressIds:
+          type: array
+          items:
+            type: integer
+          minItems: 1
+
+    LookbookResponse:
+      type: object
+      required: [id, token, url, purpose, creditCap, creditsUsed, remainingCredits, expiresAt, status, dressCount]
+      properties:
+        id:
+          type: integer
+        token:
+          type: string
+        url:
+          type: string
+          description: The public /try/:lookbookToken URL.
+        purpose:
+          $ref: "#/components/schemas/LookbookPurpose"
+        brideName:
+          type: string
+          nullable: true
+        brideEmail:
+          type: string
+          nullable: true
+        creditCap:
+          type: integer
+        creditsUsed:
+          type: integer
+        remainingCredits:
+          type: integer
+        expiresAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+        dressCount:
+          type: integer
+
+    LookbookSummary:
+      type: object
+      required: [id, token, purpose, creditCap, creditsUsed, remainingCredits, expiresAt, status, usable]
+      properties:
+        id:
+          type: integer
+        token:
+          type: string
+        purpose:
+          $ref: "#/components/schemas/LookbookPurpose"
+        creditCap:
+          type: integer
+        creditsUsed:
+          type: integer
+        remainingCredits:
+          type: integer
+        expiresAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+        usable:
+          type: boolean
+          description: Whether the link can still generate a look right now.
+
+    ListLookbooksResponse:
+      type: object
+      required: [lookbooks]
+      properties:
+        lookbooks:
+          type: array
+          items:
+            $ref: "#/components/schemas/LookbookSummary"

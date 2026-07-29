@@ -932,6 +932,56 @@ export const ImportDressesResponse = zod.object({
 });
 
 /**
+ * @summary List the caller's organization lookbooks with burn meter
+ */
+export const ListLookbooksResponse = zod.object({
+  lookbooks: zod.array(
+    zod.object({
+      id: zod.number(),
+      token: zod.string(),
+      purpose: zod.enum([
+        "pre_appointment",
+        "post_appointment",
+        "open_catalog",
+      ]),
+      creditCap: zod.number(),
+      creditsUsed: zod.number(),
+      remainingCredits: zod.number(),
+      expiresAt: zod.coerce.date(),
+      status: zod.string(),
+      usable: zod
+        .boolean()
+        .describe("Whether the link can still generate a look right now."),
+    }),
+  ),
+});
+
+/**
+ * @summary Create a curated, capped, expiring lookbook link
+ */
+
+export const createLookbookBodyExpiresInDaysMax = 365;
+
+export const CreateLookbookBody = zod.object({
+  shopId: zod
+    .number()
+    .describe("The storefront (shop\/venue id) this lookbook belongs to."),
+  purpose: zod.enum(["pre_appointment", "post_appointment", "open_catalog"]),
+  brideName: zod.string().optional(),
+  brideEmail: zod.string().email().optional(),
+  creditCap: zod
+    .number()
+    .min(1)
+    .describe("Hard cap on looks generated through this link. Never uncapped."),
+  expiresInDays: zod
+    .number()
+    .min(1)
+    .max(createLookbookBodyExpiresInDaysMax)
+    .describe("Days until the link expires. Never unexpiring."),
+  dressIds: zod.array(zod.number()).min(1),
+});
+
+/**
  * @summary Request a presigned URL for file upload
  */
 

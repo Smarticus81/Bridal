@@ -22,6 +22,7 @@ import type {
   BillingCheckoutResponse,
   BillingPortalResponse,
   CreateDressBody,
+  CreateLookbookBody,
   CreateSessionBody,
   CreateVenueBody,
   DeleteSessionResponse,
@@ -34,8 +35,10 @@ import type {
   ListDressesParams,
   ListDressesResponse,
   ListGalleryStylesResponse,
+  ListLookbooksResponse,
   ListSessionsResponse,
   ListVenueMediaResponse,
+  LookbookResponse,
   OrgCreditHistoryResponse,
   OrganizationResponse,
   OwnerSessionDetailResponse,
@@ -2373,6 +2376,167 @@ export const useImportDresses = <
   TContext
 > => {
   return useMutation(getImportDressesMutationOptions(options));
+};
+
+/**
+ * @summary List the caller's organization lookbooks with burn meter
+ */
+export const getListLookbooksUrl = () => {
+  return `/api/lookbooks`;
+};
+
+export const listLookbooks = async (
+  options?: RequestInit,
+): Promise<ListLookbooksResponse> => {
+  return customFetch<ListLookbooksResponse>(getListLookbooksUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListLookbooksQueryKey = () => {
+  return [`/api/lookbooks`] as const;
+};
+
+export const getListLookbooksQueryOptions = <
+  TData = Awaited<ReturnType<typeof listLookbooks>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listLookbooks>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListLookbooksQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listLookbooks>>> = ({
+    signal,
+  }) => listLookbooks({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listLookbooks>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListLookbooksQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listLookbooks>>
+>;
+export type ListLookbooksQueryError = ErrorType<ErrorEnvelope>;
+
+/**
+ * @summary List the caller's organization lookbooks with burn meter
+ */
+
+export function useListLookbooks<
+  TData = Awaited<ReturnType<typeof listLookbooks>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listLookbooks>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListLookbooksQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create a curated, capped, expiring lookbook link
+ */
+export const getCreateLookbookUrl = () => {
+  return `/api/lookbooks`;
+};
+
+export const createLookbook = async (
+  createLookbookBody: CreateLookbookBody,
+  options?: RequestInit,
+): Promise<LookbookResponse> => {
+  return customFetch<LookbookResponse>(getCreateLookbookUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createLookbookBody),
+  });
+};
+
+export const getCreateLookbookMutationOptions = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createLookbook>>,
+    TError,
+    { data: BodyType<CreateLookbookBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createLookbook>>,
+  TError,
+  { data: BodyType<CreateLookbookBody> },
+  TContext
+> => {
+  const mutationKey = ["createLookbook"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createLookbook>>,
+    { data: BodyType<CreateLookbookBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createLookbook(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateLookbookMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createLookbook>>
+>;
+export type CreateLookbookMutationBody = BodyType<CreateLookbookBody>;
+export type CreateLookbookMutationError = ErrorType<ErrorEnvelope>;
+
+/**
+ * @summary Create a curated, capped, expiring lookbook link
+ */
+export const useCreateLookbook = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createLookbook>>,
+    TError,
+    { data: BodyType<CreateLookbookBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createLookbook>>,
+  TError,
+  { data: BodyType<CreateLookbookBody> },
+  TContext
+> => {
+  return useMutation(getCreateLookbookMutationOptions(options));
 };
 
 /**

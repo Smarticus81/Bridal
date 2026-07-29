@@ -604,6 +604,69 @@ export interface ImportDressesDiffResponse {
   invalid?: ImportDressesDiffResponseInvalidItem[];
 }
 
+export type LookbookPurpose =
+  (typeof LookbookPurpose)[keyof typeof LookbookPurpose];
+
+export const LookbookPurpose = {
+  pre_appointment: "pre_appointment",
+  post_appointment: "post_appointment",
+  open_catalog: "open_catalog",
+} as const;
+
+export interface CreateLookbookBody {
+  /** The storefront (shop/venue id) this lookbook belongs to. */
+  shopId: number;
+  purpose: LookbookPurpose;
+  brideName?: string;
+  brideEmail?: string;
+  /**
+   * Hard cap on looks generated through this link. Never uncapped.
+   * @minimum 1
+   */
+  creditCap: number;
+  /**
+   * Days until the link expires. Never unexpiring.
+   * @minimum 1
+   * @maximum 365
+   */
+  expiresInDays: number;
+  /** @minItems 1 */
+  dressIds: number[];
+}
+
+export interface LookbookResponse {
+  id: number;
+  token: string;
+  /** The public /try/:lookbookToken URL. */
+  url: string;
+  purpose: LookbookPurpose;
+  brideName?: string | null;
+  brideEmail?: string | null;
+  creditCap: number;
+  creditsUsed: number;
+  remainingCredits: number;
+  expiresAt: string;
+  status: string;
+  dressCount: number;
+}
+
+export interface LookbookSummary {
+  id: number;
+  token: string;
+  purpose: LookbookPurpose;
+  creditCap: number;
+  creditsUsed: number;
+  remainingCredits: number;
+  expiresAt: string;
+  status: string;
+  /** Whether the link can still generate a look right now. */
+  usable: boolean;
+}
+
+export interface ListLookbooksResponse {
+  lookbooks: LookbookSummary[];
+}
+
 export type ListDressesParams = {
   status?: ListDressesStatus;
 };

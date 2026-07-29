@@ -166,3 +166,14 @@ OpenAPI schemas added: `DressStatus`, `DressMediaCoverage`, `CreateDressBody`, `
 ## Production-readiness checkpoint (verify:production --skip-qa --skip-db)
 
 Ran the production verifier's code-side path. Result: **all code checks green** — build artifacts ✅, security/source-contract smoke ✅, ffmpeg config ✅. The lone failure is `production env`, and every line is a missing **deploy credential** (PORT, DATABASE_URL, the secrets, `STRIPE_*`, RESEND, Supabase/GCS, APP_BASE_URL) — BLOCKERS B2, not a code defect. Faking `sk_live_`/Supabase values to force green is forbidden (§1.4), so the gate correctly stays red on credentials. Concretely: the *code* is production-shaped; provisioning new Supabase/Clerk/Stripe (§2.1) + the live QA scorecard (real fixtures, B1) are the two remaining gates.
+
+## Toward production — lookbooks API (remote-flow backbone)
+
+Added the lookbook API (OpenAPI-first, deterministic codegen), the second real integration of the tested logic core.
+- `lib/lookbookToken.ts` (`mintLookbookToken` / `isWellFormedLookbookToken`, test `test:lookbook-token` 2/2) — URL-safe 24-char base64url tokens for `/try/:lookbookToken`, unguessable, above the 16-char floor.
+- `routes/lookbooks.ts` (mounted), org-isolated:
+  - `POST /lookbooks` — create a curated link; validates the shop + every dress belong to the caller's org, enforces `creditCap ≥ 1` and `expiresInDays 1–365` at the schema (never uncapped, never unexpiring — §6.1), mints the token, links dresses via `lookbook_dresses`, returns the public `/try/:token` URL.
+  - `GET /lookbooks` — list with live `usable` (via tested `lookbookUsability`) + `remainingCredits` burn meter.
+- OpenAPI schemas: `LookbookPurpose`, `CreateLookbookBody`, `LookbookResponse`, `LookbookSummary`, `ListLookbooksResponse`; codegen produced `useCreateLookbook`/list hooks for the console.
+
+**Verification:** `test:lookbook-token` 2/2 · codegen deterministic ✓ · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅. Port unit-test total: 54. API surface now: dresses (3) + lookbooks (2) endpoints wired to the tested logic, additive.

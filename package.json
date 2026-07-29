@@ -23,7 +23,8 @@
     "start": "node --enable-source-maps artifacts/api-server/dist/index.mjs",
     "test:engagement": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/engagementMetrics.test.ts",
     "test:inventory-import": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/inventoryImport.test.ts",
-    "test:retention-purge": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/retentionPurge.test.ts"
+    "test:retention-purge": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/retentionPurge.test.ts",
+    "test:lookbook-token": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/lookbookToken.test.ts"
   },
   "engines": {
     "node": ">=24"
