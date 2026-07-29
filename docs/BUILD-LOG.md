@@ -55,3 +55,17 @@ Strictness extended everywhere the readiness contract lives (invariant 2, §4 la
 **Verification (Phase 2 gate):** `pnpm run smoke:security` ✅ (exit 0, "security smoke passed") · `pnpm run typecheck` ✅ · `pnpm run build` ✅. Re-ran Phase 0/1 gates — still green.
 
 **Remaining Phase 2 work (tracked, not yet done):** the mechanical `venue`→`shop` and `couple`→`bride` identifier rename across ~64 files, and replacing the `venue_media` routes/pipeline with the `dresses`/`dress_media` catalog subsystem. Per PORT-MAP §2 this is a coordinated sweep that must rewrite every `smoke:security` assertion in the same commit — it is the largest single mechanical unit in the port and is sequenced next. The new tables above intentionally reference the current `venues`/`couple_sessions` tables (documented as "shop = venues row, pre-rename") so they land green now and get renamed with everything else.
+
+## Phase 2 — Scaffold + schema (part 2: lookbook/consent policy + tests)
+
+Added `artifacts/api-server/src/lib/lookbookPolicy.ts` — pure, side-effect-free business rules the remote flow and purge job will call:
+- `lookbookUsability` / `nextLookbookStatus` / `lookbookRemainingCredits` — enforce "never uncapped, never unexpiring" (§6.1): a revoked/expired/exhausted link cannot generate another look (reason ordered revoked → expired → exhausted).
+- `retentionExpiryFor` (default 90d, per-shop override, invalid TTL falls back to default) and `isConsentPurgeable` (purge on revocation or past horizon; **never** on a missing horizon — a missing TTL must not silently drop a bride's data) (§6.3, invariant 8).
+
+Unit test `lookbookPolicy.test.ts` (node:test via tsx), wired as `pnpm run test:lookbook-policy`. Imports from `@workspace/db/schema` (the deep export) rather than the db index, so the pure module and its test never instantiate the Postgres pool.
+
+**Verification:** `test:lookbook-policy` 7/7 pass · `typecheck` ✅ · `build` ✅ · `smoke:security` ✅.
+
+### Phase 2 status
+
+Part 1 (bridal data model) and part 2 (policy + tests) are green and committed. The remaining Phase 2 unit — the mechanical `venue`→`shop` / `couple`→`bride` identifier rename plus swapping the `venue_media` routes/pipeline for the `dresses`/`dress_media` catalog — is a single coordinated sweep that must rewrite every `smoke:security` source-contract assertion in lockstep (PORT-MAP §2). It is sequenced as the next unit of work. See `docs/BLOCKERS.md` for the Phase 3-live / Phase 6-live credential+asset constraints that bound what is completable in this environment.
