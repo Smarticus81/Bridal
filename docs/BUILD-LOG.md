@@ -211,3 +211,12 @@ Added `routes/leads.ts` (mounted), the last piece of §6.5 server-side:
 Added `lib/dressFilters.ts` (unit test `test:dress-filters`, 7/7): pure `matchesDressFilters`/`filterDresses` — silhouette/neckline/sleeve (case-insensitive exact), size range (substring), price band (inclusive, excludes price-less), in-stock-at-this-shop (shopIds membership), and try-on-ready-only. Wired into `GET /dresses` over the org-scoped catalog; OpenAPI `listDresses` gained the matching query params (codegen deterministic).
 
 **Verification:** `test:dress-filters` 7/7 · codegen deterministic ✓ · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅. Port unit-test total: **61**.
+
+## Toward production — consultant console catalog page
+
+Added `CatalogPage` at `/catalog` (OrgGate-wrapped, Clerk org-isolated), the shop-side console over the generated dress hooks:
+- `useListDresses` — lists the org catalog; each dress shows style name (serif display) + SKU/size/status (mono), with a prominent **try-on readiness** badge (green "Try-on ready" / amber "Needs front photo") and a header count of how many dresses still need a front photo (§7: show the gap prominently).
+- `useCreateDress` — quick add-a-dress form (SKU + style + status), toast feedback, list invalidation on success; empty state invites "Add your first dress" (§8 voice).
+- Light surface (§8: light where you read data), routed lazily.
+
+**Verification:** `typecheck` ✅ · `smoke:security` ✅ · `build` ✅ (CatalogPage chunk emitted). 61 unit tests green. Frontend surfaces now: bride `/try` (dark) + consultant `/catalog` (light) — the two-surface split from DESIGN §8.
