@@ -69,3 +69,13 @@ Unit test `lookbookPolicy.test.ts` (node:test via tsx), wired as `pnpm run test:
 ### Phase 2 status
 
 Part 1 (bridal data model) and part 2 (policy + tests) are green and committed. The remaining Phase 2 unit — the mechanical `venue`→`shop` / `couple`→`bride` identifier rename plus swapping the `venue_media` routes/pipeline for the `dresses`/`dress_media` catalog — is a single coordinated sweep that must rewrite every `smoke:security` source-contract assertion in lockstep (PORT-MAP §2). It is sequenced as the next unit of work. See `docs/BLOCKERS.md` for the Phase 3-live / Phase 6-live credential+asset constraints that bound what is completable in this environment.
+
+## Phase 2 — Scaffold + schema (part 3: dress coverage + try-on readiness)
+
+Added `artifacts/api-server/src/lib/dressCoverage.ts` (bridal analogue of `venueMediaCoverage.ts`) with a unit test (`pnpm run test:dress-coverage`, 6/6):
+- `dressCoverageStatus` — a dress is **try-on ready** the moment it has a validated `front` image (not full coverage, the way venue needed all five). Still reports missing slots for the console nudge, and names the `blockingGap` (`front`) when not ready. Feeds Phase 5's readiness state.
+- `orderDressMediaForGeneration` / `DRESS_REFERENCE_PRIORITY` — deterministic reference ordering (front → detail → fabric → back → on_model), garment-fidelity detail ranked high, unknown-coverage rows stable-sorted last. Feeds Phase 3's reference-payload assembly.
+
+Imports coverage constants from `@workspace/db/schema` (deep export, no pool).
+
+**Verification:** `test:dress-coverage` 6/6 · `test:lookbook-policy` 7/7 · `typecheck` ✅ · `build` ✅ · `smoke:security` ✅.
