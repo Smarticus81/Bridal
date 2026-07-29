@@ -23,8 +23,21 @@ const STATUSES = ["in_stock", "special_order", "discontinued"] as const;
 function CatalogContent() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const dressesQuery = useListDresses(undefined, {
-    query: { queryKey: getListDressesQueryKey() },
+
+  const [filterStatus, setFilterStatus] = useState<"" | (typeof STATUSES)[number]>("");
+  const [filterSilhouette, setFilterSilhouette] = useState("");
+  const [tryOnReadyOnly, setTryOnReadyOnly] = useState(false);
+
+  // Only include set filters, so the query key stays stable when nothing is chosen.
+  const params = {
+    ...(filterStatus ? { status: filterStatus } : {}),
+    ...(filterSilhouette.trim() ? { silhouette: filterSilhouette.trim() } : {}),
+    ...(tryOnReadyOnly ? { tryOnReadyOnly: true } : {}),
+  };
+  const hasFilters = Object.keys(params).length > 0;
+
+  const dressesQuery = useListDresses(hasFilters ? params : undefined, {
+    query: { queryKey: getListDressesQueryKey(hasFilters ? params : undefined) },
   });
   const createDress = useCreateDress();
 
@@ -74,6 +87,50 @@ function CatalogContent() {
             </p>
           </div>
         </header>
+
+        <div className="mb-6 flex flex-wrap items-center gap-3">
+          <select
+            aria-label="Filter by status"
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value as "" | (typeof STATUSES)[number])}
+            className="h-9 rounded-md border border-neutral-300 bg-white px-3 text-sm"
+          >
+            <option value="">All statuses</option>
+            {STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {s.replace("_", " ")}
+              </option>
+            ))}
+          </select>
+          <Input
+            aria-label="Filter by silhouette"
+            value={filterSilhouette}
+            onChange={(e) => setFilterSilhouette(e.target.value)}
+            placeholder="Silhouette (e.g. A-line)"
+            className="h-9 w-56"
+          />
+          <label className="flex items-center gap-2 text-sm text-neutral-600">
+            <input
+              type="checkbox"
+              checked={tryOnReadyOnly}
+              onChange={(e) => setTryOnReadyOnly(e.target.checked)}
+            />
+            Try-on ready only
+          </label>
+          {hasFilters && (
+            <button
+              type="button"
+              className="text-sm text-neutral-500 underline"
+              onClick={() => {
+                setFilterStatus("");
+                setFilterSilhouette("");
+                setTryOnReadyOnly(false);
+              }}
+            >
+              Clear
+            </button>
+          )}
+        </div>
 
         <form onSubmit={submit} className="mb-10 grid grid-cols-1 gap-4 rounded-lg border border-neutral-200 bg-white p-5 sm:grid-cols-4">
           <div className="sm:col-span-1">

@@ -220,3 +220,7 @@ Added `CatalogPage` at `/catalog` (OrgGate-wrapped, Clerk org-isolated), the sho
 - Light surface (§8: light where you read data), routed lazily.
 
 **Verification:** `typecheck` ✅ · `smoke:security` ✅ · `build` ✅ (CatalogPage chunk emitted). 61 unit tests green. Frontend surfaces now: bride `/try` (dark) + consultant `/catalog` (light) — the two-surface split from DESIGN §8.
+
+## Toward production — catalog browse filter bar (UI)
+
+Wired the browse filters into `CatalogPage`: a status dropdown, silhouette input, and "try-on ready only" checkbox drive `useListDresses(params)` (query key varies with the filters; stable when none are set), with a Clear action. The server-side `dressFilters` logic is now usable end-to-end from the console. `typecheck` ✅ · `smoke:security` ✅ · `build` ✅.
