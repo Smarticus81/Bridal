@@ -79,3 +79,11 @@ Added `artifacts/api-server/src/lib/dressCoverage.ts` (bridal analogue of `venue
 Imports coverage constants from `@workspace/db/schema` (deep export, no pool).
 
 **Verification:** `test:dress-coverage` 6/6 · `test:lookbook-policy` 7/7 · `typecheck` ✅ · `build` ✅ · `smoke:security` ✅.
+
+## Live Gemini credential added (mid-build)
+
+`GOOGLE_AI_API_KEY` was added to the environment. Verified live (2026-07-29, read-only + one minimal generation):
+- `GET /v1beta/models` — all three spec models present: `gemini-3-pro-image`, `gemini-3.1-flash-image`, `gemini-2.5-pro` (plus imagen-4, gemini-3.1/3.5 variants).
+- `POST /v1beta/models/gemini-3-pro-image:generateContent` with `responseModalities:["IMAGE"]` — returned a real ~721 KB JPEG. Generation works end-to-end.
+
+Impact: the production model chain the startup guard enforces is real and reachable — Phase 3 is technically viable. The credential half of BLOCKERS B1 is cleared. Remaining for the §5.4 live scorecard: (1) build the `tryon:qa` harness + garment-fidelity gate (buildable), (2) real consented bride×dress fixtures (needed from the operator). Key kept in env only — never committed.
