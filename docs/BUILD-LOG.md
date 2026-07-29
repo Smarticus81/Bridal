@@ -126,3 +126,15 @@ Added `artifacts/api-server/src/lib/engagementMetrics.ts` (unit test `test:engag
 - `funnelConversion` — link opens → photos cleared → looks generated → shares → votes → fittings booked, divide-by-zero-guarded.
 
 **Verification:** `test:engagement` 6/6 · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅. Port unit-test total: 39.
+
+## Phase 5 (start) — CSV bulk inventory import with dry-run diff
+
+Added `artifacts/api-server/src/lib/inventoryImport.ts` (unit test `test:inventory-import`, 8/8) — "an unready catalog is the #1 reason this product fails at onboarding" (§7), so the import is deliberate and previewable:
+- `parseCsv` — RFC-4180-ish parser (quoted fields, escaped `""`, embedded commas/newlines, `\n`/`\r\n`).
+- `resolveColumnMapping` — arbitrary CSV headers → canonical dress fields by alias (style/brand/msrp/…), with an explicit-override map that wins.
+- `mapRowsToDresses` / `parsePriceToCents` — validate each row (sku + styleName required, status normalized/validated, `$1,299.00` → cents), collecting per-row errors instead of failing the batch.
+- `diffInventory` + `summarizeDiff` — keyed by SKU, classifies create / update (with changed field list) / unchanged / archive-missing (→ discontinued, not deleted), and prints **"will create N, update M, archive K"**.
+
+**Scale check (Phase 5 verification target):** a synthetic **300-row** import diffed against 50 existing dresses ran end-to-end with no operator intervention → "will create 250, update 0, archive 0, 50 unchanged", 300/300 valid.
+
+**Verification:** `test:inventory-import` 8/8 · 300-row scale run ✅ · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅. Port unit-test total: 47.
