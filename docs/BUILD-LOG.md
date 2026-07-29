@@ -267,3 +267,12 @@ Added `lib/tryonPrompt.ts` (unit test `test:tryon-prompt`, 7/7) — the generati
 **Live validation (with the provided key):** ran `buildTryonPrompt`'s actual output through `gemini-3-pro-image` with the probe bride + dress → produced a faithful try-on (same bride, exact dress, single subject, plain studio, no text). The production prompt — not a hand-written one — is proven end-to-end. (Synthetic probe images; not a fidelity scorecard, which still needs real consented fixtures — B1.)
 
 **Verification:** `test:tryon-prompt` 7/7 · live generation ✓ · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅. Port unit-test total: **69**. This is the generation core the per-look /try generate action will call (alongside the already-built garment-fidelity gate).
+
+## Toward production — look generation engine (adaptive retry loop)
+
+Added `lib/lookGeneration.ts` (unit test `test:look-generation`, 7/7) — `generateLookWithQuality`, the per-look engine (§5.2/§5.4), the try-on analogue of glimpse's `renderGalleryFrameWithQuality`. Composes `buildTryonPrompt` + the garment-fidelity gate into an adaptive loop:
+- prompt → generate → judge; on failure keep the best-scoring attempt, feed `garmentRetryGuidanceForError` into the next prompt, retry up to `attempts` (clamped [1,6], default 4).
+- If no attempt hits the strict target, floor-deliver the best **to the consultant** (`consultantReview: true`) only if it clears `tryonAcceptanceFloorFailures` — **body-proportion and integrity are never waived** (invariant 4); otherwise throw.
+- `generate` and `judge` are injected, so the loop logic is unit-tested without live Gemini (pass-first, retry-then-pass, floor-deliver, body-proportion-hard-fail, best-attempt-kept, attempt clamp, non-quality-error abort); the route supplies the real image client + `assertTryonLookQuality`.
+
+**Verification:** `test:look-generation` 7/7 · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅. Port unit-test total: **76**. Generation path now: prompt builder (live-validated) + garment-fidelity gate + adaptive engine — all built and tested. Remaining: the route wiring (bride session + credit debit + storage) around this engine.
