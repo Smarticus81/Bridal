@@ -276,3 +276,15 @@ Added `lib/lookGeneration.ts` (unit test `test:look-generation`, 7/7) — `gener
 - `generate` and `judge` are injected, so the loop logic is unit-tested without live Gemini (pass-first, retry-then-pass, floor-deliver, body-proportion-hard-fail, best-attempt-kept, attempt clamp, non-quality-error abort); the route supplies the real image client + `assertTryonLookQuality`.
 
 **Verification:** `test:look-generation` 7/7 · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅. Port unit-test total: **76**. Generation path now: prompt builder (live-validated) + garment-fidelity gate + adaptive engine — all built and tested. Remaining: the route wiring (bride session + credit debit + storage) around this engine.
+
+## Toward production — live try-on image client + WHOLE-PIPELINE live validation
+
+Added `lib/tryonImageClient.ts` (unit test `test:tryon-image`, 3/3): `createTryonGenerator` returns the engine's `generate(prompt)` bound to a look's bride + dress references — walks the configured Gemini image chain (gemini-3-pro-image → gemini-3.1-flash-image), falling through only on availability failures. `buildTryonImageParts` (pure, capped: ≤3 bride, ≤6 dress refs) is unit-tested.
+
+**Landmark: the entire Phase 3 generation pipeline validated live end-to-end.** Wired `generateLookWithQuality` (engine) + `createTryonGenerator` (live gemini-3-pro-image) + `assertTryonLookQuality` (live gemini-2.5-pro judge) over the probe bride + dress:
+- Attempt 1 was **rejected by the garment-fidelity gate** — judge reason: "the dress bodice features a lace pattern instead of the dense, all-over beading shown in the reference."
+- The adaptive retry fed that correction into the next prompt; **attempt 2 PASSED at 0.95 on every axis** (bride 0.95, garment 0.95, body-proportion 0.95, composition 0.90; one person, face visible).
+
+So generation → live judge → adaptive retry → gate-approved look is proven working against real Gemini. The gate genuinely discriminates (it rejects garment mismatches), and the retry converges. This is the core product mechanism, live.
+
+**Verification:** `test:tryon-image` 3/3 · live pipeline pass ✓ · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅. Port unit-test total: **79**. Generation stack complete + live-proven: prompt → image client → gate → engine. Remaining: the route wiring (bride session + idempotent per-look credit debit + storage) around it.
