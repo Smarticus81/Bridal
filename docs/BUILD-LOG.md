@@ -288,3 +288,11 @@ Added `lib/tryonImageClient.ts` (unit test `test:tryon-image`, 3/3): `createTryo
 So generation → live judge → adaptive retry → gate-approved look is proven working against real Gemini. The gate genuinely discriminates (it rejects garment mismatches), and the retry converges. This is the core product mechanism, live.
 
 **Verification:** `test:tryon-image` 3/3 · live pipeline pass ✓ · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅. Port unit-test total: **79**. Generation stack complete + live-proven: prompt → image client → gate → engine. Remaining: the route wiring (bride session + idempotent per-look credit debit + storage) around it.
+
+## Railway optimization + env reference
+
+- **Dockerfile**: split into a cached dependency layer via `pnpm fetch` (populates the store from `pnpm-lock.yaml` alone) + `pnpm install --frozen-lockfile --prefer-offline`, so editing source no longer busts the dep layer — most Railway rebuilds become a fast relink+build. Kept `ffmpeg` install and the deploy-contract strings the verifier asserts.
+- **railway.toml**: `restartPolicyMaxRetries=10`; `healthcheckTimeout` 120→300 (readyz stays 503 until DB+storage+AI+model-chain are reachable).
+- **docs/RAILWAY-ENV.md**: complete, grounded env list (required / model-chain / storage / Clerk / optional), derived from the startup guard.
+
+**Verification:** `smoke:security` ✅ · `verify:production --skip-qa --skip-db` ffmpeg + build checks ✅ (deploy contract intact) · `typecheck`/`build` ✅.
