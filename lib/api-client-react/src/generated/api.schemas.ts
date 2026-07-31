@@ -815,6 +815,11 @@ export interface TryonLookResponse {
   bodyProportionScore?: number;
 }
 
+export interface ForgetLookResponse {
+  /** True once the bride's try-on imagery is removed (or was already gone). */
+  deleted: boolean;
+}
+
 export type ListDressesParams = {
   status?: ListDressesStatus;
   silhouette?: string;

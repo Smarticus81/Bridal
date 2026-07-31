@@ -24,6 +24,7 @@ export * from "./dressMediaResponse";
 export * from "./dressResponse";
 export * from "./dressStatus";
 export * from "./errorEnvelope";
+export * from "./forgetLookResponse";
 export * from "./galleryStyleSummary";
 export * from "./generatedAsset";
 export * from "./generatedAssetAssetType";

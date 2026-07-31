@@ -24,6 +24,13 @@ import { runTryonLook, type DressReference } from "../lib/runTryonLook.js";
 import { VISUALIZATION_DISCLAIMER } from "../lib/tryonQuality.js";
 import { ObjectStorageService, mimeTypeFromObjectPath } from "../lib/objectStorage.js";
 import { assertReferenceImageQuality } from "../lib/referenceImageQuality.js";
+import { runRetentionPurge } from "../lib/retentionPurgeExecutor.js";
+import {
+  gatherSessionObjectKeys,
+  deleteObject,
+  finalizeSessionsPurge,
+} from "../lib/retentionPurgeSweeper.js";
+import type { SessionRetentionRecord } from "../lib/retentionPurge.js";
 
 const router: IRouter = Router();
 const storage = new ObjectStorageService();
@@ -290,6 +297,61 @@ router.post("/try/:lookbookToken/looks", async (req, res): Promise<void> => {
     logger.error({ err, sessionId: charge.session.id }, "try-on look generation failed");
     await refundLook(lookbook.id, charge.organizationId, charge.session.id).catch(() => {});
     res.status(502).json({ error: "We couldn't create this look. Your credit was not used — please try another dress." });
+  }
+});
+
+// POST /try/looks/:shareToken/forget — the bride's "delete everything about me"
+// (spec §6.3). No account: the share token is the capability. Immediately hard-
+// deletes her look imagery and scrubs the consent fingerprint. Reuses the
+// retention executor so a session is only marked purged after every one of its
+// storage objects is confirmed deleted. Idempotent — safe to call repeatedly.
+router.post("/try/looks/:shareToken/forget", async (req, res): Promise<void> => {
+  if (!rateLimit(`forget:${clientKey(req)}`, 20, 60 * 60 * 1000)) {
+    res.status(429).json({ error: "Too many requests. Please wait a bit." });
+    return;
+  }
+
+  const shareToken = req.params.shareToken;
+  if (!shareToken || shareToken.length < 16) {
+    res.status(404).json({ error: "We couldn't find that try-on." });
+    return;
+  }
+
+  const [session] = await db
+    .select({ id: coupleSessionsTable.id })
+    .from(coupleSessionsTable)
+    .where(eq(coupleSessionsTable.shareToken, shareToken))
+    .limit(1);
+  if (!session) {
+    res.status(404).json({ error: "We couldn't find that try-on." });
+    return;
+  }
+
+  const { sourceBySession, derivedBySession } = await gatherSessionObjectKeys([session.id]);
+  const record: SessionRetentionRecord = {
+    sessionId: session.id,
+    // revokedAt set → collectPurgeTargets selects it regardless of the horizon.
+    consent: { revokedAt: new Date(), retentionExpiresAt: null, purgedAt: null },
+    sourceObjectKeys: sourceBySession.get(session.id) ?? [],
+    derivedObjectKeys: derivedBySession.get(session.id) ?? [],
+  };
+
+  try {
+    const result = await runRetentionPurge({
+      loadDueRecords: async () => [record],
+      deleteObject,
+      finalizePurge: (ids, now) => finalizeSessionsPurge(ids, now, { markRevoked: true }),
+    });
+    const hadImagery = record.sourceObjectKeys.length + record.derivedObjectKeys.length > 0;
+    if (result.sessionsPurged === 0 && hadImagery) {
+      // A storage delete failed — never claim deletion that did not happen.
+      res.status(502).json({ error: "We couldn't fully delete your try-on. Please try again." });
+      return;
+    }
+    res.status(200).json({ deleted: true });
+  } catch (err) {
+    logger.error({ err, sessionId: session.id }, "subject forget-me purge failed");
+    res.status(502).json({ error: "We couldn't delete your try-on right now. Please try again." });
   }
 });
 

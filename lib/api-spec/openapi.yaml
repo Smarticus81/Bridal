@@ -1040,6 +1040,41 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
 
+  /try/looks/{shareToken}/forget:
+    post:
+      operationId: forgetTryonLook
+      tags: [lookbooks]
+      summary: Delete everything about a bride's try-on (public, no account)
+      description: >-
+        The bride's "delete everything about me" from her share link. The share
+        token is the capability — no account. Immediately hard-deletes her look
+        imagery from storage and scrubs the consent fingerprint. Idempotent.
+      parameters:
+        - name: shareToken
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The try-on was deleted (or was already gone)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForgetLookResponse"
+        "404":
+          description: No such try-on
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "502":
+          description: The deletion could not be completed; nothing was falsely reported as removed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
   /reactions:
     post:
       operationId: createReaction
@@ -2489,3 +2524,11 @@ components:
           type: number
         bodyProportionScore:
           type: number
+
+    ForgetLookResponse:
+      type: object
+      required: [deleted]
+      properties:
+        deleted:
+          type: boolean
+          description: True once the bride's try-on imagery is removed (or was already gone).

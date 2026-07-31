@@ -32,6 +32,7 @@ import type {
   DressMediaResponse,
   DressResponse,
   ErrorEnvelope,
+  ForgetLookResponse,
   GenerateTryonLookBody,
   GetStorageObjectParams,
   HealthStatus,
@@ -2824,6 +2825,91 @@ export function useGetLookbookByToken<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * The bride's "delete everything about me" from her share link. The share token is the capability — no account. Immediately hard-deletes her look imagery from storage and scrubs the consent fingerprint. Idempotent.
+ * @summary Delete everything about a bride's try-on (public, no account)
+ */
+export const getForgetTryonLookUrl = (shareToken: string) => {
+  return `/api/try/looks/${shareToken}/forget`;
+};
+
+export const forgetTryonLook = async (
+  shareToken: string,
+  options?: RequestInit,
+): Promise<ForgetLookResponse> => {
+  return customFetch<ForgetLookResponse>(getForgetTryonLookUrl(shareToken), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getForgetTryonLookMutationOptions = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof forgetTryonLook>>,
+    TError,
+    { shareToken: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof forgetTryonLook>>,
+  TError,
+  { shareToken: string },
+  TContext
+> => {
+  const mutationKey = ["forgetTryonLook"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof forgetTryonLook>>,
+    { shareToken: string }
+  > = (props) => {
+    const { shareToken } = props ?? {};
+
+    return forgetTryonLook(shareToken, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ForgetTryonLookMutationResult = NonNullable<
+  Awaited<ReturnType<typeof forgetTryonLook>>
+>;
+
+export type ForgetTryonLookMutationError = ErrorType<ErrorEnvelope>;
+
+/**
+ * @summary Delete everything about a bride's try-on (public, no account)
+ */
+export const useForgetTryonLook = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof forgetTryonLook>>,
+    TError,
+    { shareToken: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof forgetTryonLook>>,
+  TError,
+  { shareToken: string },
+  TContext
+> => {
+  return useMutation(getForgetTryonLookMutationOptions(options));
+};
 
 /**
  * One reaction per viewer per look. A viewer who reacts again updates their existing reaction. Viewers never sign in; the voterToken is an anonymous per-viewer token minted client-side.

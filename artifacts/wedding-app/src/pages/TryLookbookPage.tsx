@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   useGetLookbookByToken,
   useGenerateTryonLook,
+  useForgetTryonLook,
   getGetLookbookByTokenQueryKey,
   type TryDress,
   type TryonLookResponse,
@@ -178,6 +179,18 @@ function TryOnPanel({
     uploadToken,
   });
   const generate = useGenerateTryonLook();
+  const forget = useForgetTryonLook();
+  const [forgotten, setForgotten] = useState(false);
+
+  const forgetLook = async () => {
+    if (!result) return;
+    try {
+      await forget.mutateAsync({ shareToken: result.shareToken });
+      setForgotten(true);
+    } catch {
+      // Non-fatal: leave the look on screen; the bride can retry the deletion.
+    }
+  };
 
   const formReady = !!file && !!email.trim() && consent;
 
@@ -304,7 +317,23 @@ function TryOnPanel({
           </form>
         )}
 
-        {step === "done" && result && (
+        {step === "done" && result && forgotten && (
+          <div className="space-y-4 py-6 text-center">
+            <p className="text-lg">Your try-on has been deleted.</p>
+            <p className="text-sm text-neutral-400">
+              The image and your photo have been removed. Nothing about this try-on is kept.
+            </p>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full rounded-full border border-neutral-700 py-3 text-sm text-neutral-200 hover:border-neutral-500"
+            >
+              Try another dress
+            </button>
+          </div>
+        )}
+
+        {step === "done" && result && !forgotten && (
           <div className="space-y-4">
             <div className="relative overflow-hidden rounded-lg bg-neutral-950">
               <img
@@ -332,6 +361,14 @@ function TryOnPanel({
               className="w-full rounded-full border border-neutral-700 py-3 text-sm text-neutral-200 hover:border-neutral-500"
             >
               Try another dress
+            </button>
+            <button
+              type="button"
+              onClick={forgetLook}
+              disabled={forget.isPending}
+              className="w-full py-2 text-center text-xs text-neutral-500 underline hover:text-neutral-300 disabled:opacity-50"
+            >
+              {forget.isPending ? "Deleting…" : "Delete my try-on and photo"}
             </button>
           </div>
         )}

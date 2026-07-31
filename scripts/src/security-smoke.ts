@@ -1275,7 +1275,7 @@ try {
   );
   assert.match(
     retentionSweeperSource,
-    /delete\(generatedAssetsTable\)[\s\S]*delete\(coupleMediaTable\)[\s\S]*update\(consentRecordsTable\)\s*\.set\(\{ fingerprint: null, purgedAt: now \}\)/s,
+    /delete\(generatedAssetsTable\)[\s\S]*delete\(coupleMediaTable\)[\s\S]*update\(consentRecordsTable\)[\s\S]*fingerprint: null, purgedAt: now/s,
     "retention finalize hard-deletes derived+source imagery and scrubs the biometric fingerprint",
   );
   const retentionExecutorSource = fs.readFileSync(
@@ -1286,6 +1286,15 @@ try {
     retentionExecutorSource,
     /\.every\(\(key\) => deleted\.has\(key\)\)[\s\S]*deps\.finalizePurge\(finalizableSessionIds/s,
     "retention purge finalizes a session only after all of its imagery is confirmed deleted from storage",
+  );
+  const tryonLooksSource = fs.readFileSync(
+    new URL("../../artifacts/api-server/src/routes/tryonLooks.ts", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    tryonLooksSource,
+    /router\.post\("\/try\/looks\/:shareToken\/forget"[\s\S]*eq\(coupleSessionsTable\.shareToken, shareToken\)[\s\S]*runRetentionPurge\([\s\S]*result\.sessionsPurged === 0 && hadImagery[\s\S]*502/s,
+    "the subject forget-me route purges by share token and never reports deletion that did not happen",
   );
   assert.match(
     rateLimitSource,

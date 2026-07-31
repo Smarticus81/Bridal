@@ -1080,6 +1080,22 @@ export const GetLookbookByTokenResponse = zod.object({
 });
 
 /**
+ * The bride's "delete everything about me" from her share link. The share token is the capability — no account. Immediately hard-deletes her look imagery from storage and scrubs the consent fingerprint. Idempotent.
+ * @summary Delete everything about a bride's try-on (public, no account)
+ */
+export const ForgetTryonLookParams = zod.object({
+  shareToken: zod.coerce.string(),
+});
+
+export const ForgetTryonLookResponse = zod.object({
+  deleted: zod
+    .boolean()
+    .describe(
+      "True once the bride's try-on imagery is removed (or was already gone).",
+    ),
+});
+
+/**
  * One reaction per viewer per look. A viewer who reacts again updates their existing reaction. Viewers never sign in; the voterToken is an anonymous per-viewer token minted client-side.
  * @summary Cast a reaction on a shared look (public, no account)
  */
