@@ -181,6 +181,19 @@ function TryOnPanel({
   const generate = useGenerateTryonLook();
   const forget = useForgetTryonLook();
   const [forgotten, setForgotten] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
+
+  const shareWithPeople = async () => {
+    if (!result) return;
+    const url = `${window.location.origin}/look/${result.shareToken}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareCopied(true);
+    } catch {
+      // Clipboard blocked — fall back to a prompt so the link is still reachable.
+      window.prompt("Copy your share link:", url);
+    }
+  };
 
   const forgetLook = async () => {
     if (!result) return;
@@ -355,6 +368,13 @@ function TryOnPanel({
               </p>
             )}
             <p className="text-xs text-neutral-500">{result.disclaimer}</p>
+            <button
+              type="button"
+              onClick={shareWithPeople}
+              className="w-full rounded-full bg-neutral-100 py-3 text-sm font-medium text-neutral-900 transition hover:bg-white"
+            >
+              {shareCopied ? "Link copied — share it with your people" : "Share with your people"}
+            </button>
             <button
               type="button"
               onClick={onClose}

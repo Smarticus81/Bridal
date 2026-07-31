@@ -1326,6 +1326,11 @@ try {
   );
   assert.match(
     sessionsRoute,
+    /hasCompletePublicGalleryAssets\(generatedAssets\) \|\| isTryonLookSession\(generatedAssets\)[\s\S]*buildSessionDetailPayload/s,
+    "share-token session detail exposes a complete gallery or a single try-on look, never a partial gallery",
+  );
+  assert.match(
+    sessionsRoute,
     /venueMediaForReadiness[\s\S]*select\({ coverage: venueMediaTable\.coverage }\)[\s\S]*venueMediaCount < MIN_VENUE_PHOTOS[\s\S]*const normalizedEmail/s,
     "session creation blocks venues without media before debiting credits or consuming couple uploads",
   );

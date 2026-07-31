@@ -40,6 +40,7 @@ const VenueOwnerPage = lazyRoute(() => import("@/pages/VenueOwnerPage"));
 const CouplePage = lazyRoute(() => import("@/pages/CouplePage"));
 const GallerySharePage = lazyRoute(() => import("@/pages/GallerySharePage"));
 const TryLookbookPage = lazyRoute(() => import("@/pages/TryLookbookPage"));
+const LookSharePage = lazyRoute(() => import("@/pages/LookSharePage"));
 const CatalogPage = lazyRoute(() => import("@/pages/CatalogPage"));
 const LookbooksPage = lazyRoute(() => import("@/pages/LookbooksPage"));
 const LeadsPage = lazyRoute(() => import("@/pages/LeadsPage"));
@@ -95,6 +96,7 @@ function Router() {
 
         {/* Bride remote try-on entry (no account) */}
         <Route path="/try/:lookbookToken">{() => <TryLookbookPage />}</Route>
+        <Route path="/look/:shareToken">{() => <LookSharePage />}</Route>
 
         {/* Legacy integer-id routes */}
         <Route path="/session/:id/processing">
