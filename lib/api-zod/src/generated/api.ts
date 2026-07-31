@@ -928,12 +928,21 @@ export const ImportDressesBody = zod.object({
     .boolean()
     .optional()
     .describe("Mark existing dresses absent from the import as discontinued."),
+  apply: zod
+    .boolean()
+    .optional()
+    .describe(
+      "When true, execute the diff (create\/update\/archive) transactionally and return the applied counts. When false or omitted, this is a dry-run preview that writes nothing.",
+    ),
 });
 
 export const ImportDressesResponse = zod.object({
   summary: zod
     .string()
     .describe('Human-readable \"will create N, update M, archive K\".'),
+  applied: zod
+    .boolean()
+    .describe("True when the diff was written; false for a dry-run preview."),
   createCount: zod.number(),
   updateCount: zod.number(),
   archiveCount: zod.number(),

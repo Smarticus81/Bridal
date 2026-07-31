@@ -2150,14 +2150,23 @@ components:
         archiveMissing:
           type: boolean
           description: Mark existing dresses absent from the import as discontinued.
+        apply:
+          type: boolean
+          description: >-
+            When true, execute the diff (create/update/archive) transactionally
+            and return the applied counts. When false or omitted, this is a
+            dry-run preview that writes nothing.
 
     ImportDressesDiffResponse:
       type: object
-      required: [summary, createCount, updateCount, archiveCount, unchangedCount, invalidCount]
+      required: [summary, applied, createCount, updateCount, archiveCount, unchangedCount, invalidCount]
       properties:
         summary:
           type: string
           description: Human-readable "will create N, update M, archive K".
+        applied:
+          type: boolean
+          description: True when the diff was written; false for a dry-run preview.
         createCount:
           type: integer
         updateCount:

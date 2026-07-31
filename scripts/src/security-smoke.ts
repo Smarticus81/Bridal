@@ -1296,6 +1296,15 @@ try {
     /router\.post\("\/try\/looks\/:shareToken\/forget"[\s\S]*eq\(coupleSessionsTable\.shareToken, shareToken\)[\s\S]*runRetentionPurge\([\s\S]*result\.sessionsPurged === 0 && hadImagery[\s\S]*502/s,
     "the subject forget-me route purges by share token and never reports deletion that did not happen",
   );
+  const dressesRouteSource = fs.readFileSync(
+    new URL("../../artifacts/api-server/src/routes/dresses.ts", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    dressesRouteSource,
+    /const apply = parsed\.data\.apply === true;[\s\S]*db\.transaction\([\s\S]*insert\(dressesTable\)[\s\S]*organizationId: ctx\.org\.id[\s\S]*update\(dressesTable\)[\s\S]*eq\(dressesTable\.organizationId, ctx\.org\.id\)[\s\S]*status: "discontinued"[\s\S]*eq\(dressesTable\.organizationId, ctx\.org\.id\)/s,
+    "inventory import applies create/update/archive transactionally and org-scoped, only when apply is true",
+  );
   assert.match(
     rateLimitSource,
     /pruneExpiredBuckets\(now: number\)[\s\S]*rateBuckets\.size < 10_000[\s\S]*rateBuckets\.delete\(key\)[\s\S]*pruneExpiredBuckets\(now\)/s,

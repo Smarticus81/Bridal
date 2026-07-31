@@ -11,4 +11,6 @@ export interface ImportDressesBody {
   rows: ImportDressRow[];
   /** Mark existing dresses absent from the import as discontinued. */
   archiveMissing?: boolean;
+  /** When true, execute the diff (create/update/archive) transactionally and return the applied counts. When false or omitted, this is a dry-run preview that writes nothing. */
+  apply?: boolean;
 }

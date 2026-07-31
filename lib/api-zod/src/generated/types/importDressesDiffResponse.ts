@@ -10,6 +10,8 @@ import type { ImportDressesDiffResponseInvalidItem } from "./importDressesDiffRe
 export interface ImportDressesDiffResponse {
   /** Human-readable "will create N, update M, archive K". */
   summary: string;
+  /** True when the diff was written; false for a dry-run preview. */
+  applied: boolean;
   createCount: number;
   updateCount: number;
   archiveCount: number;

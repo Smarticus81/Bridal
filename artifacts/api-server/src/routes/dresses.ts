@@ -257,8 +257,67 @@ router.post("/dresses/import", async (req, res): Promise<void> => {
   }));
 
   const diff = diffInventory(mapped, existing, { archiveMissing: parsed.data.archiveMissing ?? false });
+
+  // Apply the diff transactionally when requested; otherwise it stays a dry run
+  // that writes nothing. Every write is org-scoped (create carries the org id;
+  // update/archive target ids already confirmed to belong to this org above).
+  const apply = parsed.data.apply === true;
+  if (apply && (diff.create.length > 0 || diff.update.length > 0 || diff.archive.length > 0)) {
+    await db.transaction(async (tx) => {
+      if (diff.create.length > 0) {
+        await tx.insert(dressesTable).values(
+          diff.create.map((row) => ({
+            organizationId: ctx.org.id,
+            sku: row.sku,
+            styleName: row.styleName,
+            designer: row.designer,
+            silhouette: row.silhouette,
+            neckline: row.neckline,
+            sleeve: row.sleeve,
+            trainLength: row.trainLength,
+            fabric: row.fabric,
+            color: row.color,
+            sizeRange: row.sizeRange,
+            priceCents: row.priceCents,
+            status: row.status ?? "in_stock",
+          })),
+        );
+      }
+      for (const item of diff.update) {
+        await tx
+          .update(dressesTable)
+          .set({
+            styleName: item.next.styleName,
+            designer: item.next.designer,
+            silhouette: item.next.silhouette,
+            neckline: item.next.neckline,
+            sleeve: item.next.sleeve,
+            trainLength: item.next.trainLength,
+            fabric: item.next.fabric,
+            color: item.next.color,
+            sizeRange: item.next.sizeRange,
+            priceCents: item.next.priceCents,
+            status: item.next.status ?? "in_stock",
+          })
+          .where(and(eq(dressesTable.id, item.id), eq(dressesTable.organizationId, ctx.org.id)));
+      }
+      if (diff.archive.length > 0) {
+        await tx
+          .update(dressesTable)
+          .set({ status: "discontinued" })
+          .where(
+            and(
+              eq(dressesTable.organizationId, ctx.org.id),
+              inArray(dressesTable.id, diff.archive.map((d) => d.id)),
+            ),
+          );
+      }
+    });
+  }
+
   res.json({
     summary: summarizeDiff(diff),
+    applied: apply,
     createCount: diff.create.length,
     updateCount: diff.update.length,
     archiveCount: diff.archive.length,
