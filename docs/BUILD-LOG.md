@@ -347,3 +347,13 @@ Invariant 8 ("consent records + retention TTL purge") had its *records* (consent
 Note on the source photo: the bride's uploaded photo is auto-deleted within 24h by the existing expired-upload-intent cleanup (it is never persisted as `couple_media` by the try-on route), so by the default 90-day retention horizon it is long gone; the sweep's job is the persistent derived look + the consent fingerprint.
 
 **Verification:** `test:retention-purge-executor` 5/5 · `test:retention-purge` 6/6 · `test:lookbook-policy` 7/7 · `typecheck` ✅ · `smoke:security` ✅ (sweeper wiring + selection scope + fingerprint scrub + delete-before-finalize ordering asserted) · `build` ✅. Port unit-test total: **91**.
+
+## Toward production — the bride's "delete everything about me"
+
+The retention sweep covers the *automatic* cases (TTL horizon, revocation). This adds the *subject-initiated* purge (spec §6.3): **`POST /try/looks/:shareToken/forget`** — the bride deletes her try-on on demand from her share link, no account (the share token is the capability).
+
+It **reuses the retention executor** rather than re-implementing deletion: the route hands `runRetentionPurge` a single forced-revoked record, so it inherits the delete-before-finalize safety — a session is only marked purged after every one of its storage objects is confirmed deleted, and a failed delete returns 502 rather than falsely reporting removal. Idempotent (safe to call after the imagery is already gone). The sweeper's DB ports (`gatherSessionObjectKeys`, `deleteObject`, `finalizeSessionsPurge({ markRevoked })`) are now shared between the hourly sweep and this route.
+
+Frontend: a quiet "Delete my try-on and photo" action on the reveal screen with a confirming end state ("Nothing about this try-on is kept"). OpenAPI operation + `ForgetLookResponse` added (codegen deterministic); smoke asserts the route purges by share token and never over-reports deletion.
+
+**Verification:** codegen deterministic ✓ · `typecheck` ✅ · `smoke:security` ✅ (forget route contract) · `build` ✅. API surface: **13 bridal endpoints**.
