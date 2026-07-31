@@ -335,3 +335,15 @@ The remote bride flow is now usable end-to-end from the browser, and the look sh
 - Dress catalog media becomes public **only once the dress is curated into a lookbook** (inner-join on `lookbook_dresses`) — the shop's own act of sharing it — so the bride sees dress thumbnails while uncurated catalog media stays private to the org (smoke-asserted).
 
 **Verification:** codegen deterministic ✓ · `typecheck` ✅ · `smoke:security` ✅ (new try-on-visibility + dress-media-scope assertions) · `build` ✅.
+
+## Toward production — the retention-TTL purge actually runs
+
+Invariant 8 ("consent records + retention TTL purge") had its *records* (consent required, fingerprinted, `retentionExpiresAt` stamped) and its *pure selection* (`collectPurgeTargets`) — but nothing executed the purge. Expired/revoked bride imagery was never swept. Closed that gap:
+
+- **`retentionPurgeExecutor.ts`** — pure orchestration over injected ports (no DB import, so it unit-tests without infrastructure; `test:retention-purge-executor`, 5/5). The correctness rule: a session's consent is marked purged **only after every one of its storage objects is confirmed deleted**. A failed storage delete holds that session back for the next sweep, so a bride's imagery is never recorded as gone while it still exists in storage.
+- **`retentionPurgeSweeper.ts`** — the DB-backed ports + an hourly sweeper. It scans **only consent rows** — which exist solely for bride try-on sessions — so gallery sessions are never touched. Selection: un-purged, and either revoked or past the retention horizon. Finalize hard-deletes the derived (generated look) and source (couple media) rows + their storage objects, then scrubs the biometric fingerprint (`fingerprint: null`) and stamps `purgedAt`. The consent row is **retained as an audit trail** that consent existed and was honored; the session + credit-transaction ledger stay intact for financial audit.
+- **Schema:** `consent_records.purged_at` (idempotency marker + audit); `isConsentPurgeable` now skips already-purged rows. Wired into server startup next to the other cleanup jobs; the DB readiness contract requires the new column so the migration is verified at deploy.
+
+Note on the source photo: the bride's uploaded photo is auto-deleted within 24h by the existing expired-upload-intent cleanup (it is never persisted as `couple_media` by the try-on route), so by the default 90-day retention horizon it is long gone; the sweep's job is the persistent derived look + the consent fingerprint.
+
+**Verification:** `test:retention-purge-executor` 5/5 · `test:retention-purge` 6/6 · `test:lookbook-policy` 7/7 · `typecheck` ✅ · `smoke:security` ✅ (sweeper wiring + selection scope + fingerprint scrub + delete-before-finalize ordering asserted) · `build` ✅. Port unit-test total: **91**.
