@@ -1051,6 +1051,14 @@ export const GetLookbookByTokenResponse = zod.object({
   purpose: zod.enum(["pre_appointment", "post_appointment", "open_catalog"]),
   remainingCredits: zod.number(),
   shopName: zod.string(),
+  shopSlug: zod
+    .string()
+    .describe("The shop's slug, used to authorize the bride's photo upload."),
+  uploadToken: zod
+    .string()
+    .describe(
+      "Short-lived token authorizing the bride photo upload for this shop.",
+    ),
   disclaimer: zod
     .string()
     .describe("The visualization-only disclaimer shown on every look surface."),

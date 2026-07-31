@@ -2270,7 +2270,7 @@ components:
 
     TryLookbookResponse:
       type: object
-      required: [usable, purpose, remainingCredits, shopName, disclaimer, dresses]
+      required: [usable, purpose, remainingCredits, shopName, shopSlug, uploadToken, disclaimer, dresses]
       properties:
         usable:
           type: boolean
@@ -2285,6 +2285,12 @@ components:
           type: integer
         shopName:
           type: string
+        shopSlug:
+          type: string
+          description: The shop's slug, used to authorize the bride's photo upload.
+        uploadToken:
+          type: string
+          description: Short-lived token authorizing the bride photo upload for this shop.
         disclaimer:
           type: string
           description: The visualization-only disclaimer shown on every look surface.

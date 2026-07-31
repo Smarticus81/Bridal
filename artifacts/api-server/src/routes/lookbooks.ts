@@ -14,6 +14,7 @@ import { getAppBaseUrl } from "../lib/appUrl.js";
 import { isWellFormedLookbookToken, mintLookbookToken } from "../lib/lookbookToken.js";
 import { lookbookRemainingCredits, lookbookUsability } from "../lib/lookbookPolicy.js";
 import { VISUALIZATION_DISCLAIMER } from "../lib/tryonQuality.js";
+import { createCoupleUploadToken } from "../lib/uploadToken.js";
 
 const router: IRouter = Router();
 
@@ -144,7 +145,7 @@ router.get("/try/:lookbookToken", async (req, res): Promise<void> => {
   const usability = lookbookUsability(lookbook, new Date());
 
   const [shop] = await db
-    .select({ name: venuesTable.name })
+    .select({ name: venuesTable.name, slug: venuesTable.slug })
     .from(venuesTable)
     .where(eq(venuesTable.id, lookbook.shopId))
     .limit(1);
@@ -175,12 +176,16 @@ router.get("/try/:lookbookToken", async (req, res): Promise<void> => {
     if (!frontByDress.has(front.dressId)) frontByDress.set(front.dressId, front.objectKey);
   }
 
+  const shopSlug = shop?.slug ?? "";
+
   res.json({
     usable: usability.usable,
     reason: usability.usable ? null : usability.reason,
     purpose: lookbook.purpose,
     remainingCredits: lookbookRemainingCredits(lookbook),
     shopName: shop?.name ?? "",
+    shopSlug,
+    uploadToken: shopSlug ? createCoupleUploadToken(shopSlug) : "",
     disclaimer: VISUALIZATION_DISCLAIMER,
     dresses: dressRows.map((row) => ({
       id: row.id,

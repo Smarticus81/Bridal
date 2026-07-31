@@ -698,6 +698,10 @@ export interface TryLookbookResponse {
   purpose: LookbookPurpose;
   remainingCredits: number;
   shopName: string;
+  /** The shop's slug, used to authorize the bride's photo upload. */
+  shopSlug: string;
+  /** Short-lived token authorizing the bride photo upload for this shop. */
+  uploadToken: string;
   /** The visualization-only disclaimer shown on every look surface. */
   disclaimer: string;
   dresses: TryDress[];
