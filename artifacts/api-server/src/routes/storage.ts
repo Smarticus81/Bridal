@@ -19,12 +19,17 @@ import {
   coupleMediaTable,
   generatedAssetsTable,
   uploadIntentsTable,
+  dressMediaTable,
+  lookbookDressesTable,
 } from "@workspace/db";
 import { rateLimit, clientKey } from "../lib/rateLimit";
 import { getCallerOrgDbId, requireOrgVenue } from "../lib/orgAuth.js";
 import { verifyCoupleUploadToken } from "../lib/uploadToken";
 import { canReadVenueMediaReference } from "../lib/objectAccess";
-import { canReadGeneratedAssetWithShareToken } from "../lib/sessionVisibility";
+import {
+  canReadGeneratedAssetWithShareToken,
+  canReadTryonLookWithShareToken,
+} from "../lib/sessionVisibility";
 
 const router: IRouter = Router();
 const objectStorageService = new ObjectStorageService();
@@ -275,6 +280,17 @@ async function canReadStoredObject(req: Request, objectPath: string): Promise<bo
     });
   }
 
+  // Dress catalog media is public once the dress has been curated into a
+  // lookbook — that is the shop's own act of sharing it with a bride. Media of
+  // dresses never placed in a lookbook stays private to the owning org.
+  const curatedDressMedia = await db
+    .select({ id: dressMediaTable.id })
+    .from(dressMediaTable)
+    .innerJoin(lookbookDressesTable, eq(dressMediaTable.dressId, lookbookDressesTable.dressId))
+    .where(eq(dressMediaTable.objectKey, objectPath))
+    .limit(1);
+  if (curatedDressMedia.length > 0) return true;
+
   const shareToken = typeof req.query.shareToken === "string" ? req.query.shareToken : "";
   if (shareToken) {
     const generatedCandidates = await db
@@ -296,7 +312,12 @@ async function canReadStoredObject(req: Request, objectPath: string): Promise<bo
         })
         .from(generatedAssetsTable)
         .where(eq(generatedAssetsTable.sessionId, generated.sessionId));
-      if (canReadGeneratedAssetWithShareToken(generated.status, sessionAssets)) return true;
+      if (
+        canReadGeneratedAssetWithShareToken(generated.status, sessionAssets) ||
+        canReadTryonLookWithShareToken(generated.status, sessionAssets)
+      ) {
+        return true;
+      }
     }
   }
 

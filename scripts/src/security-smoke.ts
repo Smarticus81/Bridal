@@ -170,12 +170,17 @@ const sessionVisibilityModule = (await import(
   hasCompletePublicGalleryAssets: (
     assets: Array<{ assetType: string; displayOrder: number }>,
   ) => boolean;
+  canReadTryonLookWithShareToken: (
+    status: string,
+    assets: Array<{ assetType: string; displayOrder: number }>,
+  ) => boolean;
 };
 
 const {
   canExposeGeneratedAssetsToSharePage,
   canReadGeneratedAssetWithShareToken,
   hasCompletePublicGalleryAssets,
+  canReadTryonLookWithShareToken,
 } = sessionVisibilityModule;
 
 const referenceQualityModule = (await import(
@@ -843,6 +848,21 @@ try {
     true,
     "share-token object reads allow generated assets after the ready gallery has a complete asset bundle",
   );
+  assert.equal(
+    canReadTryonLookWithShareToken("processing", [{ assetType: "image", displayOrder: 1 }]),
+    false,
+    "share-token try-on look reads reject a look until the session is ready",
+  );
+  assert.equal(
+    canReadTryonLookWithShareToken("ready", [{ assetType: "image", displayOrder: 1 }]),
+    true,
+    "share-token try-on look reads allow a single ready look image",
+  );
+  assert.equal(
+    canReadTryonLookWithShareToken("ready", completeGalleryAssets),
+    false,
+    "the single-look try-on reader never widens visibility into a wedding gallery bundle",
+  );
   const titleCard = await buildReelTitleCard({ venueName: "Willow & Stone <Estate>" });
   assert.ok(titleCard, "branded motion reel title card is produced when a venue name exists");
   const titleCardMeta = await sharp(titleCard).metadata();
@@ -960,6 +980,11 @@ try {
     /venueMedia\.slice\(0, MAX_VENUE_REFERENCES_FOR_GALLERY\)\.map/.test(gallerySessionPipelineSource),
     false,
     "gallery generation does not pre-slice venue media before preserving required coverage",
+  );
+  assert.match(
+    storageRoute,
+    /dressMediaTable[\s\S]*innerJoin\(lookbookDressesTable, eq\(dressMediaTable\.dressId, lookbookDressesTable\.dressId\)\)[\s\S]*eq\(dressMediaTable\.objectKey, objectPath\)[\s\S]*curatedDressMedia\.length > 0\) return true/s,
+    "dress catalog media is public only once the dress is curated into a lookbook",
   );
   const uploadHookSource = fs.readFileSync(
     new URL("../../lib/object-storage-web/src/use-upload.ts", import.meta.url),

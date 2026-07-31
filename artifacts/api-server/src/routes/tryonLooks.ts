@@ -279,6 +279,7 @@ router.post("/try/:lookbookToken/looks", async (req, res): Promise<void> => {
 
     res.status(201).json({
       objectKey,
+      shareToken,
       disclaimer: VISUALIZATION_DISCLAIMER,
       consultantReview: look.consultantReview,
       brideLikenessScore: look.report.brideLikenessScore,

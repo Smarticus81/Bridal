@@ -2470,11 +2470,14 @@ components:
 
     TryonLookResponse:
       type: object
-      required: [objectKey, disclaimer, consultantReview]
+      required: [objectKey, shareToken, disclaimer, consultantReview]
       properties:
         objectKey:
           type: string
           description: Storage object key of the generated look.
+        shareToken:
+          type: string
+          description: Token authorizing the bride to view this look's image.
         disclaimer:
           type: string
         consultantReview:

@@ -9,6 +9,8 @@
 export interface TryonLookResponse {
   /** Storage object key of the generated look. */
   objectKey: string;
+  /** Token authorizing the bride to view this look's image. */
+  shareToken: string;
   disclaimer: string;
   /** True when the look is held for consultant review rather than shown as final. */
   consultantReview: boolean;
