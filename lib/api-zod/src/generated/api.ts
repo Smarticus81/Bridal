@@ -1016,6 +1016,25 @@ export const CreateLookbookBody = zod.object({
 });
 
 /**
+ * The bride selects a dress from the lookbook and supplies her uploaded photo and explicit consent. Costs one credit (bounded by the lookbook cap and the shop's balance). Runs the garment-fidelity gate; a below-target look is routed to the consultant, never returned as final.
+ * @summary Generate a try-on look for a chosen dress (public, no account)
+ */
+export const GenerateTryonLookParams = zod.object({
+  lookbookToken: zod.coerce.string(),
+});
+
+export const GenerateTryonLookBody = zod.object({
+  dressId: zod.number(),
+  bridePhotoObjectKey: zod
+    .string()
+    .describe("Object key of the bride's uploaded, gated photo."),
+  brideEmail: zod.string().email(),
+  consent: zod
+    .boolean()
+    .describe("Must be true — the bride's own affirmative action."),
+});
+
+/**
  * Public entry for /try/:lookbookToken. Returns the shop's curated dresses to try. When the link is expired, revoked, or exhausted it returns a calm unusable state rather than an error.
  * @summary Resolve a lookbook for the remote bride flow (public, no account)
  */

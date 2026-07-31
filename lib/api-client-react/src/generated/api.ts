@@ -32,6 +32,7 @@ import type {
   DressMediaResponse,
   DressResponse,
   ErrorEnvelope,
+  GenerateTryonLookBody,
   GetStorageObjectParams,
   HealthStatus,
   ImportDressesBody,
@@ -59,6 +60,7 @@ import type {
   SessionReactionsResponse,
   SessionResponse,
   TryLookbookResponse,
+  TryonLookResponse,
   UpdateVenueBody,
   UploadUrlRequest,
   UploadUrlResponse,
@@ -2634,6 +2636,97 @@ export const useCreateLookbook = <
   TContext
 > => {
   return useMutation(getCreateLookbookMutationOptions(options));
+};
+
+/**
+ * The bride selects a dress from the lookbook and supplies her uploaded photo and explicit consent. Costs one credit (bounded by the lookbook cap and the shop's balance). Runs the garment-fidelity gate; a below-target look is routed to the consultant, never returned as final.
+ * @summary Generate a try-on look for a chosen dress (public, no account)
+ */
+export const getGenerateTryonLookUrl = (lookbookToken: string) => {
+  return `/api/try/${lookbookToken}/looks`;
+};
+
+export const generateTryonLook = async (
+  lookbookToken: string,
+  generateTryonLookBody: GenerateTryonLookBody,
+  options?: RequestInit,
+): Promise<TryonLookResponse> => {
+  return customFetch<TryonLookResponse>(
+    getGenerateTryonLookUrl(lookbookToken),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(generateTryonLookBody),
+    },
+  );
+};
+
+export const getGenerateTryonLookMutationOptions = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateTryonLook>>,
+    TError,
+    { lookbookToken: string; data: BodyType<GenerateTryonLookBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof generateTryonLook>>,
+  TError,
+  { lookbookToken: string; data: BodyType<GenerateTryonLookBody> },
+  TContext
+> => {
+  const mutationKey = ["generateTryonLook"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof generateTryonLook>>,
+    { lookbookToken: string; data: BodyType<GenerateTryonLookBody> }
+  > = (props) => {
+    const { lookbookToken, data } = props ?? {};
+
+    return generateTryonLook(lookbookToken, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type GenerateTryonLookMutationResult = NonNullable<
+  Awaited<ReturnType<typeof generateTryonLook>>
+>;
+export type GenerateTryonLookMutationBody = BodyType<GenerateTryonLookBody>;
+export type GenerateTryonLookMutationError = ErrorType<ErrorEnvelope>;
+
+/**
+ * @summary Generate a try-on look for a chosen dress (public, no account)
+ */
+export const useGenerateTryonLook = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateTryonLook>>,
+    TError,
+    { lookbookToken: string; data: BodyType<GenerateTryonLookBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof generateTryonLook>>,
+  TError,
+  { lookbookToken: string; data: BodyType<GenerateTryonLookBody> },
+  TContext
+> => {
+  return useMutation(getGenerateTryonLookMutationOptions(options));
 };
 
 /**

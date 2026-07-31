@@ -789,6 +789,26 @@ export interface DressMediaResponse {
   createdAt: string;
 }
 
+export interface GenerateTryonLookBody {
+  dressId: number;
+  /** Object key of the bride's uploaded, gated photo. */
+  bridePhotoObjectKey: string;
+  brideEmail: string;
+  /** Must be true — the bride's own affirmative action. */
+  consent: boolean;
+}
+
+export interface TryonLookResponse {
+  /** Storage object key of the generated look. */
+  objectKey: string;
+  disclaimer: string;
+  /** True when the look is held for consultant review rather than shown as final. */
+  consultantReview: boolean;
+  brideLikenessScore?: number;
+  garmentFidelityScore?: number;
+  bodyProportionScore?: number;
+}
+
 export type ListDressesParams = {
   status?: ListDressesStatus;
   silhouette?: string;

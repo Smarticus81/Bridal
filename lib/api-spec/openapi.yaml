@@ -957,6 +957,60 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
 
+  /try/{lookbookToken}/looks:
+    post:
+      operationId: generateTryonLook
+      tags: [lookbooks]
+      summary: Generate a try-on look for a chosen dress (public, no account)
+      description: >-
+        The bride selects a dress from the lookbook and supplies her uploaded
+        photo and explicit consent. Costs one credit (bounded by the lookbook cap
+        and the shop's balance). Runs the garment-fidelity gate; a below-target
+        look is routed to the consultant, never returned as final.
+      parameters:
+        - name: lookbookToken
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateTryonLookBody"
+      responses:
+        "201":
+          description: Look generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TryonLookResponse"
+        "400":
+          description: Invalid input or photo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "402":
+          description: Lookbook exhausted or shop out of credits
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Unknown lookbook or dress not in it
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: Lookbook link is not usable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
   /try/{lookbookToken}:
     get:
       operationId: getLookbookByToken
@@ -2391,3 +2445,38 @@ components:
         createdAt:
           type: string
           format: date-time
+
+    GenerateTryonLookBody:
+      type: object
+      required: [dressId, bridePhotoObjectKey, brideEmail, consent]
+      properties:
+        dressId:
+          type: integer
+        bridePhotoObjectKey:
+          type: string
+          description: Object key of the bride's uploaded, gated photo.
+        brideEmail:
+          type: string
+          format: email
+        consent:
+          type: boolean
+          description: Must be true — the bride's own affirmative action.
+
+    TryonLookResponse:
+      type: object
+      required: [objectKey, disclaimer, consultantReview]
+      properties:
+        objectKey:
+          type: string
+          description: Storage object key of the generated look.
+        disclaimer:
+          type: string
+        consultantReview:
+          type: boolean
+          description: True when the look is held for consultant review rather than shown as final.
+        brideLikenessScore:
+          type: number
+        garmentFidelityScore:
+          type: number
+        bodyProportionScore:
+          type: number

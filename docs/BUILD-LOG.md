@@ -304,3 +304,20 @@ Added `lib/runTryonLook.ts` (unit test `test:run-tryon-look`, 2/2): composes the
 This is the callable the `POST /try/:lookbookToken/looks` route will invoke; the route's remaining work is the DB side — resolve+validate the lookbook, debit one credit idempotently (cap + org balance), download refs, call `runTryonLook`, upload + insert the look asset.
 
 **Verification:** `test:run-tryon-look` 2/2 · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅. Port unit-test total: **81**.
+
+## Toward production — POST /try/:lookbookToken/looks (END-TO-END try-on, final integration)
+
+Added `lib/lookDebit.ts` (`decideLookDebit`, unit test `test:look-debit` 5/5) — the pure per-look credit decision (§6.6, invariant 7): one look = one credit, bounded by the lookbook cap first, then the org balance; never negative.
+
+Added `routes/tryonLooks.ts` (mounted) — **`POST /try/:lookbookToken/looks`**, the public bride generate action that ties the whole product together:
+1. Rate-limit; resolve + `lookbookUsability` (409 if expired/revoked/exhausted); dress must be in the lookbook.
+2. Require explicit `consent === true`; download + `assertReferenceImageQuality` the bride photo; SHA-256 fingerprint it.
+3. Dress references ordered front-first (`orderDressMediaForGeneration`); refuse if no validated `front` (dress not try-on ready).
+4. **Idempotent credit debit in one transaction** (invariant 7): `decideLookDebit`, then a guarded compare-and-set on `lookbooks.creditsUsed` + `gte`-guarded decrement of `organizations.creditsBalance`; create the bride session (`couple_sessions`), the `consent_records` row (fingerprint + `retentionExpiresAt` via `retentionExpiryFor`), and the `credit_transactions` debit.
+5. Generate via `runTryonLook` (garment-fidelity gate + adaptive retry); upload the polished look; insert `generated_assets` with model/attempts/quality report; mark the session ready.
+6. **Refund on failure** — a look that fails generation reverses the debit (`session_refund`) and marks the session failed, so a failed look never costs the shop a credit.
+7. Response carries the look object key, the visualization disclaimer, `consultantReview`, and the axis scores.
+
+End-to-end flow is now code-complete: bride opens `/try` → picks a dress → this route → consent + credit + gate-approved look. The generation pieces are already live-proven against Gemini; the DB/storage transaction path is contract-verified here (typecheck/smoke/build) and exercises on a deployed env with DB + storage.
+
+**Verification:** `test:look-debit` 5/5 · codegen deterministic ✓ · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅. API surface: **12 bridal endpoints**. Port unit-test total: **86**.
