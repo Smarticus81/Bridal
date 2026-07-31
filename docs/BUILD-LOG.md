@@ -367,3 +367,15 @@ Frontend: a quiet "Delete my try-on and photo" action on the reveal screen with 
 Every write is **org-scoped** — creates carry the org id; updates and archives constrain on `organizationId` — so a bulk import can never reach into another org's catalog. The response gains `applied` to distinguish a written run from a preview.
 
 **Verification:** codegen deterministic ✓ · `typecheck` ✅ · `smoke:security` ✅ (transactional org-scoped apply asserted) · `build` ✅.
+
+## Phase 4 (completing) — share-to-party votes for try-on looks
+
+The reactions API (`POST /reactions`, `GET /sessions/by-token/:shareToken/reactions`) and the engagement tally (`test:engagement`, 6/6) already existed — but no surface consumed them, and `GET /sessions/by-token/:shareToken` dropped a single look (it gated on the full four-still-plus-reel wedding bundle), so a shared look showed nothing to vote on. Closed the loop:
+
+- **Backend:** by-token session detail now exposes **a complete gallery OR a single try-on look** (`isTryonLookSession`), never a partially-generated gallery — the same rule as the storage read gate.
+- **Frontend `LookSharePage`** (`/look/:shareToken`, dark surface): the bride's people see her look and vote **love / maybe / pass**. The voter token is an anonymous per-viewer id kept in localStorage, so a repeat vote updates in place rather than stacking; a live tally shows the count and surfaces a gentle **"book a fitting"** nudge once the love threshold is crossed (`shouldSurfaceBookFitting`). The visualization disclaimer is on the surface (invariant 5).
+- **Bride reveal:** a "Share with your people" action copies the `/look/:shareToken` link (prompt fallback when the clipboard is blocked).
+
+No API/schema change (reused existing endpoints), so no codegen churn.
+
+**Verification:** `test:engagement` 6/6 · `typecheck` ✅ · `smoke:security` ✅ (by-token gallery/look exposure rule asserted) · `build` ✅. Both bride flows (in-store consultant + remote lookbook) and the share-to-party votes are now end-to-end.
