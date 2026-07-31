@@ -1260,6 +1260,34 @@ try {
     "server startup deletes expired or spent owner login tokens and expired or revoked owner sessions",
   );
   assert.match(
+    serverIndex,
+    /startRetentionPurgeSweeper\(\);/,
+    "server startup starts the retention purge sweeper so the TTL purge actually runs",
+  );
+  const retentionSweeperSource = fs.readFileSync(
+    new URL("../../artifacts/api-server/src/lib/retentionPurgeSweeper.ts", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    retentionSweeperSource,
+    /isNull\(consentRecordsTable\.purgedAt\)[\s\S]*isNotNull\(consentRecordsTable\.revokedAt\)[\s\S]*lt\(\s*consentRecordsTable\.retentionExpiresAt,\s*now\s*\)/s,
+    "retention sweep selects only un-purged consent past its horizon or revoked",
+  );
+  assert.match(
+    retentionSweeperSource,
+    /delete\(generatedAssetsTable\)[\s\S]*delete\(coupleMediaTable\)[\s\S]*update\(consentRecordsTable\)\s*\.set\(\{ fingerprint: null, purgedAt: now \}\)/s,
+    "retention finalize hard-deletes derived+source imagery and scrubs the biometric fingerprint",
+  );
+  const retentionExecutorSource = fs.readFileSync(
+    new URL("../../artifacts/api-server/src/lib/retentionPurgeExecutor.ts", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    retentionExecutorSource,
+    /\.every\(\(key\) => deleted\.has\(key\)\)[\s\S]*deps\.finalizePurge\(finalizableSessionIds/s,
+    "retention purge finalizes a session only after all of its imagery is confirmed deleted from storage",
+  );
+  assert.match(
     rateLimitSource,
     /pruneExpiredBuckets\(now: number\)[\s\S]*rateBuckets\.size < 10_000[\s\S]*rateBuckets\.delete\(key\)[\s\S]*pruneExpiredBuckets\(now\)/s,
     "in-memory rate limiter prunes expired buckets to avoid unbounded growth on long-lived instances",

@@ -32,6 +32,10 @@ export const consentRecordsTable = pgTable("consent_records", {
   // derived assets from storage past this timestamp.
   retentionExpiresAt: timestamp("retention_expires_at"),
   revokedAt: timestamp("revoked_at"),
+  // Set when the retention purge has hard-deleted this record's imagery and
+  // scrubbed its biometric fingerprint. The row is retained as a consent audit
+  // trail; a non-null value makes re-selection by the purge idempotent.
+  purgedAt: timestamp("purged_at"),
 });
 
 /** Default per-shop retention window, in days, when a shop sets no override. */

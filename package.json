@@ -24,6 +24,7 @@
     "test:engagement": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/engagementMetrics.test.ts",
     "test:inventory-import": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/inventoryImport.test.ts",
     "test:retention-purge": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/retentionPurge.test.ts",
+    "test:retention-purge-executor": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/retentionPurgeExecutor.test.ts",
     "test:lookbook-token": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/lookbookToken.test.ts",
     "test:dress-filters": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/dressFilters.test.ts",
     "test:tryon-prompt": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/tryonPrompt.test.ts",

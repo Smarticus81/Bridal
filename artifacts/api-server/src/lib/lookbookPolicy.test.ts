@@ -76,9 +76,11 @@ test("retention horizon defaults to 90 days and honors a per-shop override", () 
 });
 
 test("consent is purgeable on revocation or past the horizon, never on a missing horizon", () => {
-  assert.equal(isConsentPurgeable({ revokedAt: past, retentionExpiresAt: null }, NOW), true);
-  assert.equal(isConsentPurgeable({ revokedAt: null, retentionExpiresAt: past }, NOW), true);
-  assert.equal(isConsentPurgeable({ revokedAt: null, retentionExpiresAt: future }, NOW), false);
+  assert.equal(isConsentPurgeable({ revokedAt: past, retentionExpiresAt: null, purgedAt: null }, NOW), true);
+  assert.equal(isConsentPurgeable({ revokedAt: null, retentionExpiresAt: past, purgedAt: null }, NOW), true);
+  assert.equal(isConsentPurgeable({ revokedAt: null, retentionExpiresAt: future, purgedAt: null }, NOW), false);
   // Missing horizon must never silently drop a bride's data.
-  assert.equal(isConsentPurgeable({ revokedAt: null, retentionExpiresAt: null }, NOW), false);
+  assert.equal(isConsentPurgeable({ revokedAt: null, retentionExpiresAt: null, purgedAt: null }, NOW), false);
+  // Already purged is never re-selected, even when revoked and past the horizon.
+  assert.equal(isConsentPurgeable({ revokedAt: past, retentionExpiresAt: past, purgedAt: past }, NOW), false);
 });

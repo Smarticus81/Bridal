@@ -77,9 +77,12 @@ export function retentionExpiryFor(
  * not-yet-purgeable — a missing TTL must never silently drop a bride's data.
  */
 export function isConsentPurgeable(
-  record: Pick<ConsentRecord, "revokedAt" | "retentionExpiresAt">,
+  record: Pick<ConsentRecord, "revokedAt" | "retentionExpiresAt" | "purgedAt">,
   now: Date,
 ): boolean {
+  // Already purged — its imagery is gone and its fingerprint scrubbed. Never
+  // re-select it, so the purge is idempotent.
+  if (record.purgedAt) return false;
   if (record.revokedAt) return true;
   if (!record.retentionExpiresAt) return false;
   return record.retentionExpiresAt.getTime() <= now.getTime();

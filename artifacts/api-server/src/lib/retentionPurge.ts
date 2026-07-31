@@ -13,7 +13,7 @@ import { isConsentPurgeable } from "./lookbookPolicy.js";
 
 export interface SessionRetentionRecord {
   sessionId: number;
-  consent: Pick<ConsentRecord, "revokedAt" | "retentionExpiresAt">;
+  consent: Pick<ConsentRecord, "revokedAt" | "retentionExpiresAt" | "purgedAt">;
   /** The bride's uploaded source photo object keys. */
   sourceObjectKeys: string[];
   /** Generated looks and any other derived asset object keys. */

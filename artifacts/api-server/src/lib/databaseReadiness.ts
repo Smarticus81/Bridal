@@ -180,6 +180,7 @@ export const REQUIRED_DATABASE_COLUMNS = {
     "consented_at",
     "retention_expires_at",
     "revoked_at",
+    "purged_at",
   ],
 } as const satisfies Record<(typeof REQUIRED_DATABASE_TABLES)[number], readonly string[]>;
 
