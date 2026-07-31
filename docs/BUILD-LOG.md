@@ -321,3 +321,17 @@ Added `routes/tryonLooks.ts` (mounted) — **`POST /try/:lookbookToken/looks`**,
 End-to-end flow is now code-complete: bride opens `/try` → picks a dress → this route → consent + credit + gate-approved look. The generation pieces are already live-proven against Gemini; the DB/storage transaction path is contract-verified here (typecheck/smoke/build) and exercises on a deployed env with DB + storage.
 
 **Verification:** `test:look-debit` 5/5 · codegen deterministic ✓ · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅. API surface: **12 bridal endpoints**. Port unit-test total: **86**.
+
+## Toward production — the bride sees her look (frontend generate flow + look viewing)
+
+The remote bride flow is now usable end-to-end from the browser, and the look she generates is actually viewable.
+
+**Resolve (`GET /try/:lookbookToken`)** now returns `shopSlug` + a short-lived `uploadToken` (reusing the couple-upload token path — no storage change), so the account-less bride can authorize her photo upload.
+
+**`TryLookbookPage`** (dark surface, §8): the curated dresses render as a grid; tapping one opens a try-on panel — photo upload (`useUpload` purpose `couple`, scoped by `shopSlug`+`uploadToken`), email, an explicit consent checkbox — then `useGenerateTryonLook`. On success the gate-approved look is revealed with a drape animation lifting off the finished image; consultant-review holds and the visualization disclaimer are surfaced. Failures state plainly that no credit was used.
+
+**Look viewing** — two storage read-gate additions so the images actually serve without an account:
+- `canReadTryonLookWithShareToken` (new `sessionVisibility` helper): a `ready` session whose assets are all images is a try-on look and readable by its session `shareToken`. The wedding-gallery reader still requires the full four-still-plus-reel bundle, so this never widens visibility into a partially-generated gallery (smoke-asserted, incl. the negative case that a gallery bundle is rejected by the single-look reader). The generate response now returns the session `shareToken`.
+- Dress catalog media becomes public **only once the dress is curated into a lookbook** (inner-join on `lookbook_dresses`) — the shop's own act of sharing it — so the bride sees dress thumbnails while uncurated catalog media stays private to the org (smoke-asserted).
+
+**Verification:** codegen deterministic ✓ · `typecheck` ✅ · `smoke:security` ✅ (new try-on-visibility + dress-media-scope assertions) · `build` ✅.
