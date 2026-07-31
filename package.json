@@ -28,7 +28,8 @@
     "test:dress-filters": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/dressFilters.test.ts",
     "test:tryon-prompt": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/tryonPrompt.test.ts",
     "test:look-generation": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/lookGeneration.test.ts",
-    "test:tryon-image": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/tryonImageClient.test.ts"
+    "test:tryon-image": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/tryonImageClient.test.ts",
+    "test:run-tryon-look": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/runTryonLook.test.ts"
   },
   "engines": {
     "node": ">=24"

@@ -296,3 +296,11 @@ So generation → live judge → adaptive retry → gate-approved look is proven
 - **docs/RAILWAY-ENV.md**: complete, grounded env list (required / model-chain / storage / Clerk / optional), derived from the startup guard.
 
 **Verification:** `smoke:security` ✅ · `verify:production --skip-qa --skip-db` ffmpeg + build checks ✅ (deploy contract intact) · `typecheck`/`build` ✅.
+
+## Toward production — runTryonLook (generate-one-look orchestration)
+
+Added `lib/runTryonLook.ts` (unit test `test:run-tryon-look`, 2/2): composes the whole server-side generation of one polished look — `createTryonGenerator` → `generateLookWithQuality` (engine + garment-fidelity judge + adaptive retry) → `polishGalleryFrame` (branded finish) → returns `{polished, model, attempts, consultantReview, report}` ready for storage. `generate`/`judge` default to the live implementations but are injectable, so the composition (incl. the polish producing a valid JPEG, and consultant-review floor passthrough) is unit-tested without a Gemini call.
+
+This is the callable the `POST /try/:lookbookToken/looks` route will invoke; the route's remaining work is the DB side — resolve+validate the lookbook, debit one credit idempotently (cap + org balance), download refs, call `runTryonLook`, upload + insert the look asset.
+
+**Verification:** `test:run-tryon-look` 2/2 · `typecheck` ✅ · `smoke:security` ✅ · `build` ✅. Port unit-test total: **81**.
