@@ -357,3 +357,13 @@ It **reuses the retention executor** rather than re-implementing deletion: the r
 Frontend: a quiet "Delete my try-on and photo" action on the reveal screen with a confirming end state ("Nothing about this try-on is kept"). OpenAPI operation + `ForgetLookResponse` added (codegen deterministic); smoke asserts the route purges by share token and never over-reports deletion.
 
 **Verification:** codegen deterministic ✓ · `typecheck` ✅ · `smoke:security` ✅ (forget route contract) · `build` ✅. API surface: **13 bridal endpoints**.
+
+## Phase 5 — inventory bulk import can apply, not just preview
+
+`POST /dresses/import` already computed the dry-run diff (create/update/archive/unchanged/invalid, keyed by SKU) but never wrote it — it was preview-only. Added an **`apply`** flag:
+- `apply` omitted/false → dry-run preview, writes nothing (unchanged behavior).
+- `apply: true` → the diff is executed in **one transaction**: insert creates (carrying `ctx.org.id`), update changed rows, set missing rows `discontinued` when `archiveMissing`.
+
+Every write is **org-scoped** — creates carry the org id; updates and archives constrain on `organizationId` — so a bulk import can never reach into another org's catalog. The response gains `applied` to distinguish a written run from a preview.
+
+**Verification:** codegen deterministic ✓ · `typecheck` ✅ · `smoke:security` ✅ (transactional org-scoped apply asserted) · `build` ✅.
