@@ -136,16 +136,35 @@ export default function VenueLandingPage() {
 /* ————————————————— 001 · Manifesto hero ————————————————— */
 
 function HeroScene({ onStart, onSignIn }: { onStart: () => void; onSignIn: () => void }) {
+  const reduceMotion = useReducedMotion();
   return (
     <section className="grain relative flex min-h-screen flex-col justify-end overflow-hidden pt-24">
-      <img
-        src={BRAND_ASSETS.heroAtmosphere}
-        alt=""
-        aria-hidden
-        fetchPriority="high"
-        decoding="async"
-        className="absolute inset-0 h-full w-full object-cover opacity-70"
-      />
+      {reduceMotion ? (
+        <img
+          src={BRAND_ASSETS.heroAtmosphere}
+          alt=""
+          aria-hidden
+          fetchPriority="high"
+          decoding="async"
+          className="absolute inset-0 h-full w-full object-cover opacity-70"
+        />
+      ) : (
+        // The ballet transformation, looping silently behind the manifesto.
+        // poster paints instantly and is also the fallback if the video file
+        // hasn't been fetched yet (scripts/fetch-brand-assets.mjs).
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          poster={BRAND_ASSETS.heroAtmosphere}
+          aria-hidden
+          className="absolute inset-0 h-full w-full object-cover opacity-70"
+        >
+          <source src={BRAND_ASSETS.heroVideo} type="video/mp4" />
+        </video>
+      )}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/55 via-background/70 to-background"

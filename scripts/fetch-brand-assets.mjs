@@ -16,6 +16,10 @@ const ASSETS = {
   "frame-first-dance.webp": `${CDN_BASE}/hf_20260705_205829_1a4cd4b3-bc16-4489-b1e9-1ec6893e1a5a_min.webp`,
   "frame-golden-hour.webp": `${CDN_BASE}/hf_20260705_205832_fd9973ea-4be7-4105-9076-2b4767cea833_min.webp`,
   "frame-reel-still.webp": `${CDN_BASE}/hf_20260705_205835_eee8b83b-0301-44a7-aca4-0a0bb7b50e70_min.webp`,
+  // The landing-page hero background: the de-sparkled ballet transformation
+  // (grey-tee → ivory gown), 5s / 720p, cinematic_studio_3_0. hero-atmosphere
+  // stays as the poster + reduced-motion fallback.
+  "hero-ballet.mp4": `${CDN_BASE}/hf_20260730_230050_30e01f58-7209-487e-9b51-b1482459892b.mp4`,
 };
 
 const outDir = join(process.cwd(), "artifacts/wedding-app/public/brand");
