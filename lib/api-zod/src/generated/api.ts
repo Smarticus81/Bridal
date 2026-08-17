@@ -828,6 +828,363 @@ export const ListGalleryStylesResponse = zod.object({
 });
 
 /**
+ * @summary List the caller's organization catalog
+ */
+export const listDressesQueryMinPriceCentsMin = 0;
+
+export const listDressesQueryMaxPriceCentsMin = 0;
+
+export const ListDressesQueryParams = zod.object({
+  status: zod.enum(["in_stock", "special_order", "discontinued"]).optional(),
+  silhouette: zod.coerce.string().optional(),
+  neckline: zod.coerce.string().optional(),
+  sleeve: zod.coerce.string().optional(),
+  sizeRange: zod.coerce.string().optional(),
+  minPriceCents: zod.coerce
+    .number()
+    .min(listDressesQueryMinPriceCentsMin)
+    .optional(),
+  maxPriceCents: zod.coerce
+    .number()
+    .min(listDressesQueryMaxPriceCentsMin)
+    .optional(),
+  shopId: zod.coerce.number().optional(),
+  tryOnReadyOnly: zod.coerce.boolean().optional(),
+});
+
+export const ListDressesResponse = zod.object({
+  dresses: zod.array(
+    zod.object({
+      id: zod.number(),
+      sku: zod.string(),
+      designer: zod.string().nullish(),
+      styleName: zod.string(),
+      silhouette: zod.string().nullish(),
+      neckline: zod.string().nullish(),
+      sleeve: zod.string().nullish(),
+      trainLength: zod.string().nullish(),
+      fabric: zod.string().nullish(),
+      color: zod.string().nullish(),
+      sizeRange: zod.string().nullish(),
+      priceCents: zod.number().nullish(),
+      isConsignment: zod.boolean(),
+      status: zod.enum(["in_stock", "special_order", "discontinued"]),
+      shopIds: zod.array(zod.number()),
+      tryOnReady: zod
+        .boolean()
+        .describe("True when the dress has a validated front reference image."),
+      createdAt: zod.coerce.date(),
+    }),
+  ),
+});
+
+/**
+ * @summary Add a dress to the catalog
+ */
+
+export const createDressBodyPriceCentsMin = 0;
+
+export const CreateDressBody = zod.object({
+  sku: zod.string().min(1),
+  styleName: zod.string().min(1),
+  designer: zod.string().optional(),
+  silhouette: zod.string().optional(),
+  neckline: zod.string().optional(),
+  sleeve: zod.string().optional(),
+  trainLength: zod.string().optional(),
+  fabric: zod.string().optional(),
+  color: zod.string().optional(),
+  sizeRange: zod.string().optional(),
+  priceCents: zod.number().min(createDressBodyPriceCentsMin).optional(),
+  isConsignment: zod.boolean().optional(),
+  status: zod.enum(["in_stock", "special_order", "discontinued"]).optional(),
+  shopIds: zod.array(zod.number()).optional(),
+});
+
+/**
+ * Returns "will create N, update M, archive K" for the supplied rows against the caller's existing catalog. This is a dry run: it never writes. Commit is a separate, explicit step.
+ * @summary Dry-run diff of a bulk catalog import
+ */
+export const ImportDressesBody = zod.object({
+  rows: zod.array(
+    zod.object({
+      sku: zod.string(),
+      styleName: zod.string(),
+      designer: zod.string().optional(),
+      silhouette: zod.string().optional(),
+      neckline: zod.string().optional(),
+      sleeve: zod.string().optional(),
+      trainLength: zod.string().optional(),
+      fabric: zod.string().optional(),
+      color: zod.string().optional(),
+      sizeRange: zod.string().optional(),
+      priceCents: zod.number().optional(),
+      status: zod
+        .enum(["in_stock", "special_order", "discontinued"])
+        .optional(),
+    }),
+  ),
+  archiveMissing: zod
+    .boolean()
+    .optional()
+    .describe("Mark existing dresses absent from the import as discontinued."),
+  apply: zod
+    .boolean()
+    .optional()
+    .describe(
+      "When true, execute the diff (create\/update\/archive) transactionally and return the applied counts. When false or omitted, this is a dry-run preview that writes nothing.",
+    ),
+});
+
+export const ImportDressesResponse = zod.object({
+  summary: zod
+    .string()
+    .describe('Human-readable \"will create N, update M, archive K\".'),
+  applied: zod
+    .boolean()
+    .describe("True when the diff was written; false for a dry-run preview."),
+  createCount: zod.number(),
+  updateCount: zod.number(),
+  archiveCount: zod.number(),
+  unchangedCount: zod.number(),
+  invalidCount: zod.number(),
+  invalid: zod
+    .array(
+      zod.object({
+        rowIndex: zod.number(),
+        errors: zod.array(zod.string()),
+      }),
+    )
+    .optional(),
+});
+
+/**
+ * The photo must first be uploaded via /storage/uploads/request-url with purpose "dress". A validated front image makes the dress try-on ready.
+ * @summary Attach a coverage-tagged reference photo to a dress
+ */
+export const AddDressMediaParams = zod.object({
+  dressId: zod.coerce.number(),
+});
+
+export const addDressMediaBodyDisplayOrderMin = 0;
+
+export const AddDressMediaBody = zod.object({
+  objectKey: zod.string(),
+  coverage: zod.enum(["front", "back", "detail", "fabric", "on_model"]),
+  displayOrder: zod.number().min(addDressMediaBodyDisplayOrderMin).optional(),
+});
+
+/**
+ * @summary List the caller's organization lookbooks with burn meter
+ */
+export const ListLookbooksResponse = zod.object({
+  lookbooks: zod.array(
+    zod.object({
+      id: zod.number(),
+      token: zod.string(),
+      purpose: zod.enum([
+        "pre_appointment",
+        "post_appointment",
+        "open_catalog",
+      ]),
+      creditCap: zod.number(),
+      creditsUsed: zod.number(),
+      remainingCredits: zod.number(),
+      expiresAt: zod.coerce.date(),
+      status: zod.string(),
+      usable: zod
+        .boolean()
+        .describe("Whether the link can still generate a look right now."),
+    }),
+  ),
+});
+
+/**
+ * @summary Create a curated, capped, expiring lookbook link
+ */
+
+export const createLookbookBodyExpiresInDaysMax = 365;
+
+export const CreateLookbookBody = zod.object({
+  shopId: zod
+    .number()
+    .describe("The storefront (shop\/venue id) this lookbook belongs to."),
+  purpose: zod.enum(["pre_appointment", "post_appointment", "open_catalog"]),
+  brideName: zod.string().optional(),
+  brideEmail: zod.string().email().optional(),
+  creditCap: zod
+    .number()
+    .min(1)
+    .describe("Hard cap on looks generated through this link. Never uncapped."),
+  expiresInDays: zod
+    .number()
+    .min(1)
+    .max(createLookbookBodyExpiresInDaysMax)
+    .describe("Days until the link expires. Never unexpiring."),
+  dressIds: zod.array(zod.number()).min(1),
+});
+
+/**
+ * The bride selects a dress from the lookbook and supplies her uploaded photo and explicit consent. Costs one credit (bounded by the lookbook cap and the shop's balance). Runs the garment-fidelity gate; a below-target look is routed to the consultant, never returned as final.
+ * @summary Generate a try-on look for a chosen dress (public, no account)
+ */
+export const GenerateTryonLookParams = zod.object({
+  lookbookToken: zod.coerce.string(),
+});
+
+export const GenerateTryonLookBody = zod.object({
+  dressId: zod.number(),
+  bridePhotoObjectKey: zod
+    .string()
+    .describe("Object key of the bride's uploaded, gated photo."),
+  brideEmail: zod.string().email(),
+  consent: zod
+    .boolean()
+    .describe("Must be true — the bride's own affirmative action."),
+});
+
+/**
+ * Public entry for /try/:lookbookToken. Returns the shop's curated dresses to try. When the link is expired, revoked, or exhausted it returns a calm unusable state rather than an error.
+ * @summary Resolve a lookbook for the remote bride flow (public, no account)
+ */
+export const GetLookbookByTokenParams = zod.object({
+  lookbookToken: zod.coerce.string(),
+});
+
+export const GetLookbookByTokenResponse = zod.object({
+  usable: zod.boolean(),
+  reason: zod
+    .enum(["expired", "revoked", "exhausted"])
+    .nullish()
+    .describe("Why the link is not usable, when usable is false."),
+  purpose: zod.enum(["pre_appointment", "post_appointment", "open_catalog"]),
+  remainingCredits: zod.number(),
+  shopName: zod.string(),
+  shopSlug: zod
+    .string()
+    .describe("The shop's slug, used to authorize the bride's photo upload."),
+  uploadToken: zod
+    .string()
+    .describe(
+      "Short-lived token authorizing the bride photo upload for this shop.",
+    ),
+  disclaimer: zod
+    .string()
+    .describe("The visualization-only disclaimer shown on every look surface."),
+  dresses: zod.array(
+    zod.object({
+      id: zod.number(),
+      styleName: zod.string(),
+      designer: zod.string().nullish(),
+      silhouette: zod.string().nullish(),
+      neckline: zod.string().nullish(),
+      frontImageObjectKey: zod
+        .string()
+        .nullish()
+        .describe(
+          "Object key of the dress's front reference image, if present.",
+        ),
+    }),
+  ),
+});
+
+/**
+ * The bride's "delete everything about me" from her share link. The share token is the capability — no account. Immediately hard-deletes her look imagery from storage and scrubs the consent fingerprint. Idempotent.
+ * @summary Delete everything about a bride's try-on (public, no account)
+ */
+export const ForgetTryonLookParams = zod.object({
+  shareToken: zod.coerce.string(),
+});
+
+export const ForgetTryonLookResponse = zod.object({
+  deleted: zod
+    .boolean()
+    .describe(
+      "True once the bride's try-on imagery is removed (or was already gone).",
+    ),
+});
+
+/**
+ * One reaction per viewer per look. A viewer who reacts again updates their existing reaction. Viewers never sign in; the voterToken is an anonymous per-viewer token minted client-side.
+ * @summary Cast a reaction on a shared look (public, no account)
+ */
+export const createReactionBodyVoterTokenMin = 8;
+
+export const CreateReactionBody = zod.object({
+  generatedAssetId: zod.number(),
+  voterToken: zod.string().min(createReactionBodyVoterTokenMin),
+  kind: zod.enum(["love", "maybe", "pass"]),
+  voterEmail: zod
+    .string()
+    .email()
+    .optional()
+    .describe(
+      "Optional, captured post-vote only — never a wall before the gallery.",
+    ),
+});
+
+export const CreateReactionResponse = zod.object({
+  generatedAssetId: zod.number(),
+  kind: zod.enum(["love", "maybe", "pass"]),
+  total: zod.number(),
+  byKind: zod.record(zod.string(), zod.number()),
+  bookFitting: zod.boolean(),
+});
+
+/**
+ * @summary Live per-look vote tally for a shared gallery (tokenized)
+ */
+export const GetSessionReactionsParams = zod.object({
+  shareToken: zod.coerce.string(),
+});
+
+export const GetSessionReactionsResponse = zod.object({
+  looks: zod.array(
+    zod.object({
+      generatedAssetId: zod.number(),
+      total: zod.number(),
+      byKind: zod.record(zod.string(), zod.number()),
+      bookFitting: zod
+        .boolean()
+        .describe(
+          "True once the look crosses the fitting-booking vote threshold.",
+        ),
+    }),
+  ),
+});
+
+/**
+ * @summary List the caller's organization leads (console)
+ */
+export const ListLeadsResponse = zod.object({
+  leads: zod.array(
+    zod.object({
+      id: zod.number(),
+      email: zod.string(),
+      name: zod.string().nullish(),
+      phone: zod.string().nullish(),
+      source: zod.string(),
+      shopId: zod.number().optional(),
+      lookbookId: zod.number().nullish(),
+      createdAt: zod.coerce.date(),
+    }),
+  ),
+});
+
+/**
+ * Public. The organization and shop are derived from the lookbook token, so a caller cannot attribute a lead to an org they don't belong to.
+ * @summary Capture a lead from the remote flow (public, after first look)
+ */
+export const CreateLeadBody = zod.object({
+  lookbookToken: zod
+    .string()
+    .describe("The \/try link token; the org and shop are derived from it."),
+  email: zod.string().email(),
+  name: zod.string().optional(),
+  phone: zod.string().optional(),
+});
+
+/**
  * @summary Request a presigned URL for file upload
  */
 
@@ -841,13 +1198,13 @@ export const RequestUploadUrlBody = zod.object({
     .max(requestUploadUrlBodySizeMax)
     .describe("Maximum upload size is 50MB."),
   contentType: zod.enum(["image/jpeg", "image/png", "image/webp"]),
-  purpose: zod.enum(["couple", "venue"]),
+  purpose: zod.enum(["couple", "venue", "dress"]),
   venueSlug: zod.string().min(1),
   uploadToken: zod
     .string()
     .optional()
     .describe(
-      "Required for couple uploads. Venue media uploads use the owner session cookie instead.",
+      "Required for couple uploads. Venue and dress media uploads use the owner session cookie instead.",
     ),
 });
 
@@ -865,13 +1222,13 @@ export const RequestUploadUrlResponse = zod.object({
         .max(requestUploadUrlResponseMetadataSizeMax)
         .describe("Maximum upload size is 50MB."),
       contentType: zod.enum(["image/jpeg", "image/png", "image/webp"]),
-      purpose: zod.enum(["couple", "venue"]),
+      purpose: zod.enum(["couple", "venue", "dress"]),
       venueSlug: zod.string().min(1),
       uploadToken: zod
         .string()
         .optional()
         .describe(
-          "Required for couple uploads. Venue media uploads use the owner session cookie instead.",
+          "Required for couple uploads. Venue and dress media uploads use the owner session cookie instead.",
         ),
     })
     .optional(),

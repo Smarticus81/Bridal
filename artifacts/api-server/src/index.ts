@@ -12,8 +12,9 @@ import {
 import { and, asc, eq, isNotNull, isNull, lt, or, sql } from "drizzle-orm";
 import { refundCreditsForSession } from "./lib/credits.js";
 import { startSessionWorker } from "./lib/sessionWorker.js";
+import { startRetentionPurgeSweeper } from "./lib/retentionPurgeSweeper.js";
 import { getAppBaseUrl } from "./lib/appUrl.js";
-import { assertProductionEnvironment } from "./lib/envValidation.js";
+import { assertProductionEnvironment, validateProductionEnvironment } from "./lib/envValidation.js";
 import {
   ownerAuthCleanupBatchSize,
   staleProcessingSessionMinutes,
@@ -167,7 +168,21 @@ process.on("unhandledRejection", (reason) => {
 
 const rawPort = process.env["PORT"];
 
-assertProductionEnvironment();
+// Incomplete production env boots in setup mode instead of crash-looping the
+// deploy: the SPA and configured routes serve, unconfigured subsystems return
+// 503, and /api/readyz stays a strict 503 until every check passes. Set
+// STRICT_PRODUCTION_BOOT=1 to restore the hard launch guard.
+if ((process.env.STRICT_PRODUCTION_BOOT ?? "").trim() === "1") {
+  assertProductionEnvironment();
+} else {
+  const productionEnvErrors = validateProductionEnvironment();
+  if (productionEnvErrors.length > 0) {
+    logger.error(
+      { errors: productionEnvErrors },
+      "Production environment is incomplete; booting in setup mode. /api/readyz will report 503 until every check passes.",
+    );
+  }
+}
 
 if (!rawPort) {
   throw new Error(
@@ -192,4 +207,5 @@ app.listen(port, (err) => {
   void cleanupExpiredUploadIntents();
   void cleanupExpiredOwnerAuth();
   startSessionWorker();
+  startRetentionPurgeSweeper();
 });

@@ -478,6 +478,7 @@ export type UploadUrlRequestPurpose =
 export const UploadUrlRequestPurpose = {
   couple: "couple",
   venue: "venue",
+  dress: "dress",
 } as const;
 
 export interface UploadUrlRequest {
@@ -493,7 +494,7 @@ export interface UploadUrlRequest {
   purpose: UploadUrlRequestPurpose;
   /** @minLength 1 */
   venueSlug: string;
-  /** Required for couple uploads. Venue media uploads use the owner session cookie instead. */
+  /** Required for couple uploads. Venue and dress media uploads use the owner session cookie instead. */
   uploadToken?: string;
 }
 
@@ -502,6 +503,353 @@ export interface UploadUrlResponse {
   objectPath: string;
   metadata?: UploadUrlRequest;
 }
+
+export type DressStatus = (typeof DressStatus)[keyof typeof DressStatus];
+
+export const DressStatus = {
+  in_stock: "in_stock",
+  special_order: "special_order",
+  discontinued: "discontinued",
+} as const;
+
+export type DressMediaCoverage =
+  (typeof DressMediaCoverage)[keyof typeof DressMediaCoverage];
+
+export const DressMediaCoverage = {
+  front: "front",
+  back: "back",
+  detail: "detail",
+  fabric: "fabric",
+  on_model: "on_model",
+} as const;
+
+export interface CreateDressBody {
+  /** @minLength 1 */
+  sku: string;
+  /** @minLength 1 */
+  styleName: string;
+  designer?: string;
+  silhouette?: string;
+  neckline?: string;
+  sleeve?: string;
+  trainLength?: string;
+  fabric?: string;
+  color?: string;
+  sizeRange?: string;
+  /** @minimum 0 */
+  priceCents?: number;
+  isConsignment?: boolean;
+  status?: DressStatus;
+  shopIds?: number[];
+}
+
+export interface DressResponse {
+  id: number;
+  sku: string;
+  designer?: string | null;
+  styleName: string;
+  silhouette?: string | null;
+  neckline?: string | null;
+  sleeve?: string | null;
+  trainLength?: string | null;
+  fabric?: string | null;
+  color?: string | null;
+  sizeRange?: string | null;
+  priceCents?: number | null;
+  isConsignment: boolean;
+  status: DressStatus;
+  shopIds: number[];
+  /** True when the dress has a validated front reference image. */
+  tryOnReady: boolean;
+  createdAt: string;
+}
+
+export interface ListDressesResponse {
+  dresses: DressResponse[];
+}
+
+export interface ImportDressRow {
+  sku: string;
+  styleName: string;
+  designer?: string;
+  silhouette?: string;
+  neckline?: string;
+  sleeve?: string;
+  trainLength?: string;
+  fabric?: string;
+  color?: string;
+  sizeRange?: string;
+  priceCents?: number;
+  status?: DressStatus;
+}
+
+export interface ImportDressesBody {
+  rows: ImportDressRow[];
+  /** Mark existing dresses absent from the import as discontinued. */
+  archiveMissing?: boolean;
+  /** When true, execute the diff (create/update/archive) transactionally and return the applied counts. When false or omitted, this is a dry-run preview that writes nothing. */
+  apply?: boolean;
+}
+
+export type ImportDressesDiffResponseInvalidItem = {
+  rowIndex: number;
+  errors: string[];
+};
+
+export interface ImportDressesDiffResponse {
+  /** Human-readable "will create N, update M, archive K". */
+  summary: string;
+  /** True when the diff was written; false for a dry-run preview. */
+  applied: boolean;
+  createCount: number;
+  updateCount: number;
+  archiveCount: number;
+  unchangedCount: number;
+  invalidCount: number;
+  invalid?: ImportDressesDiffResponseInvalidItem[];
+}
+
+export type LookbookPurpose =
+  (typeof LookbookPurpose)[keyof typeof LookbookPurpose];
+
+export const LookbookPurpose = {
+  pre_appointment: "pre_appointment",
+  post_appointment: "post_appointment",
+  open_catalog: "open_catalog",
+} as const;
+
+export interface CreateLookbookBody {
+  /** The storefront (shop/venue id) this lookbook belongs to. */
+  shopId: number;
+  purpose: LookbookPurpose;
+  brideName?: string;
+  brideEmail?: string;
+  /**
+   * Hard cap on looks generated through this link. Never uncapped.
+   * @minimum 1
+   */
+  creditCap: number;
+  /**
+   * Days until the link expires. Never unexpiring.
+   * @minimum 1
+   * @maximum 365
+   */
+  expiresInDays: number;
+  /** @minItems 1 */
+  dressIds: number[];
+}
+
+export interface LookbookResponse {
+  id: number;
+  token: string;
+  /** The public /try/:lookbookToken URL. */
+  url: string;
+  purpose: LookbookPurpose;
+  brideName?: string | null;
+  brideEmail?: string | null;
+  creditCap: number;
+  creditsUsed: number;
+  remainingCredits: number;
+  expiresAt: string;
+  status: string;
+  dressCount: number;
+}
+
+export interface LookbookSummary {
+  id: number;
+  token: string;
+  purpose: LookbookPurpose;
+  creditCap: number;
+  creditsUsed: number;
+  remainingCredits: number;
+  expiresAt: string;
+  status: string;
+  /** Whether the link can still generate a look right now. */
+  usable: boolean;
+}
+
+export interface ListLookbooksResponse {
+  lookbooks: LookbookSummary[];
+}
+
+export interface TryDress {
+  id: number;
+  styleName: string;
+  designer?: string | null;
+  silhouette?: string | null;
+  neckline?: string | null;
+  /** Object key of the dress's front reference image, if present. */
+  frontImageObjectKey?: string | null;
+}
+
+/**
+ * Why the link is not usable, when usable is false.
+ */
+export type TryLookbookResponseReason =
+  | (typeof TryLookbookResponseReason)[keyof typeof TryLookbookResponseReason]
+  | null;
+
+export const TryLookbookResponseReason = {
+  expired: "expired",
+  revoked: "revoked",
+  exhausted: "exhausted",
+} as const;
+
+export interface TryLookbookResponse {
+  usable: boolean;
+  /** Why the link is not usable, when usable is false. */
+  reason?: TryLookbookResponseReason;
+  purpose: LookbookPurpose;
+  remainingCredits: number;
+  shopName: string;
+  /** The shop's slug, used to authorize the bride's photo upload. */
+  shopSlug: string;
+  /** Short-lived token authorizing the bride photo upload for this shop. */
+  uploadToken: string;
+  /** The visualization-only disclaimer shown on every look surface. */
+  disclaimer: string;
+  dresses: TryDress[];
+}
+
+export type ReactionKind = (typeof ReactionKind)[keyof typeof ReactionKind];
+
+export const ReactionKind = {
+  love: "love",
+  maybe: "maybe",
+  pass: "pass",
+} as const;
+
+export interface CreateReactionBody {
+  generatedAssetId: number;
+  /** @minLength 8 */
+  voterToken: string;
+  kind: ReactionKind;
+  /** Optional, captured post-vote only — never a wall before the gallery. */
+  voterEmail?: string;
+}
+
+export type LookTallyItemByKind = { [key: string]: number };
+
+export interface LookTallyItem {
+  generatedAssetId: number;
+  total: number;
+  byKind: LookTallyItemByKind;
+  /** True once the look crosses the fitting-booking vote threshold. */
+  bookFitting: boolean;
+}
+
+export type ReactionResponseByKind = { [key: string]: number };
+
+export interface ReactionResponse {
+  generatedAssetId: number;
+  kind: ReactionKind;
+  total: number;
+  byKind: ReactionResponseByKind;
+  bookFitting: boolean;
+}
+
+export interface SessionReactionsResponse {
+  looks: LookTallyItem[];
+}
+
+export interface CreateLeadBody {
+  /** The /try link token; the org and shop are derived from it. */
+  lookbookToken: string;
+  email: string;
+  name?: string;
+  phone?: string;
+}
+
+export interface LeadResponse {
+  id: number;
+  email: string;
+  createdAt: string;
+}
+
+export interface LeadSummary {
+  id: number;
+  email: string;
+  name?: string | null;
+  phone?: string | null;
+  source: string;
+  shopId?: number;
+  lookbookId?: number | null;
+  createdAt: string;
+}
+
+export interface ListLeadsResponse {
+  leads: LeadSummary[];
+}
+
+export interface AddDressMediaBody {
+  objectKey: string;
+  coverage: DressMediaCoverage;
+  /** @minimum 0 */
+  displayOrder?: number;
+}
+
+export interface DressMediaResponse {
+  id: number;
+  dressId: number;
+  objectKey: string;
+  coverage: DressMediaCoverage;
+  displayOrder: number;
+  createdAt: string;
+}
+
+export interface GenerateTryonLookBody {
+  dressId: number;
+  /** Object key of the bride's uploaded, gated photo. */
+  bridePhotoObjectKey: string;
+  brideEmail: string;
+  /** Must be true — the bride's own affirmative action. */
+  consent: boolean;
+}
+
+export interface TryonLookResponse {
+  /** Storage object key of the generated look. */
+  objectKey: string;
+  /** Token authorizing the bride to view this look's image. */
+  shareToken: string;
+  disclaimer: string;
+  /** True when the look is held for consultant review rather than shown as final. */
+  consultantReview: boolean;
+  brideLikenessScore?: number;
+  garmentFidelityScore?: number;
+  bodyProportionScore?: number;
+}
+
+export interface ForgetLookResponse {
+  /** True once the bride's try-on imagery is removed (or was already gone). */
+  deleted: boolean;
+}
+
+export type ListDressesParams = {
+  status?: ListDressesStatus;
+  silhouette?: string;
+  neckline?: string;
+  sleeve?: string;
+  sizeRange?: string;
+  /**
+   * @minimum 0
+   */
+  minPriceCents?: number;
+  /**
+   * @minimum 0
+   */
+  maxPriceCents?: number;
+  shopId?: number;
+  tryOnReadyOnly?: boolean;
+};
+
+export type ListDressesStatus =
+  (typeof ListDressesStatus)[keyof typeof ListDressesStatus];
+
+export const ListDressesStatus = {
+  in_stock: "in_stock",
+  special_order: "special_order",
+  discontinued: "discontinued",
+} as const;
 
 export type GetStorageObjectParams = {
   /**

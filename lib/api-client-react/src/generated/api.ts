@@ -17,22 +17,40 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  AddDressMediaBody,
   AddVenueMediaBody,
   BillingCheckoutBody,
   BillingCheckoutResponse,
   BillingPortalResponse,
+  CreateDressBody,
+  CreateLeadBody,
+  CreateLookbookBody,
+  CreateReactionBody,
   CreateSessionBody,
   CreateVenueBody,
   DeleteSessionResponse,
+  DressMediaResponse,
+  DressResponse,
   ErrorEnvelope,
+  ForgetLookResponse,
+  GenerateTryonLookBody,
   GetStorageObjectParams,
   HealthStatus,
+  ImportDressesBody,
+  ImportDressesDiffResponse,
+  LeadResponse,
+  ListDressesParams,
+  ListDressesResponse,
   ListGalleryStylesResponse,
+  ListLeadsResponse,
+  ListLookbooksResponse,
   ListSessionsResponse,
   ListVenueMediaResponse,
+  LookbookResponse,
   OrgCreditHistoryResponse,
   OrganizationResponse,
   OwnerSessionDetailResponse,
+  ReactionResponse,
   ReadinessStatus,
   RecoverSessionsBody,
   RecoverSessionsResponse,
@@ -40,7 +58,10 @@ import type {
   SendSessionEmailByTokenBody,
   SendSessionEmailResponse,
   SessionDetailResponse,
+  SessionReactionsResponse,
   SessionResponse,
+  TryLookbookResponse,
+  TryonLookResponse,
   UpdateVenueBody,
   UploadUrlRequest,
   UploadUrlResponse,
@@ -2101,6 +2122,1127 @@ export function useListGalleryStyles<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary List the caller's organization catalog
+ */
+export const getListDressesUrl = (params?: ListDressesParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/dresses?${stringifiedParams}`
+    : `/api/dresses`;
+};
+
+export const listDresses = async (
+  params?: ListDressesParams,
+  options?: RequestInit,
+): Promise<ListDressesResponse> => {
+  return customFetch<ListDressesResponse>(getListDressesUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListDressesQueryKey = (params?: ListDressesParams) => {
+  return [`/api/dresses`, ...(params ? [params] : [])] as const;
+};
+
+export const getListDressesQueryOptions = <
+  TData = Awaited<ReturnType<typeof listDresses>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: ListDressesParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listDresses>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListDressesQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listDresses>>> = ({
+    signal,
+  }) => listDresses(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listDresses>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListDressesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listDresses>>
+>;
+export type ListDressesQueryError = ErrorType<ErrorEnvelope>;
+
+/**
+ * @summary List the caller's organization catalog
+ */
+
+export function useListDresses<
+  TData = Awaited<ReturnType<typeof listDresses>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  params?: ListDressesParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listDresses>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListDressesQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Add a dress to the catalog
+ */
+export const getCreateDressUrl = () => {
+  return `/api/dresses`;
+};
+
+export const createDress = async (
+  createDressBody: CreateDressBody,
+  options?: RequestInit,
+): Promise<DressResponse> => {
+  return customFetch<DressResponse>(getCreateDressUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createDressBody),
+  });
+};
+
+export const getCreateDressMutationOptions = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createDress>>,
+    TError,
+    { data: BodyType<CreateDressBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createDress>>,
+  TError,
+  { data: BodyType<CreateDressBody> },
+  TContext
+> => {
+  const mutationKey = ["createDress"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createDress>>,
+    { data: BodyType<CreateDressBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createDress(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateDressMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createDress>>
+>;
+export type CreateDressMutationBody = BodyType<CreateDressBody>;
+export type CreateDressMutationError = ErrorType<ErrorEnvelope>;
+
+/**
+ * @summary Add a dress to the catalog
+ */
+export const useCreateDress = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createDress>>,
+    TError,
+    { data: BodyType<CreateDressBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createDress>>,
+  TError,
+  { data: BodyType<CreateDressBody> },
+  TContext
+> => {
+  return useMutation(getCreateDressMutationOptions(options));
+};
+
+/**
+ * Returns "will create N, update M, archive K" for the supplied rows against the caller's existing catalog. This is a dry run: it never writes. Commit is a separate, explicit step.
+ * @summary Dry-run diff of a bulk catalog import
+ */
+export const getImportDressesUrl = () => {
+  return `/api/dresses/import`;
+};
+
+export const importDresses = async (
+  importDressesBody: ImportDressesBody,
+  options?: RequestInit,
+): Promise<ImportDressesDiffResponse> => {
+  return customFetch<ImportDressesDiffResponse>(getImportDressesUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(importDressesBody),
+  });
+};
+
+export const getImportDressesMutationOptions = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof importDresses>>,
+    TError,
+    { data: BodyType<ImportDressesBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof importDresses>>,
+  TError,
+  { data: BodyType<ImportDressesBody> },
+  TContext
+> => {
+  const mutationKey = ["importDresses"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof importDresses>>,
+    { data: BodyType<ImportDressesBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return importDresses(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ImportDressesMutationResult = NonNullable<
+  Awaited<ReturnType<typeof importDresses>>
+>;
+export type ImportDressesMutationBody = BodyType<ImportDressesBody>;
+export type ImportDressesMutationError = ErrorType<ErrorEnvelope>;
+
+/**
+ * @summary Dry-run diff of a bulk catalog import
+ */
+export const useImportDresses = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof importDresses>>,
+    TError,
+    { data: BodyType<ImportDressesBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof importDresses>>,
+  TError,
+  { data: BodyType<ImportDressesBody> },
+  TContext
+> => {
+  return useMutation(getImportDressesMutationOptions(options));
+};
+
+/**
+ * The photo must first be uploaded via /storage/uploads/request-url with purpose "dress". A validated front image makes the dress try-on ready.
+ * @summary Attach a coverage-tagged reference photo to a dress
+ */
+export const getAddDressMediaUrl = (dressId: number) => {
+  return `/api/dresses/${dressId}/media`;
+};
+
+export const addDressMedia = async (
+  dressId: number,
+  addDressMediaBody: AddDressMediaBody,
+  options?: RequestInit,
+): Promise<DressMediaResponse> => {
+  return customFetch<DressMediaResponse>(getAddDressMediaUrl(dressId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(addDressMediaBody),
+  });
+};
+
+export const getAddDressMediaMutationOptions = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof addDressMedia>>,
+    TError,
+    { dressId: number; data: BodyType<AddDressMediaBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof addDressMedia>>,
+  TError,
+  { dressId: number; data: BodyType<AddDressMediaBody> },
+  TContext
+> => {
+  const mutationKey = ["addDressMedia"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof addDressMedia>>,
+    { dressId: number; data: BodyType<AddDressMediaBody> }
+  > = (props) => {
+    const { dressId, data } = props ?? {};
+
+    return addDressMedia(dressId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AddDressMediaMutationResult = NonNullable<
+  Awaited<ReturnType<typeof addDressMedia>>
+>;
+export type AddDressMediaMutationBody = BodyType<AddDressMediaBody>;
+export type AddDressMediaMutationError = ErrorType<ErrorEnvelope>;
+
+/**
+ * @summary Attach a coverage-tagged reference photo to a dress
+ */
+export const useAddDressMedia = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof addDressMedia>>,
+    TError,
+    { dressId: number; data: BodyType<AddDressMediaBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof addDressMedia>>,
+  TError,
+  { dressId: number; data: BodyType<AddDressMediaBody> },
+  TContext
+> => {
+  return useMutation(getAddDressMediaMutationOptions(options));
+};
+
+/**
+ * @summary List the caller's organization lookbooks with burn meter
+ */
+export const getListLookbooksUrl = () => {
+  return `/api/lookbooks`;
+};
+
+export const listLookbooks = async (
+  options?: RequestInit,
+): Promise<ListLookbooksResponse> => {
+  return customFetch<ListLookbooksResponse>(getListLookbooksUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListLookbooksQueryKey = () => {
+  return [`/api/lookbooks`] as const;
+};
+
+export const getListLookbooksQueryOptions = <
+  TData = Awaited<ReturnType<typeof listLookbooks>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listLookbooks>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListLookbooksQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listLookbooks>>> = ({
+    signal,
+  }) => listLookbooks({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listLookbooks>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListLookbooksQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listLookbooks>>
+>;
+export type ListLookbooksQueryError = ErrorType<ErrorEnvelope>;
+
+/**
+ * @summary List the caller's organization lookbooks with burn meter
+ */
+
+export function useListLookbooks<
+  TData = Awaited<ReturnType<typeof listLookbooks>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listLookbooks>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListLookbooksQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create a curated, capped, expiring lookbook link
+ */
+export const getCreateLookbookUrl = () => {
+  return `/api/lookbooks`;
+};
+
+export const createLookbook = async (
+  createLookbookBody: CreateLookbookBody,
+  options?: RequestInit,
+): Promise<LookbookResponse> => {
+  return customFetch<LookbookResponse>(getCreateLookbookUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createLookbookBody),
+  });
+};
+
+export const getCreateLookbookMutationOptions = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createLookbook>>,
+    TError,
+    { data: BodyType<CreateLookbookBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createLookbook>>,
+  TError,
+  { data: BodyType<CreateLookbookBody> },
+  TContext
+> => {
+  const mutationKey = ["createLookbook"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createLookbook>>,
+    { data: BodyType<CreateLookbookBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createLookbook(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateLookbookMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createLookbook>>
+>;
+export type CreateLookbookMutationBody = BodyType<CreateLookbookBody>;
+export type CreateLookbookMutationError = ErrorType<ErrorEnvelope>;
+
+/**
+ * @summary Create a curated, capped, expiring lookbook link
+ */
+export const useCreateLookbook = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createLookbook>>,
+    TError,
+    { data: BodyType<CreateLookbookBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createLookbook>>,
+  TError,
+  { data: BodyType<CreateLookbookBody> },
+  TContext
+> => {
+  return useMutation(getCreateLookbookMutationOptions(options));
+};
+
+/**
+ * The bride selects a dress from the lookbook and supplies her uploaded photo and explicit consent. Costs one credit (bounded by the lookbook cap and the shop's balance). Runs the garment-fidelity gate; a below-target look is routed to the consultant, never returned as final.
+ * @summary Generate a try-on look for a chosen dress (public, no account)
+ */
+export const getGenerateTryonLookUrl = (lookbookToken: string) => {
+  return `/api/try/${lookbookToken}/looks`;
+};
+
+export const generateTryonLook = async (
+  lookbookToken: string,
+  generateTryonLookBody: GenerateTryonLookBody,
+  options?: RequestInit,
+): Promise<TryonLookResponse> => {
+  return customFetch<TryonLookResponse>(
+    getGenerateTryonLookUrl(lookbookToken),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(generateTryonLookBody),
+    },
+  );
+};
+
+export const getGenerateTryonLookMutationOptions = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateTryonLook>>,
+    TError,
+    { lookbookToken: string; data: BodyType<GenerateTryonLookBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof generateTryonLook>>,
+  TError,
+  { lookbookToken: string; data: BodyType<GenerateTryonLookBody> },
+  TContext
+> => {
+  const mutationKey = ["generateTryonLook"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof generateTryonLook>>,
+    { lookbookToken: string; data: BodyType<GenerateTryonLookBody> }
+  > = (props) => {
+    const { lookbookToken, data } = props ?? {};
+
+    return generateTryonLook(lookbookToken, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type GenerateTryonLookMutationResult = NonNullable<
+  Awaited<ReturnType<typeof generateTryonLook>>
+>;
+export type GenerateTryonLookMutationBody = BodyType<GenerateTryonLookBody>;
+export type GenerateTryonLookMutationError = ErrorType<ErrorEnvelope>;
+
+/**
+ * @summary Generate a try-on look for a chosen dress (public, no account)
+ */
+export const useGenerateTryonLook = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateTryonLook>>,
+    TError,
+    { lookbookToken: string; data: BodyType<GenerateTryonLookBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof generateTryonLook>>,
+  TError,
+  { lookbookToken: string; data: BodyType<GenerateTryonLookBody> },
+  TContext
+> => {
+  return useMutation(getGenerateTryonLookMutationOptions(options));
+};
+
+/**
+ * Public entry for /try/:lookbookToken. Returns the shop's curated dresses to try. When the link is expired, revoked, or exhausted it returns a calm unusable state rather than an error.
+ * @summary Resolve a lookbook for the remote bride flow (public, no account)
+ */
+export const getGetLookbookByTokenUrl = (lookbookToken: string) => {
+  return `/api/try/${lookbookToken}`;
+};
+
+export const getLookbookByToken = async (
+  lookbookToken: string,
+  options?: RequestInit,
+): Promise<TryLookbookResponse> => {
+  return customFetch<TryLookbookResponse>(
+    getGetLookbookByTokenUrl(lookbookToken),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetLookbookByTokenQueryKey = (lookbookToken: string) => {
+  return [`/api/try/${lookbookToken}`] as const;
+};
+
+export const getGetLookbookByTokenQueryOptions = <
+  TData = Awaited<ReturnType<typeof getLookbookByToken>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  lookbookToken: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getLookbookByToken>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetLookbookByTokenQueryKey(lookbookToken);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getLookbookByToken>>
+  > = ({ signal }) =>
+    getLookbookByToken(lookbookToken, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!lookbookToken,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getLookbookByToken>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetLookbookByTokenQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getLookbookByToken>>
+>;
+export type GetLookbookByTokenQueryError = ErrorType<ErrorEnvelope>;
+
+/**
+ * @summary Resolve a lookbook for the remote bride flow (public, no account)
+ */
+
+export function useGetLookbookByToken<
+  TData = Awaited<ReturnType<typeof getLookbookByToken>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  lookbookToken: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getLookbookByToken>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetLookbookByTokenQueryOptions(
+    lookbookToken,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * The bride's "delete everything about me" from her share link. The share token is the capability — no account. Immediately hard-deletes her look imagery from storage and scrubs the consent fingerprint. Idempotent.
+ * @summary Delete everything about a bride's try-on (public, no account)
+ */
+export const getForgetTryonLookUrl = (shareToken: string) => {
+  return `/api/try/looks/${shareToken}/forget`;
+};
+
+export const forgetTryonLook = async (
+  shareToken: string,
+  options?: RequestInit,
+): Promise<ForgetLookResponse> => {
+  return customFetch<ForgetLookResponse>(getForgetTryonLookUrl(shareToken), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getForgetTryonLookMutationOptions = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof forgetTryonLook>>,
+    TError,
+    { shareToken: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof forgetTryonLook>>,
+  TError,
+  { shareToken: string },
+  TContext
+> => {
+  const mutationKey = ["forgetTryonLook"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof forgetTryonLook>>,
+    { shareToken: string }
+  > = (props) => {
+    const { shareToken } = props ?? {};
+
+    return forgetTryonLook(shareToken, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ForgetTryonLookMutationResult = NonNullable<
+  Awaited<ReturnType<typeof forgetTryonLook>>
+>;
+
+export type ForgetTryonLookMutationError = ErrorType<ErrorEnvelope>;
+
+/**
+ * @summary Delete everything about a bride's try-on (public, no account)
+ */
+export const useForgetTryonLook = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof forgetTryonLook>>,
+    TError,
+    { shareToken: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof forgetTryonLook>>,
+  TError,
+  { shareToken: string },
+  TContext
+> => {
+  return useMutation(getForgetTryonLookMutationOptions(options));
+};
+
+/**
+ * One reaction per viewer per look. A viewer who reacts again updates their existing reaction. Viewers never sign in; the voterToken is an anonymous per-viewer token minted client-side.
+ * @summary Cast a reaction on a shared look (public, no account)
+ */
+export const getCreateReactionUrl = () => {
+  return `/api/reactions`;
+};
+
+export const createReaction = async (
+  createReactionBody: CreateReactionBody,
+  options?: RequestInit,
+): Promise<ReactionResponse> => {
+  return customFetch<ReactionResponse>(getCreateReactionUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createReactionBody),
+  });
+};
+
+export const getCreateReactionMutationOptions = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createReaction>>,
+    TError,
+    { data: BodyType<CreateReactionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createReaction>>,
+  TError,
+  { data: BodyType<CreateReactionBody> },
+  TContext
+> => {
+  const mutationKey = ["createReaction"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createReaction>>,
+    { data: BodyType<CreateReactionBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createReaction(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateReactionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createReaction>>
+>;
+export type CreateReactionMutationBody = BodyType<CreateReactionBody>;
+export type CreateReactionMutationError = ErrorType<ErrorEnvelope>;
+
+/**
+ * @summary Cast a reaction on a shared look (public, no account)
+ */
+export const useCreateReaction = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createReaction>>,
+    TError,
+    { data: BodyType<CreateReactionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createReaction>>,
+  TError,
+  { data: BodyType<CreateReactionBody> },
+  TContext
+> => {
+  return useMutation(getCreateReactionMutationOptions(options));
+};
+
+/**
+ * @summary Live per-look vote tally for a shared gallery (tokenized)
+ */
+export const getGetSessionReactionsUrl = (shareToken: string) => {
+  return `/api/sessions/by-token/${shareToken}/reactions`;
+};
+
+export const getSessionReactions = async (
+  shareToken: string,
+  options?: RequestInit,
+): Promise<SessionReactionsResponse> => {
+  return customFetch<SessionReactionsResponse>(
+    getGetSessionReactionsUrl(shareToken),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetSessionReactionsQueryKey = (shareToken: string) => {
+  return [`/api/sessions/by-token/${shareToken}/reactions`] as const;
+};
+
+export const getGetSessionReactionsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getSessionReactions>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  shareToken: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getSessionReactions>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetSessionReactionsQueryKey(shareToken);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getSessionReactions>>
+  > = ({ signal }) =>
+    getSessionReactions(shareToken, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!shareToken,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getSessionReactions>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetSessionReactionsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getSessionReactions>>
+>;
+export type GetSessionReactionsQueryError = ErrorType<ErrorEnvelope>;
+
+/**
+ * @summary Live per-look vote tally for a shared gallery (tokenized)
+ */
+
+export function useGetSessionReactions<
+  TData = Awaited<ReturnType<typeof getSessionReactions>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(
+  shareToken: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getSessionReactions>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetSessionReactionsQueryOptions(shareToken, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List the caller's organization leads (console)
+ */
+export const getListLeadsUrl = () => {
+  return `/api/leads`;
+};
+
+export const listLeads = async (
+  options?: RequestInit,
+): Promise<ListLeadsResponse> => {
+  return customFetch<ListLeadsResponse>(getListLeadsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListLeadsQueryKey = () => {
+  return [`/api/leads`] as const;
+};
+
+export const getListLeadsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listLeads>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof listLeads>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListLeadsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listLeads>>> = ({
+    signal,
+  }) => listLeads({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listLeads>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListLeadsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listLeads>>
+>;
+export type ListLeadsQueryError = ErrorType<ErrorEnvelope>;
+
+/**
+ * @summary List the caller's organization leads (console)
+ */
+
+export function useListLeads<
+  TData = Awaited<ReturnType<typeof listLeads>>,
+  TError = ErrorType<ErrorEnvelope>,
+>(options?: {
+  query?: UseQueryOptions<Awaited<ReturnType<typeof listLeads>>, TError, TData>;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListLeadsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * Public. The organization and shop are derived from the lookbook token, so a caller cannot attribute a lead to an org they don't belong to.
+ * @summary Capture a lead from the remote flow (public, after first look)
+ */
+export const getCreateLeadUrl = () => {
+  return `/api/leads`;
+};
+
+export const createLead = async (
+  createLeadBody: CreateLeadBody,
+  options?: RequestInit,
+): Promise<LeadResponse> => {
+  return customFetch<LeadResponse>(getCreateLeadUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createLeadBody),
+  });
+};
+
+export const getCreateLeadMutationOptions = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createLead>>,
+    TError,
+    { data: BodyType<CreateLeadBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createLead>>,
+  TError,
+  { data: BodyType<CreateLeadBody> },
+  TContext
+> => {
+  const mutationKey = ["createLead"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createLead>>,
+    { data: BodyType<CreateLeadBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createLead(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateLeadMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createLead>>
+>;
+export type CreateLeadMutationBody = BodyType<CreateLeadBody>;
+export type CreateLeadMutationError = ErrorType<ErrorEnvelope>;
+
+/**
+ * @summary Capture a lead from the remote flow (public, after first look)
+ */
+export const useCreateLead = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createLead>>,
+    TError,
+    { data: BodyType<CreateLeadBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createLead>>,
+  TError,
+  { data: BodyType<CreateLeadBody> },
+  TContext
+> => {
+  return useMutation(getCreateLeadMutationOptions(options));
+};
 
 /**
  * @summary Request a presigned URL for file upload

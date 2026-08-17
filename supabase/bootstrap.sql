@@ -174,3 +174,115 @@ ALTER TABLE credit_transactions
 CREATE UNIQUE INDEX IF NOT EXISTS credit_transactions_stripe_event_id_unique
   ON credit_transactions (stripe_event_id)
   WHERE stripe_event_id IS NOT NULL;
+
+-- ===========================================================================
+-- veil bridal subsystem (added by the port). A "shop" is a venues(id) row.
+-- ===========================================================================
+
+-- Catalog: 200-600 dresses per shop, replacing glimpse's 5 static profile slots.
+CREATE TABLE IF NOT EXISTS dresses (
+  id SERIAL PRIMARY KEY,
+  organization_id INTEGER NOT NULL,
+  sku TEXT NOT NULL,
+  designer TEXT,
+  style_name TEXT NOT NULL,
+  silhouette TEXT,
+  neckline TEXT,
+  sleeve TEXT,
+  train_length TEXT,
+  fabric TEXT,
+  color TEXT,
+  size_range TEXT,
+  price_cents INTEGER,
+  is_consignment BOOLEAN NOT NULL DEFAULT FALSE,
+  status TEXT NOT NULL DEFAULT 'in_stock',
+  shop_ids INTEGER[] NOT NULL DEFAULT '{}'::int[],
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS dresses_org_sku_unique
+  ON dresses (organization_id, sku);
+
+-- Dress reference photos with explicit coverage slots (front required).
+CREATE TABLE IF NOT EXISTS dress_media (
+  id SERIAL PRIMARY KEY,
+  dress_id INTEGER NOT NULL REFERENCES dresses(id) ON DELETE CASCADE,
+  object_key TEXT NOT NULL,
+  coverage TEXT NOT NULL DEFAULT 'front',
+  display_order INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS dress_media_dress_object_key_unique
+  ON dress_media (dress_id, object_key);
+
+-- Lookbooks: curated dress sets for the remote /try/:lookbookToken flow.
+-- credit_cap and expires_at are NOT NULL so a link is never uncapped/unexpiring.
+CREATE TABLE IF NOT EXISTS lookbooks (
+  id SERIAL PRIMARY KEY,
+  organization_id INTEGER NOT NULL,
+  shop_id INTEGER NOT NULL,
+  token TEXT NOT NULL UNIQUE,
+  purpose TEXT NOT NULL,
+  bride_name TEXT,
+  bride_email TEXT,
+  credit_cap INTEGER NOT NULL,
+  credits_used INTEGER NOT NULL DEFAULT 0,
+  expires_at TIMESTAMP NOT NULL,
+  status TEXT NOT NULL DEFAULT 'active',
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS lookbook_dresses (
+  id SERIAL PRIMARY KEY,
+  lookbook_id INTEGER NOT NULL REFERENCES lookbooks(id) ON DELETE CASCADE,
+  dress_id INTEGER NOT NULL REFERENCES dresses(id) ON DELETE CASCADE,
+  display_order INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS lookbook_dresses_lookbook_dress_unique
+  ON lookbook_dresses (lookbook_id, dress_id);
+
+-- Share-to-party reactions: one per viewer per look, no viewer account.
+CREATE TABLE IF NOT EXISTS reactions (
+  id SERIAL PRIMARY KEY,
+  session_id INTEGER NOT NULL REFERENCES couple_sessions(id) ON DELETE CASCADE,
+  generated_asset_id INTEGER NOT NULL REFERENCES generated_assets(id) ON DELETE CASCADE,
+  voter_token TEXT NOT NULL,
+  kind TEXT NOT NULL DEFAULT 'love',
+  voter_email TEXT,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS reactions_asset_voter_unique
+  ON reactions (generated_asset_id, voter_token);
+
+-- Commercial lead capture (fires after the first look renders).
+CREATE TABLE IF NOT EXISTS leads (
+  id SERIAL PRIMARY KEY,
+  organization_id INTEGER NOT NULL,
+  shop_id INTEGER NOT NULL,
+  lookbook_id INTEGER REFERENCES lookbooks(id) ON DELETE SET NULL,
+  session_id INTEGER REFERENCES couple_sessions(id) ON DELETE SET NULL,
+  email TEXT NOT NULL,
+  name TEXT,
+  phone TEXT,
+  source TEXT NOT NULL DEFAULT 'remote_flow',
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- Consent + retention ledger. Explicit, timestamped, bride-affirmed.
+CREATE TABLE IF NOT EXISTS consent_records (
+  id SERIAL PRIMARY KEY,
+  session_id INTEGER REFERENCES couple_sessions(id) ON DELETE CASCADE,
+  lookbook_id INTEGER REFERENCES lookbooks(id) ON DELETE SET NULL,
+  subject_email TEXT NOT NULL,
+  consent_type TEXT NOT NULL DEFAULT 'image_use',
+  fingerprint TEXT,
+  affirmative BOOLEAN NOT NULL DEFAULT FALSE,
+  ip_address TEXT,
+  user_agent TEXT,
+  consented_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  retention_expires_at TIMESTAMP,
+  revoked_at TIMESTAMP
+);

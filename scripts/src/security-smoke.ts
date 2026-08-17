@@ -170,12 +170,17 @@ const sessionVisibilityModule = (await import(
   hasCompletePublicGalleryAssets: (
     assets: Array<{ assetType: string; displayOrder: number }>,
   ) => boolean;
+  canReadTryonLookWithShareToken: (
+    status: string,
+    assets: Array<{ assetType: string; displayOrder: number }>,
+  ) => boolean;
 };
 
 const {
   canExposeGeneratedAssetsToSharePage,
   canReadGeneratedAssetWithShareToken,
   hasCompletePublicGalleryAssets,
+  canReadTryonLookWithShareToken,
 } = sessionVisibilityModule;
 
 const referenceQualityModule = (await import(
@@ -843,6 +848,21 @@ try {
     true,
     "share-token object reads allow generated assets after the ready gallery has a complete asset bundle",
   );
+  assert.equal(
+    canReadTryonLookWithShareToken("processing", [{ assetType: "image", displayOrder: 1 }]),
+    false,
+    "share-token try-on look reads reject a look until the session is ready",
+  );
+  assert.equal(
+    canReadTryonLookWithShareToken("ready", [{ assetType: "image", displayOrder: 1 }]),
+    true,
+    "share-token try-on look reads allow a single ready look image",
+  );
+  assert.equal(
+    canReadTryonLookWithShareToken("ready", completeGalleryAssets),
+    false,
+    "the single-look try-on reader never widens visibility into a wedding gallery bundle",
+  );
   const titleCard = await buildReelTitleCard({ venueName: "Willow & Stone <Estate>" });
   assert.ok(titleCard, "branded motion reel title card is produced when a venue name exists");
   const titleCardMeta = await sharp(titleCard).metadata();
@@ -960,6 +980,11 @@ try {
     /venueMedia\.slice\(0, MAX_VENUE_REFERENCES_FOR_GALLERY\)\.map/.test(gallerySessionPipelineSource),
     false,
     "gallery generation does not pre-slice venue media before preserving required coverage",
+  );
+  assert.match(
+    storageRoute,
+    /dressMediaTable[\s\S]*innerJoin\(lookbookDressesTable, eq\(dressMediaTable\.dressId, lookbookDressesTable\.dressId\)\)[\s\S]*eq\(dressMediaTable\.objectKey, objectPath\)[\s\S]*curatedDressMedia\.length > 0\) return true/s,
+    "dress catalog media is public only once the dress is curated into a lookbook",
   );
   const uploadHookSource = fs.readFileSync(
     new URL("../../lib/object-storage-web/src/use-upload.ts", import.meta.url),
@@ -1235,6 +1260,52 @@ try {
     "server startup deletes expired or spent owner login tokens and expired or revoked owner sessions",
   );
   assert.match(
+    serverIndex,
+    /startRetentionPurgeSweeper\(\);/,
+    "server startup starts the retention purge sweeper so the TTL purge actually runs",
+  );
+  const retentionSweeperSource = fs.readFileSync(
+    new URL("../../artifacts/api-server/src/lib/retentionPurgeSweeper.ts", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    retentionSweeperSource,
+    /isNull\(consentRecordsTable\.purgedAt\)[\s\S]*isNotNull\(consentRecordsTable\.revokedAt\)[\s\S]*lt\(\s*consentRecordsTable\.retentionExpiresAt,\s*now\s*\)/s,
+    "retention sweep selects only un-purged consent past its horizon or revoked",
+  );
+  assert.match(
+    retentionSweeperSource,
+    /delete\(generatedAssetsTable\)[\s\S]*delete\(coupleMediaTable\)[\s\S]*update\(consentRecordsTable\)[\s\S]*fingerprint: null, purgedAt: now/s,
+    "retention finalize hard-deletes derived+source imagery and scrubs the biometric fingerprint",
+  );
+  const retentionExecutorSource = fs.readFileSync(
+    new URL("../../artifacts/api-server/src/lib/retentionPurgeExecutor.ts", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    retentionExecutorSource,
+    /\.every\(\(key\) => deleted\.has\(key\)\)[\s\S]*deps\.finalizePurge\(finalizableSessionIds/s,
+    "retention purge finalizes a session only after all of its imagery is confirmed deleted from storage",
+  );
+  const tryonLooksSource = fs.readFileSync(
+    new URL("../../artifacts/api-server/src/routes/tryonLooks.ts", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    tryonLooksSource,
+    /router\.post\("\/try\/looks\/:shareToken\/forget"[\s\S]*eq\(coupleSessionsTable\.shareToken, shareToken\)[\s\S]*runRetentionPurge\([\s\S]*result\.sessionsPurged === 0 && hadImagery[\s\S]*502/s,
+    "the subject forget-me route purges by share token and never reports deletion that did not happen",
+  );
+  const dressesRouteSource = fs.readFileSync(
+    new URL("../../artifacts/api-server/src/routes/dresses.ts", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    dressesRouteSource,
+    /const apply = parsed\.data\.apply === true;[\s\S]*db\.transaction\([\s\S]*insert\(dressesTable\)[\s\S]*organizationId: ctx\.org\.id[\s\S]*update\(dressesTable\)[\s\S]*eq\(dressesTable\.organizationId, ctx\.org\.id\)[\s\S]*status: "discontinued"[\s\S]*eq\(dressesTable\.organizationId, ctx\.org\.id\)/s,
+    "inventory import applies create/update/archive transactionally and org-scoped, only when apply is true",
+  );
+  assert.match(
     rateLimitSource,
     /pruneExpiredBuckets\(now: number\)[\s\S]*rateBuckets\.size < 10_000[\s\S]*rateBuckets\.delete\(key\)[\s\S]*pruneExpiredBuckets\(now\)/s,
     "in-memory rate limiter prunes expired buckets to avoid unbounded growth on long-lived instances",
@@ -1252,6 +1323,11 @@ try {
     sessionsRoute,
     /findGalleryStyle\(styleId\)/,
     "session creation rejects invalid gallery styles before charging credits",
+  );
+  assert.match(
+    sessionsRoute,
+    /hasCompletePublicGalleryAssets\(generatedAssets\) \|\| isTryonLookSession\(generatedAssets\)[\s\S]*buildSessionDetailPayload/s,
+    "share-token session detail exposes a complete gallery or a single try-on look, never a partial gallery",
   );
   assert.match(
     sessionsRoute,
@@ -1425,6 +1501,19 @@ try {
     couplePageSource,
     /temporarily unavailable for new galleries[\s\S]*venue team/s,
     "couple preview page uses neutral availability language when the venue cannot start sessions",
+  );
+
+  // Invariant 5: the visualization disclaimer renders on every surface showing a
+  // look. The bride's remote try-on entry is one such surface.
+  const tryLookbookSource = fs.readFileSync(
+    new URL("../../artifacts/wedding-app/src/pages/TryLookbookPage.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.ok(
+    tryLookbookSource.includes(
+      "Visualization only — not a representation of fit, size, or exact fabric.",
+    ),
+    "bride try-on page renders the visualization-only disclaimer",
   );
 
   const createdAt = new Date("2026-06-20T12:00:00.000Z");

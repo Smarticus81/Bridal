@@ -16,7 +16,7 @@ interface UploadResponse {
 interface UseUploadOptions {
   /** Base path where object storage routes are mounted (default: "/api/storage") */
   basePath?: string;
-  purpose?: "couple" | "venue";
+  purpose?: "couple" | "venue" | "dress";
   venueSlug?: string;
   uploadToken?: string;
   onSuccess?: (response: UploadResponse) => void;

@@ -36,3 +36,22 @@ export function canReadGeneratedAssetWithShareToken(
 ): boolean {
   return canExposeGeneratedAssetsToSharePage(status) && hasCompletePublicGalleryAssets(assets);
 }
+
+/**
+ * A remote try-on session holds looks, not the four-still-plus-reel wedding
+ * gallery bundle. Each look is a single image; a session is a try-on when every
+ * generated asset is an image and there is at least one. A wedding gallery only
+ * reaches "ready" with its full bundle (which includes a video reel), so this
+ * never widens visibility into a partially-generated gallery.
+ */
+export function isTryonLookSession(assets: GalleryAssetVisibilityInput[]): boolean {
+  if (assets.length === 0) return false;
+  return assets.every((asset) => asset.assetType === "image");
+}
+
+export function canReadTryonLookWithShareToken(
+  status: string,
+  assets: GalleryAssetVisibilityInput[],
+): boolean {
+  return canExposeGeneratedAssetsToSharePage(status) && isTryonLookSession(assets);
+}

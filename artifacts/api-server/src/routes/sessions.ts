@@ -49,6 +49,7 @@ import {
 import {
   canExposeGeneratedAssetsToSharePage,
   hasCompletePublicGalleryAssets,
+  isTryonLookSession,
 } from "../lib/sessionVisibility.js";
 import { findGalleryStyle } from "../lib/galleryStyles.js";
 
@@ -555,9 +556,12 @@ router.get("/sessions/by-token/:shareToken", async (req, res): Promise<void> => 
         .where(eq(generatedAssetsTable.sessionId, session.id))
         .orderBy(generatedAssetsTable.displayOrder)
     : [];
-  const publicGeneratedAssets = hasCompletePublicGalleryAssets(generatedAssets)
-    ? generatedAssets
-    : [];
+  // Expose the assets to the party either as a complete wedding gallery or as a
+  // remote try-on look (single image) — never a partially-generated gallery.
+  const publicGeneratedAssets =
+    hasCompletePublicGalleryAssets(generatedAssets) || isTryonLookSession(generatedAssets)
+      ? generatedAssets
+      : [];
 
   res.json(buildSessionDetailPayload(session, venue, venueMedia, publicGeneratedAssets, { includeEmail: false }));
 });

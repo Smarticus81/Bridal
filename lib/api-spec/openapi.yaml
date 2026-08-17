@@ -743,6 +743,449 @@ paths:
               schema:
                 $ref: "#/components/schemas/ListGalleryStylesResponse"
 
+  /dresses:
+    get:
+      operationId: listDresses
+      tags: [dresses]
+      summary: List the caller's organization catalog
+      parameters:
+        - in: query
+          name: status
+          required: false
+          schema:
+            type: string
+            enum: [in_stock, special_order, discontinued]
+        - in: query
+          name: silhouette
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: neckline
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: sleeve
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: sizeRange
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: minPriceCents
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+        - in: query
+          name: maxPriceCents
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+        - in: query
+          name: shopId
+          required: false
+          schema:
+            type: integer
+        - in: query
+          name: tryOnReadyOnly
+          required: false
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Catalog list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListDressesResponse"
+        "403":
+          description: No active organization
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    post:
+      operationId: createDress
+      tags: [dresses]
+      summary: Add a dress to the catalog
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDressBody"
+      responses:
+        "201":
+          description: Dress created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DressResponse"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: SKU already exists in this organization
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /dresses/import:
+    post:
+      operationId: importDresses
+      tags: [dresses]
+      summary: Dry-run diff of a bulk catalog import
+      description: >-
+        Returns "will create N, update M, archive K" for the supplied rows
+        against the caller's existing catalog. This is a dry run: it never
+        writes. Commit is a separate, explicit step.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImportDressesBody"
+      responses:
+        "200":
+          description: Dry-run diff
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportDressesDiffResponse"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /dresses/{dressId}/media:
+    post:
+      operationId: addDressMedia
+      tags: [dresses]
+      summary: Attach a coverage-tagged reference photo to a dress
+      description: >-
+        The photo must first be uploaded via /storage/uploads/request-url with
+        purpose "dress". A validated front image makes the dress try-on ready.
+      parameters:
+        - name: dressId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddDressMediaBody"
+      responses:
+        "201":
+          description: Dress media attached
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DressMediaResponse"
+        "400":
+          description: Invalid input or photo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Dress not found in your catalog
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: Duplicate photo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /lookbooks:
+    get:
+      operationId: listLookbooks
+      tags: [lookbooks]
+      summary: List the caller's organization lookbooks with burn meter
+      responses:
+        "200":
+          description: Lookbook list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListLookbooksResponse"
+        "403":
+          description: No active organization
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    post:
+      operationId: createLookbook
+      tags: [lookbooks]
+      summary: Create a curated, capped, expiring lookbook link
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLookbookBody"
+      responses:
+        "201":
+          description: Lookbook created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LookbookResponse"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /try/{lookbookToken}/looks:
+    post:
+      operationId: generateTryonLook
+      tags: [lookbooks]
+      summary: Generate a try-on look for a chosen dress (public, no account)
+      description: >-
+        The bride selects a dress from the lookbook and supplies her uploaded
+        photo and explicit consent. Costs one credit (bounded by the lookbook cap
+        and the shop's balance). Runs the garment-fidelity gate; a below-target
+        look is routed to the consultant, never returned as final.
+      parameters:
+        - name: lookbookToken
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateTryonLookBody"
+      responses:
+        "201":
+          description: Look generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TryonLookResponse"
+        "400":
+          description: Invalid input or photo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "402":
+          description: Lookbook exhausted or shop out of credits
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Unknown lookbook or dress not in it
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: Lookbook link is not usable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /try/{lookbookToken}:
+    get:
+      operationId: getLookbookByToken
+      tags: [lookbooks]
+      summary: Resolve a lookbook for the remote bride flow (public, no account)
+      description: >-
+        Public entry for /try/:lookbookToken. Returns the shop's curated dresses
+        to try. When the link is expired, revoked, or exhausted it returns a calm
+        unusable state rather than an error.
+      parameters:
+        - name: lookbookToken
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lookbook resolved (usable or a calm unusable state)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TryLookbookResponse"
+        "404":
+          description: No such lookbook
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /try/looks/{shareToken}/forget:
+    post:
+      operationId: forgetTryonLook
+      tags: [lookbooks]
+      summary: Delete everything about a bride's try-on (public, no account)
+      description: >-
+        The bride's "delete everything about me" from her share link. The share
+        token is the capability — no account. Immediately hard-deletes her look
+        imagery from storage and scrubs the consent fingerprint. Idempotent.
+      parameters:
+        - name: shareToken
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The try-on was deleted (or was already gone)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ForgetLookResponse"
+        "404":
+          description: No such try-on
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "502":
+          description: The deletion could not be completed; nothing was falsely reported as removed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /reactions:
+    post:
+      operationId: createReaction
+      tags: [reactions]
+      summary: Cast a reaction on a shared look (public, no account)
+      description: >-
+        One reaction per viewer per look. A viewer who reacts again updates their
+        existing reaction. Viewers never sign in; the voterToken is an anonymous
+        per-viewer token minted client-side.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReactionBody"
+      responses:
+        "200":
+          description: Reaction recorded, with the live tally for that look
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReactionResponse"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: No such look
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /sessions/by-token/{shareToken}/reactions:
+    get:
+      operationId: getSessionReactions
+      tags: [reactions]
+      summary: Live per-look vote tally for a shared gallery (tokenized)
+      parameters:
+        - name: shareToken
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Per-look tally
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionReactionsResponse"
+        "404":
+          description: No such share
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /leads:
+    get:
+      operationId: listLeads
+      tags: [leads]
+      summary: List the caller's organization leads (console)
+      responses:
+        "200":
+          description: Lead list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListLeadsResponse"
+        "403":
+          description: No active organization
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+    post:
+      operationId: createLead
+      tags: [leads]
+      summary: Capture a lead from the remote flow (public, after first look)
+      description: >-
+        Public. The organization and shop are derived from the lookbook token, so
+        a caller cannot attribute a lead to an org they don't belong to.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLeadBody"
+      responses:
+        "201":
+          description: Lead captured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadResponse"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Unknown lookbook token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
   /storage/uploads/request-url:
     post:
       tags: [storage]
@@ -1539,13 +1982,13 @@ components:
           enum: [image/jpeg, image/png, image/webp]
         purpose:
           type: string
-          enum: [couple, venue]
+          enum: [couple, venue, dress]
         venueSlug:
           type: string
           minLength: 1
         uploadToken:
           type: string
-          description: Required for couple uploads. Venue media uploads use the owner session cookie instead.
+          description: Required for couple uploads. Venue and dress media uploads use the owner session cookie instead.
 
     UploadUrlResponse:
       type: object
@@ -1559,3 +2002,542 @@ components:
         metadata:
           $ref: "#/components/schemas/UploadUrlRequest"
 
+
+    DressStatus:
+      type: string
+      enum: [in_stock, special_order, discontinued]
+
+    DressMediaCoverage:
+      type: string
+      enum: [front, back, detail, fabric, on_model]
+
+    CreateDressBody:
+      type: object
+      required: [sku, styleName]
+      properties:
+        sku:
+          type: string
+          minLength: 1
+        styleName:
+          type: string
+          minLength: 1
+        designer:
+          type: string
+        silhouette:
+          type: string
+        neckline:
+          type: string
+        sleeve:
+          type: string
+        trainLength:
+          type: string
+        fabric:
+          type: string
+        color:
+          type: string
+        sizeRange:
+          type: string
+        priceCents:
+          type: integer
+          minimum: 0
+        isConsignment:
+          type: boolean
+        status:
+          $ref: "#/components/schemas/DressStatus"
+        shopIds:
+          type: array
+          items:
+            type: integer
+
+    DressResponse:
+      type: object
+      required: [id, sku, styleName, status, isConsignment, shopIds, tryOnReady, createdAt]
+      properties:
+        id:
+          type: integer
+        sku:
+          type: string
+        designer:
+          type: string
+          nullable: true
+        styleName:
+          type: string
+        silhouette:
+          type: string
+          nullable: true
+        neckline:
+          type: string
+          nullable: true
+        sleeve:
+          type: string
+          nullable: true
+        trainLength:
+          type: string
+          nullable: true
+        fabric:
+          type: string
+          nullable: true
+        color:
+          type: string
+          nullable: true
+        sizeRange:
+          type: string
+          nullable: true
+        priceCents:
+          type: integer
+          nullable: true
+        isConsignment:
+          type: boolean
+        status:
+          $ref: "#/components/schemas/DressStatus"
+        shopIds:
+          type: array
+          items:
+            type: integer
+        tryOnReady:
+          type: boolean
+          description: True when the dress has a validated front reference image.
+        createdAt:
+          type: string
+          format: date-time
+
+    ListDressesResponse:
+      type: object
+      required: [dresses]
+      properties:
+        dresses:
+          type: array
+          items:
+            $ref: "#/components/schemas/DressResponse"
+
+    ImportDressRow:
+      type: object
+      required: [sku, styleName]
+      properties:
+        sku:
+          type: string
+        styleName:
+          type: string
+        designer:
+          type: string
+        silhouette:
+          type: string
+        neckline:
+          type: string
+        sleeve:
+          type: string
+        trainLength:
+          type: string
+        fabric:
+          type: string
+        color:
+          type: string
+        sizeRange:
+          type: string
+        priceCents:
+          type: integer
+        status:
+          $ref: "#/components/schemas/DressStatus"
+
+    ImportDressesBody:
+      type: object
+      required: [rows]
+      properties:
+        rows:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImportDressRow"
+        archiveMissing:
+          type: boolean
+          description: Mark existing dresses absent from the import as discontinued.
+        apply:
+          type: boolean
+          description: >-
+            When true, execute the diff (create/update/archive) transactionally
+            and return the applied counts. When false or omitted, this is a
+            dry-run preview that writes nothing.
+
+    ImportDressesDiffResponse:
+      type: object
+      required: [summary, applied, createCount, updateCount, archiveCount, unchangedCount, invalidCount]
+      properties:
+        summary:
+          type: string
+          description: Human-readable "will create N, update M, archive K".
+        applied:
+          type: boolean
+          description: True when the diff was written; false for a dry-run preview.
+        createCount:
+          type: integer
+        updateCount:
+          type: integer
+        archiveCount:
+          type: integer
+        unchangedCount:
+          type: integer
+        invalidCount:
+          type: integer
+        invalid:
+          type: array
+          items:
+            type: object
+            required: [rowIndex, errors]
+            properties:
+              rowIndex:
+                type: integer
+              errors:
+                type: array
+                items:
+                  type: string
+
+    LookbookPurpose:
+      type: string
+      enum: [pre_appointment, post_appointment, open_catalog]
+
+    CreateLookbookBody:
+      type: object
+      required: [shopId, purpose, creditCap, expiresInDays, dressIds]
+      properties:
+        shopId:
+          type: integer
+          description: The storefront (shop/venue id) this lookbook belongs to.
+        purpose:
+          $ref: "#/components/schemas/LookbookPurpose"
+        brideName:
+          type: string
+        brideEmail:
+          type: string
+          format: email
+        creditCap:
+          type: integer
+          minimum: 1
+          description: Hard cap on looks generated through this link. Never uncapped.
+        expiresInDays:
+          type: integer
+          minimum: 1
+          maximum: 365
+          description: Days until the link expires. Never unexpiring.
+        dressIds:
+          type: array
+          items:
+            type: integer
+          minItems: 1
+
+    LookbookResponse:
+      type: object
+      required: [id, token, url, purpose, creditCap, creditsUsed, remainingCredits, expiresAt, status, dressCount]
+      properties:
+        id:
+          type: integer
+        token:
+          type: string
+        url:
+          type: string
+          description: The public /try/:lookbookToken URL.
+        purpose:
+          $ref: "#/components/schemas/LookbookPurpose"
+        brideName:
+          type: string
+          nullable: true
+        brideEmail:
+          type: string
+          nullable: true
+        creditCap:
+          type: integer
+        creditsUsed:
+          type: integer
+        remainingCredits:
+          type: integer
+        expiresAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+        dressCount:
+          type: integer
+
+    LookbookSummary:
+      type: object
+      required: [id, token, purpose, creditCap, creditsUsed, remainingCredits, expiresAt, status, usable]
+      properties:
+        id:
+          type: integer
+        token:
+          type: string
+        purpose:
+          $ref: "#/components/schemas/LookbookPurpose"
+        creditCap:
+          type: integer
+        creditsUsed:
+          type: integer
+        remainingCredits:
+          type: integer
+        expiresAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+        usable:
+          type: boolean
+          description: Whether the link can still generate a look right now.
+
+    ListLookbooksResponse:
+      type: object
+      required: [lookbooks]
+      properties:
+        lookbooks:
+          type: array
+          items:
+            $ref: "#/components/schemas/LookbookSummary"
+
+    TryDress:
+      type: object
+      required: [id, styleName]
+      properties:
+        id:
+          type: integer
+        styleName:
+          type: string
+        designer:
+          type: string
+          nullable: true
+        silhouette:
+          type: string
+          nullable: true
+        neckline:
+          type: string
+          nullable: true
+        frontImageObjectKey:
+          type: string
+          nullable: true
+          description: Object key of the dress's front reference image, if present.
+
+    TryLookbookResponse:
+      type: object
+      required: [usable, purpose, remainingCredits, shopName, shopSlug, uploadToken, disclaimer, dresses]
+      properties:
+        usable:
+          type: boolean
+        reason:
+          type: string
+          nullable: true
+          enum: [expired, revoked, exhausted]
+          description: Why the link is not usable, when usable is false.
+        purpose:
+          $ref: "#/components/schemas/LookbookPurpose"
+        remainingCredits:
+          type: integer
+        shopName:
+          type: string
+        shopSlug:
+          type: string
+          description: The shop's slug, used to authorize the bride's photo upload.
+        uploadToken:
+          type: string
+          description: Short-lived token authorizing the bride photo upload for this shop.
+        disclaimer:
+          type: string
+          description: The visualization-only disclaimer shown on every look surface.
+        dresses:
+          type: array
+          items:
+            $ref: "#/components/schemas/TryDress"
+
+    ReactionKind:
+      type: string
+      enum: [love, maybe, pass]
+
+    CreateReactionBody:
+      type: object
+      required: [generatedAssetId, voterToken, kind]
+      properties:
+        generatedAssetId:
+          type: integer
+        voterToken:
+          type: string
+          minLength: 8
+        kind:
+          $ref: "#/components/schemas/ReactionKind"
+        voterEmail:
+          type: string
+          format: email
+          description: Optional, captured post-vote only — never a wall before the gallery.
+
+    LookTallyItem:
+      type: object
+      required: [generatedAssetId, total, byKind, bookFitting]
+      properties:
+        generatedAssetId:
+          type: integer
+        total:
+          type: integer
+        byKind:
+          type: object
+          additionalProperties:
+            type: integer
+        bookFitting:
+          type: boolean
+          description: True once the look crosses the fitting-booking vote threshold.
+
+    ReactionResponse:
+      type: object
+      required: [generatedAssetId, kind, total, byKind, bookFitting]
+      properties:
+        generatedAssetId:
+          type: integer
+        kind:
+          $ref: "#/components/schemas/ReactionKind"
+        total:
+          type: integer
+        byKind:
+          type: object
+          additionalProperties:
+            type: integer
+        bookFitting:
+          type: boolean
+
+    SessionReactionsResponse:
+      type: object
+      required: [looks]
+      properties:
+        looks:
+          type: array
+          items:
+            $ref: "#/components/schemas/LookTallyItem"
+
+    CreateLeadBody:
+      type: object
+      required: [lookbookToken, email]
+      properties:
+        lookbookToken:
+          type: string
+          description: The /try link token; the org and shop are derived from it.
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        phone:
+          type: string
+
+    LeadResponse:
+      type: object
+      required: [id, email, createdAt]
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    LeadSummary:
+      type: object
+      required: [id, email, source, createdAt]
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        name:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        source:
+          type: string
+        shopId:
+          type: integer
+        lookbookId:
+          type: integer
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    ListLeadsResponse:
+      type: object
+      required: [leads]
+      properties:
+        leads:
+          type: array
+          items:
+            $ref: "#/components/schemas/LeadSummary"
+
+    AddDressMediaBody:
+      type: object
+      required: [objectKey, coverage]
+      properties:
+        objectKey:
+          type: string
+        coverage:
+          $ref: "#/components/schemas/DressMediaCoverage"
+        displayOrder:
+          type: integer
+          minimum: 0
+
+    DressMediaResponse:
+      type: object
+      required: [id, dressId, objectKey, coverage, displayOrder, createdAt]
+      properties:
+        id:
+          type: integer
+        dressId:
+          type: integer
+        objectKey:
+          type: string
+        coverage:
+          $ref: "#/components/schemas/DressMediaCoverage"
+        displayOrder:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    GenerateTryonLookBody:
+      type: object
+      required: [dressId, bridePhotoObjectKey, brideEmail, consent]
+      properties:
+        dressId:
+          type: integer
+        bridePhotoObjectKey:
+          type: string
+          description: Object key of the bride's uploaded, gated photo.
+        brideEmail:
+          type: string
+          format: email
+        consent:
+          type: boolean
+          description: Must be true — the bride's own affirmative action.
+
+    TryonLookResponse:
+      type: object
+      required: [objectKey, shareToken, disclaimer, consultantReview]
+      properties:
+        objectKey:
+          type: string
+          description: Storage object key of the generated look.
+        shareToken:
+          type: string
+          description: Token authorizing the bride to view this look's image.
+        disclaimer:
+          type: string
+        consultantReview:
+          type: boolean
+          description: True when the look is held for consultant review rather than shown as final.
+        brideLikenessScore:
+          type: number
+        garmentFidelityScore:
+          type: number
+        bodyProportionScore:
+          type: number
+
+    ForgetLookResponse:
+      type: object
+      required: [deleted]
+      properties:
+        deleted:
+          type: boolean
+          description: True once the bride's try-on imagery is removed (or was already gone).

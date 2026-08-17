@@ -12,11 +12,26 @@
     "gallery:qa": "node ./scripts/node_modules/tsx/dist/cli.mjs ./artifacts/api-server/src/tools/galleryQa.ts",
     "test:reference-upscaler": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/referenceImagePreparation.test.ts",
     "test:mobile-reel": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/byteRange.test.ts",
+    "test:lookbook-policy": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/lookbookPolicy.test.ts",
+    "test:dress-coverage": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/dressCoverage.test.ts",
+    "test:tryon-quality": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/tryonQuality.test.ts",
+    "test:photo-gate": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/photoGate.test.ts",
     "setup:db": "node scripts/setup-database.cjs",
     "setup:storage": "node scripts/setup-supabase-storage.cjs",
     "generate:secrets": "node scripts/generate-secrets.cjs",
     "db:push": "pnpm --filter @workspace/db run push",
-    "start": "node --enable-source-maps artifacts/api-server/dist/index.mjs"
+    "start": "node --enable-source-maps artifacts/api-server/dist/index.mjs",
+    "test:engagement": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/engagementMetrics.test.ts",
+    "test:inventory-import": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/inventoryImport.test.ts",
+    "test:retention-purge": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/retentionPurge.test.ts",
+    "test:retention-purge-executor": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/retentionPurgeExecutor.test.ts",
+    "test:lookbook-token": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/lookbookToken.test.ts",
+    "test:dress-filters": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/dressFilters.test.ts",
+    "test:tryon-prompt": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/tryonPrompt.test.ts",
+    "test:look-generation": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/lookGeneration.test.ts",
+    "test:tryon-image": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/tryonImageClient.test.ts",
+    "test:run-tryon-look": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/runTryonLook.test.ts",
+    "test:look-debit": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/lookDebit.test.ts"
   },
   "engines": {
     "node": ">=24"

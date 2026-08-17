@@ -170,3 +170,12 @@ final ask. CTAs escalate: "Start free" (header) → "Start with 5 free galleries
   same treatment needed there.
 - Consider a scroll-scrubbed gallery-develop moment using real generated assets
   (Higgsfield) once budget for bespoke hero media is approved.
+
+## Bridal port — /try/:lookbookToken (bride remote entry)
+
+- Dark surface (`bg-neutral-950`) per DESIGN §8: dark where you look at images/looks. No cards — dresses sit directly on the ground, separated by hairline dividers, with generous vertical rhythm.
+- Two type registers (§8): style name in a serif display face, the designer/silhouette/neckline line in mono uppercase, small, beneath. The romance layer and the data layer are visibly different faces.
+- Calm states, not errors: a spent link (expired/revoked/exhausted) renders a quiet amber line, never a red failure. An unknown link says "This link isn't valid." plainly.
+- The visualization-only disclaimer renders in the footer of every /try view and is enforced by `smoke:security` (invariant 5). It ships as a literal in the bundle.
+- No account, ever (§9): the page is public, keyed only by the lookbook token.
+- Not yet: the drape-reveal signature animation (arrives with actual generated looks, Phase 4 generate step), dress imagery (needs storage ACL for /try), and the photo-capture gate UI.

@@ -10,6 +10,10 @@
 
 export const BRAND_ASSETS = {
   heroAtmosphere: "/brand/hero-atmosphere.webp",
+  // Landing-page hero background video (ballet transformation). Served from
+  // /brand once scripts/fetch-brand-assets.mjs has pulled it; heroAtmosphere is
+  // the poster and the reduced-motion / not-yet-fetched fallback.
+  heroVideo: "/brand/hero-ballet.mp4",
   frameCeremony: "/brand/frame-ceremony.webp",
   frameFirstDance: "/brand/frame-first-dance.webp",
   frameGoldenHour: "/brand/frame-golden-hour.webp",
