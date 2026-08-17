@@ -8,7 +8,13 @@ Grounded in the production startup guard (`artifacts/api-server/src/lib/envValid
 > Generate the two secrets with `pnpm run generate:secrets`. Use a **new**
 > Supabase / Clerk / Stripe project — never reuse another app's.
 
-## 1. Required — the app refuses to boot in production without these
+## 1. Required for full production readiness
+
+Missing values no longer crash the boot: the server starts in **setup mode**
+(the SPA serves, unconfigured subsystems answer 503, and `/api/readyz` stays
+503 until every check passes). Only `PORT` and `DATABASE_URL` are needed for
+the process to come up at all. Set `STRICT_PRODUCTION_BOOT=1` to restore the
+hard crash-on-incomplete-env guard for the final launch cutover.
 
 | Variable | Notes |
 |---|---|
