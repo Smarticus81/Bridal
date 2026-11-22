@@ -484,6 +484,40 @@
   background: #171522;
   max-height: 67dvh;
 }
+.film-guide {
+  padding: 0 18px;
+  border-bottom: 1px solid #484153;
+  font-size: 0.84rem;
+}
+.film-guide summary {
+  padding: 12px 0;
+  width: fit-content;
+  font-weight: 600;
+}
+.film-guide ol {
+  display: grid;
+  gap: 14px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+.film-guide button {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  text-align: left;
+  font-weight: 650;
+}
+.film-guide button span {
+  font: 0.76rem var(--font-mono);
+  color: var(--lime);
+}
+.film-guide li p {
+  color: #e0dbe9;
+  max-width: 82ch;
+  line-height: 1.55;
+  margin: 3px 0 0;
+}
 @media (max-width: 900px) {
   .aw-wrap {
     width: 92%;
