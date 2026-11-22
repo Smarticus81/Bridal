@@ -61,7 +61,7 @@ export function buildTryonPrompt(d: DressPromptFacets, opts: { retryGuidance?: s
     `TRY-ON: Generate a photorealistic full-length image of the bride from the bride reference images wearing ${dressSummary(d)}.`,
     "IDENTITY LOCK: Preserve her exact face, hair, skin tone, and age. Preserve her real body proportions exactly — do not slim, lengthen, or reshape her figure.",
     `GARMENT LOCK: ${garmentFacetClause(d)}`,
-    "COMPOSITING LOCK: Exactly one person — the bride. Plain, evenly lit studio backdrop. Natural scale, perspective, and contact shadows. No additional or duplicated people. No text, logos, or watermarks. Photorealistic.",
+    "COMPOSITING LOCK: Exactly one person — the bride. Frame her head, hands, hem and train in a single 3:4 portrait. Keep space below the hem. Use a neutral studio, soft side light, neutral white balance and visible texture in ivory highlights. The dress model or mannequin supplies garment detail only. Natural scale and contact shadows. No additional or duplicated people. No text, logos, or watermarks. Photorealistic.",
   ];
   const guidance = opts.retryGuidance?.trim();
   if (guidance) lines.push(guidance);

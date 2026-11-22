@@ -1,7 +1,9 @@
+import { BoutiqueNav } from "@/components/layout/BoutiqueNav";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useListDresses,
+  type DressMediaCoverage,
   useCreateDress,
   useAddDressMedia,
   useGetOrganization,
@@ -50,7 +52,8 @@ function CatalogContent() {
 
   const [uploadingId, setUploadingId] = useState<number | null>(null);
 
-  const uploadFront = async (dressId: number, file: File | undefined) => {
+  const [views, setViews] = useState<Record<number, DressMediaCoverage>>({});
+  const uploadView = async (dressId: number, file: File | undefined, coverage: DressMediaCoverage) => {
     if (!file || !shopSlug) return;
     setUploadingId(dressId);
     try {
@@ -58,9 +61,9 @@ function CatalogContent() {
       if (!result) throw new Error("upload failed");
       await addDressMedia.mutateAsync({
         dressId,
-        data: { objectKey: result.objectPath, coverage: "front" },
+        data: { objectKey: result.objectPath, coverage },
       });
-      toast({ title: "Front photo added", description: "This dress is now try-on ready." });
+      toast({ title: "Reference added", description: `Saved the ${coverage.replace("_", " ")} view.` });
       queryClient.invalidateQueries({ queryKey: getListDressesQueryKey() });
     } catch {
       toast({
@@ -106,6 +109,7 @@ function CatalogContent() {
   return (
     <main className="min-h-screen bg-neutral-50 text-neutral-900">
       <div className="mx-auto max-w-5xl px-6 py-12">
+        <BoutiqueNav />
         <header className="mb-8 flex items-baseline justify-between">
           <div>
             <h1 className="text-3xl font-semibold">Catalog</h1>
@@ -202,7 +206,7 @@ function CatalogContent() {
 
         <ul className="divide-y divide-neutral-200">
           {dresses.map((dress) => (
-            <li key={dress.id} className="flex items-center justify-between py-4">
+            <li key={dress.id} className="flex flex-wrap items-center justify-between gap-3 py-4">
               <div>
                 <p className="font-serif text-lg">{dress.styleName}</p>
                 <p className="font-mono text-xs uppercase tracking-wider text-neutral-500">
@@ -211,22 +215,18 @@ function CatalogContent() {
                   {` · ${dress.status.replace("_", " ")}`}
                 </p>
               </div>
-              {dress.tryOnReady ? (
-                <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-800">
-                  Try-on ready
-                </span>
-              ) : (
-                <label className="cursor-pointer rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800 hover:bg-amber-200">
-                  {uploadingId === dress.id ? "Uploading…" : "Add front photo"}
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    className="hidden"
-                    disabled={!shopSlug || uploadingId !== null}
-                    onChange={(e) => uploadFront(dress.id, e.target.files?.[0])}
-                  />
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                {dress.tryOnReady && <span className="text-xs text-emerald-800">Try-on ready</span>}
+                <select className="rounded border border-neutral-300 bg-white p-2 text-sm" aria-label={`Reference angle for ${dress.styleName}`}
+                  value={views[dress.id] ?? (dress.tryOnReady ? "detail" : "front")} onChange={e => setViews({ ...views, [dress.id]: e.target.value as DressMediaCoverage })}>
+                  <option value="front">Full-length front</option><option value="back">Full-length back</option><option value="detail">Lace / neckline</option><option value="fabric">Fabric close-up</option><option value="on_model">On model</option>
+                </select>
+                <label className="relative cursor-pointer rounded border border-neutral-400 px-3 py-2 text-sm has-[:focus-visible]:ring-2">
+                  {uploadingId === dress.id ? "Uploading…" : "Add photo"}
+                  <input aria-label={`Upload reference for ${dress.styleName}`} type="file" accept="image/jpeg,image/png,image/webp" className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                    disabled={!shopSlug || uploadingId !== null} onChange={e => { const file = e.target.files?.[0]; e.target.value = ""; void uploadView(dress.id, file, views[dress.id] ?? (dress.tryOnReady ? "detail" : "front")); }} />
                 </label>
-              )}
+              </div>
             </li>
           ))}
         </ul>

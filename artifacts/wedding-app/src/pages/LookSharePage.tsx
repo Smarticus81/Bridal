@@ -57,7 +57,7 @@ export default function LookSharePage() {
   const queryClient = useQueryClient();
 
   const sessionQuery = useGetSessionByToken(token, {
-    query: { queryKey: getGetSessionByTokenQueryKey(token), enabled: !!token },
+    query: { queryKey: getGetSessionByTokenQueryKey(token), enabled: !!token, refetchInterval: q => q.state.data?.status === "processing" ? 3000 : false },
   });
   const reactionsQuery = useGetSessionReactions(token, {
     query: { queryKey: getGetSessionReactionsQueryKey(token), enabled: !!token },
@@ -73,11 +73,12 @@ export default function LookSharePage() {
 
   const vote = (kind: ReactionKindType) => {
     if (!look) return;
-    setMyVote(kind);
+
     createReaction.mutate(
       { data: { generatedAssetId: look.id, voterToken, kind } },
       {
         onSuccess: () => {
+          setMyVote(kind);
           queryClient.invalidateQueries({ queryKey: getGetSessionReactionsQueryKey(token) });
         },
       },
@@ -89,10 +90,11 @@ export default function LookSharePage() {
       <div className="mx-auto max-w-2xl px-6 py-14">
         {sessionQuery.isLoading && <p className="text-neutral-400">Loading…</p>}
 
-        {(sessionQuery.isError || (sessionQuery.data && !look)) && (
+        {sessionQuery.data?.status === "processing" && <section aria-live="polite"><h1 className="font-display text-4xl">Preparing your fitting</h1><p className="mt-4 text-neutral-300">Your look will appear here after its quality check. You can return to this link later.</p></section>}
+        {(sessionQuery.isError || (sessionQuery.data && sessionQuery.data.status !== "processing" && !look)) && (
           <div className="space-y-2">
             <h1 className="text-2xl font-semibold">This look isn't available.</h1>
-            <p className="text-neutral-400">The link may have expired, or the look was deleted.</p>
+            <p className="text-neutral-400">{sessionQuery.data?.errorMessage || "The link may have expired, or the look was deleted."}</p>
           </div>
         )}
 
@@ -131,6 +133,7 @@ export default function LookSharePage() {
               })}
             </div>
 
+            {createReaction.isError && <p role="alert">Your vote could not be saved. Please try again.</p>}
             {tally && tally.total > 0 && (
               <p className="mt-5 text-center text-sm text-neutral-400">
                 {tally.total} {tally.total === 1 ? "vote" : "votes"} so far

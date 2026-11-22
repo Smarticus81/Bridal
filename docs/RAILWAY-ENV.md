@@ -12,8 +12,7 @@ Grounded in the production startup guard (`artifacts/api-server/src/lib/envValid
 
 Missing values no longer crash the boot: the server starts in **setup mode**
 (the SPA serves, unconfigured subsystems answer 503, and `/api/readyz` stays
-503 until every check passes). Only `PORT` and `DATABASE_URL` are needed for
-the process to come up at all. Set `STRICT_PRODUCTION_BOOT=1` to restore the
+503 until every check passes). With only `PORT`, the public studio and sample fitting are available. Database workers start when `DATABASE_URL` is set. Set `STRICT_PRODUCTION_BOOT=1` to restore the
 hard crash-on-incomplete-env guard for the final launch cutover.
 
 | Variable | Notes |
@@ -112,5 +111,12 @@ the app falls back to them for `APP_BASE_URL` when it's unset.
 
 1. Set the §1 variables (+ §2/§3, and §4 to enable the console).
 2. Deploy — the Dockerfile builds and starts `node dist/index.mjs`.
-3. Railway health-checks `/api/readyz`; it stays 503 until DB + storage + AI are reachable. First run only: apply the schema (`pnpm run setup:db`) and provision buckets (`pnpm run setup:storage`).
+3. Railway checks liveness at `/api/healthz`. Check `/api/readyz` separately for paid workflows. First run only: apply the schema (`pnpm run setup:db`) and provision buckets (`pnpm run setup:storage`).
 4. Point the Stripe webhook at `https://<host>/api/billing/webhook` and the Clerk webhook at `https://<host>/api/webhooks/clerk`.
+
+
+## Bridal fitting verification
+
+From the repository root, run `pnpm run tryon:qa` with the Bridal Gemini key. It sends the included synthetic adult subject and synthetic gown through photo review, image generation and garment review. It records model, attempts, elapsed time, input fingerprints, final JPEG and scores under `qa-output/tryon/`. It consumes provider usage and does not debit a boutique account. The public sample is a separately generated illustration.
+
+The browser starts a render at `POST /api/try/{lookbookToken}/jobs` and polls the returned private session. The original synchronous endpoint is also supported. Each completed look consumes one credit. A render failure releases the reservation, and a below-target image stays out of the bride’s gallery. The API service serves the frontend and workers from one container.

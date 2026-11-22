@@ -89,8 +89,20 @@ export function orderDressMediaForGeneration<T extends { coverage?: string | nul
     if (!isDressMediaCoverage(coverage)) return DRESS_REFERENCE_PRIORITY.length;
     return DRESS_REFERENCE_PRIORITY.indexOf(coverage);
   };
-  return media
+  const ordered = media
     .map((item, index) => ({ item, index }))
     .sort((a, b) => rank(a.item.coverage) - rank(b.item.coverage) || a.index - b.index)
     .map(({ item }) => item);
+  const seen = new Set<string>();
+  const primary: T[] = [];
+  const additional: T[] = [];
+  for (const item of ordered) {
+    if (isDressMediaCoverage(item.coverage) && !seen.has(item.coverage)) {
+      primary.push(item);
+      seen.add(item.coverage);
+    } else {
+      additional.push(item);
+    }
+  }
+  return [...primary, ...additional];
 }

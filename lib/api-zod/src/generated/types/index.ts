@@ -80,6 +80,7 @@ export * from "./sessionResponseStatus";
 export * from "./sessionSummary";
 export * from "./sessionSummaryStatus";
 export * from "./simpleAcceptedResponse";
+export * from "./startTryonJob202";
 export * from "./tryDress";
 export * from "./tryLookbookResponse";
 export * from "./tryLookbookResponseReason";

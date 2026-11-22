@@ -179,3 +179,8 @@ final ask. CTAs escalate: "Start free" (header) → "Start with 5 free galleries
 - The visualization-only disclaimer renders in the footer of every /try view and is enforced by `smoke:security` (invariant 5). It ships as a literal in the bundle.
 - No account, ever (§9): the page is public, keyed only by the lookbook token.
 - Not yet: the drape-reveal signature animation (arrives with actual generated looks, Phase 4 generate step), dress imagery (needs storage ACL for /try), and the photo-capture gate UI.
+
+
+## Bridal boutique studio
+
+The boutique homepage leads into a three-view sample fitting. Generated editorial photography sits beside the bride, garment and try-on references. The sample uses a fictional adult and synthetic dress. The public comparison works without uploading personal data or consuming credits.

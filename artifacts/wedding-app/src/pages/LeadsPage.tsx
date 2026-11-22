@@ -1,3 +1,4 @@
+import { BoutiqueNav } from "@/components/layout/BoutiqueNav";
 import { useListLeads, getListLeadsQueryKey } from "@workspace/api-client-react";
 import { OrgGate } from "@/components/auth/OrgGate";
 
@@ -14,14 +15,16 @@ function LeadsContent() {
   return (
     <main className="min-h-screen bg-neutral-50 text-neutral-900">
       <div className="mx-auto max-w-4xl px-6 py-12">
-        <h1 className="text-3xl font-semibold">Leads</h1>
+        <BoutiqueNav />
+        <h1 className="text-3xl font-semibold">Fitting requests</h1>
         <p className="mt-1 text-sm text-neutral-500">
           Brides who shared their details from a try-on link.
         </p>
 
         {leadsQuery.isLoading && <p className="mt-6 text-neutral-500">Loading…</p>}
-        {leads.length === 0 && !leadsQuery.isLoading && (
-          <p className="mt-6 text-neutral-500">No leads yet. They'll appear here as brides try dresses at home.</p>
+        {leadsQuery.isError && <p role="alert">Fitting requests could not be loaded. <button onClick={() => leadsQuery.refetch()} className="underline">Retry</button></p>}
+        {leads.length === 0 && !leadsQuery.isLoading && !leadsQuery.isError && (
+          <p className="mt-6 text-neutral-500">Requests appear here when brides ask for a fitting.</p>
         )}
 
         {leads.length > 0 && (

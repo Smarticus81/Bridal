@@ -966,7 +966,7 @@ paths:
         The bride selects a dress from the lookbook and supplies her uploaded
         photo and explicit consent. Costs one credit (bounded by the lookbook cap
         and the shop's balance). Runs the garment-fidelity gate; a below-target
-        look is routed to the consultant, never returned as final.
+        look is withheld and the credit refunded.
       parameters:
         - name: lookbookToken
           in: path
@@ -986,6 +986,63 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TryonLookResponse"
+        "400":
+          description: Invalid input or photo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "402":
+          description: Lookbook exhausted or shop out of credits
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "404":
+          description: Unknown lookbook or dress not in it
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "409":
+          description: Lookbook link is not usable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /try/{lookbookToken}/jobs:
+    post:
+      operationId: startTryonJob
+      tags: [lookbooks]
+      summary: Start a try-on and return a token for polling the existing session endpoint
+      description: >-
+        The bride selects a dress from the lookbook and supplies her uploaded
+        photo and explicit consent. Costs one credit (bounded by the lookbook cap
+        and the shop's balance). Runs the garment-fidelity gate; a below-target
+        look is withheld and the credit refunded.
+      parameters:
+        - name: lookbookToken
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateTryonLookBody"
+      responses:
+        "202":
+          description: Generation accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [shareToken]
+                properties:
+                  shareToken: { type: string }
         "400":
           description: Invalid input or photo
           content:

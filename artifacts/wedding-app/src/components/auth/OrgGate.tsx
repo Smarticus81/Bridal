@@ -19,57 +19,17 @@ import {
 } from "@/lib/clerk";
 
 export function ClerkSetupNotice() {
-  const hostname = typeof window !== "undefined" ? window.location.hostname : "";
+  const destination = clerkStatus === "domain-mismatch" && clerkExpectedDomain
+    ? `https://${clerkExpectedDomain}${window.location.pathname}` : "/#sample";
   return (
-    <div className="grain relative min-h-screen bg-background text-foreground flex items-center justify-center px-6">
-      <div className="relative w-full max-w-md bg-card p-8">
-        <FrameTicks size={16} className="text-foreground/40" />
-        <p className="mono-label mb-4 text-rose">Setup required</p>
-        {clerkStatus === "domain-mismatch" ? (
-          <>
-            <h1 className="font-display text-2xl font-medium mb-3">
-              Sign-in lives on {clerkExpectedDomain}
-            </h1>
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              This page is open at <span className="font-mono">{hostname}</span>, but the
-              configured Clerk production key only works on{" "}
-              <span className="font-mono">{clerkExpectedDomain}</span> and its subdomains.
-            </p>
-            <a
-              href={`https://${clerkExpectedDomain}${typeof window !== "undefined" ? window.location.pathname : ""}`}
-              className="mt-6 inline-flex h-11 items-center justify-center bg-rose px-6 text-sm font-medium text-rose-foreground transition-colors hover:bg-rose-hover"
-            >
-              Continue on {clerkExpectedDomain}
-            </a>
-            <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-              To sign in from this address instead, use a development{" "}
-              <span className="font-mono">pk_test_…</span> key for this environment.
-            </p>
-          </>
-        ) : clerkStatus === "invalid-key" ? (
-          <>
-            <h1 className="font-display text-2xl font-medium mb-3">Sign-in key is malformed</h1>
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              The configured Clerk publishable key doesn't look like a valid{" "}
-              <span className="font-mono">pk_test_…</span> or{" "}
-              <span className="font-mono">pk_live_…</span> key. Check{" "}
-              <span className="font-mono">CLERK_PUBLISHABLE_KEY</span> /{" "}
-              <span className="font-mono">VITE_CLERK_PUBLISHABLE_KEY</span> in the server
-              environment, then redeploy.
-            </p>
-          </>
-        ) : (
-          <>
-            <h1 className="font-display text-2xl font-medium mb-3">Sign-in isn't configured yet</h1>
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              Set <span className="font-mono">VITE_CLERK_PUBLISHABLE_KEY</span> and{" "}
-              <span className="font-mono">CLERK_SECRET_KEY</span> in the server environment,
-              then redeploy. See <span className="font-mono">.env.example</span>.
-            </p>
-          </>
-        )}
-      </div>
-    </div>
+    <main className="min-h-screen grid place-items-center bg-[#392a32] p-6 text-[#f2f0e9]">
+      <section className="max-w-lg">
+        <a href="/" className="font-display text-2xl tracking-tight">glimpse</a>
+        <h1 className="mt-10 font-display text-4xl leading-tight">{clerkStatus === "domain-mismatch" ? "Continue to boutique sign in" : "Boutique sign-in is unavailable"}</h1>
+        <p className="my-5 text-neutral-300">{clerkStatus === "domain-mismatch" ? "Sign in at your boutique’s registered address." : "You can still explore the sample fitting and inspect the gown references."}</p>
+        <a className="inline-block border-b border-current py-2" href={destination}>{clerkStatus === "domain-mismatch" ? "Open sign in" : "Explore the sample fitting"} →</a>
+      </section>
+    </main>
   );
 }
 

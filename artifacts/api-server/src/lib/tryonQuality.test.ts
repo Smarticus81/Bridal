@@ -113,3 +113,9 @@ test("the visualization disclaimer is the exact required string", () => {
     "Visualization only — not a representation of fit, size, or exact fabric.",
   );
 });
+
+test("missing integrity findings cannot pass the judge", () => {
+  const report = normalizeTryonReport({ pass: true });
+  assert.ok(tryonThresholdFailures(report).includes("extra people detected"));
+  assert.ok(tryonThresholdFailures(report).includes("text/logo artifacts detected"));
+});

@@ -203,7 +203,9 @@ app.listen(port, (err) => {
   }
 
   logger.info({ port, appBaseUrl: getAppBaseUrl() }, "Server listening");
+  if (!process.env.DATABASE_URL) return;
   void cleanupOrphanedSessions();
+  setInterval(() => void cleanupOrphanedSessions(), 10 * 60_000).unref();
   void cleanupExpiredUploadIntents();
   void cleanupExpiredOwnerAuth();
   startSessionWorker();

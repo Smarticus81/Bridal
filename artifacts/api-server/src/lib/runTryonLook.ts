@@ -1,23 +1,13 @@
 import { createTryonGenerator, type ReferenceImage } from "./tryonImageClient.js";
 import { generateLookWithQuality, type GeneratedLookImage } from "./lookGeneration.js";
 import { assertTryonLookQuality, type TryonQualityReport } from "./tryonQuality.js";
-import { polishGalleryFrame } from "./galleryFrame.js";
+import sharp from "sharp";
+import { prepareReferenceImage } from "./referenceImagePreparation.js";
+import { validateGeneratedStill } from "./stillImageClient.js";
 import { dressSummary, type DressPromptFacets } from "./tryonPrompt.js";
 import type { DressMediaCoverage } from "./dressCoverage.js";
 
-/**
- * Generate one polished, gate-approved try-on look end to end (spec §5.2). The
- * route calls this after it has resolved the bride references and the dress
- * references; this composes the pieces validated live:
- *
- *   createTryonGenerator (Gemini chain) → generateLookWithQuality (engine with
- *   the garment-fidelity judge + adaptive retry) → polishGalleryFrame (branded
- *   finish) → the stored look.
- *
- * `generate` and `judge` default to the live implementations but are injectable
- * so the composition is unit-testable without a Gemini call.
- */
-
+/** Prepare color-preserving inputs and deliver the same JPEG evaluated by the judge. */
 export interface DressReference extends ReferenceImage {
   coverage?: DressMediaCoverage | null;
 }
@@ -58,11 +48,21 @@ export async function runTryonLook(params: {
 }): Promise<TryonLookResult> {
   const summary = dressSummary(params.dress);
 
+  async function prepare<T extends ReferenceImage>(references: T[]) {
+    const prepared: T[] = [];
+    for (const ref of references) {
+      const { buffer } = await prepareReferenceImage({ ...ref, preserveColor: true });
+      prepared.push({ ...ref, buffer, mimeType: "image/jpeg" });
+    }
+    return prepared;
+  }
+  const brideReferences = await prepare(params.brideReferences);
+  const dressReferences = await prepare(params.dressReferences);
   const generate =
     params.generate ??
     createTryonGenerator({
-      brideReferences: params.brideReferences,
-      dressReferences: params.dressReferences,
+      brideReferences,
+      dressReferences,
     });
 
   const judge =
@@ -73,8 +73,8 @@ export async function runTryonLook(params: {
         dressSummary: summary,
         generated: image,
         generatedModel: image.model,
-        brideReferences: params.brideReferences,
-        dressReferences: params.dressReferences,
+        brideReferences,
+        dressReferences,
       });
       // assertTryonLookQuality returns null only when the gate is disabled.
       return report ?? GATE_DISABLED_REPORT;
@@ -83,11 +83,17 @@ export async function runTryonLook(params: {
   const result = await generateLookWithQuality({
     dress: params.dress,
     attempts: params.attempts,
-    generate,
+    generate: async (prompt, attempt) => {
+      const image = await generate(prompt, attempt);
+      const buffer = await sharp(image.buffer, { limitInputPixels: 64_000_000 })
+        .rotate().toColourspace("srgb").jpeg({ quality: 95, chromaSubsampling: "4:4:4", mozjpeg: true }).toBuffer();
+      await validateGeneratedStill(buffer, "3:4");
+      return { ...image, buffer, mimeType: "image/jpeg" };
+    },
     judge,
   });
 
-  const polished = await polishGalleryFrame(result.image.buffer, { sceneIndex: 0 });
+  const polished = result.image.buffer;
 
   return {
     polished,

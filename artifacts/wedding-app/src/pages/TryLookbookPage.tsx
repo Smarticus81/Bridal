@@ -1,9 +1,13 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useParams } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   useGetLookbookByToken,
-  useGenerateTryonLook,
+  useStartTryonJob,
+  useCreateLead,
+  useGetSessionByToken,
+  getGetSessionByTokenQueryKey,
   useForgetTryonLook,
   getGetLookbookByTokenQueryKey,
   type TryDress,
@@ -50,6 +54,12 @@ export default function TryLookbookPage() {
     },
   });
 
+  const storageKey = `bridal:job:${token}`;
+  const [lastJob, setLastJob] = useState(() => { try { return sessionStorage.getItem(storageKey) || ""; } catch { return ""; } });
+  const remember = (shareToken: string) => {
+    setLastJob(shareToken);
+    try { sessionStorage.setItem(storageKey, shareToken); } catch { /* Private browsing */ }
+  };
   const [activeDress, setActiveDress] = useState<TryDress | null>(null);
 
   return (
@@ -72,7 +82,7 @@ export default function TryLookbookPage() {
               <p className="text-sm uppercase tracking-widest text-neutral-500">
                 {query.data.shopName}
               </p>
-              <h1 className="mt-2 text-3xl font-semibold">Your lookbook</h1>
+              <h1 className="mt-3 font-display text-5xl leading-tight">Your private fitting</h1>
               {query.data.usable ? (
                 <p className="mt-2 text-neutral-400">
                   {query.data.remainingCredits} tries left. Choose a dress to see it on you.
@@ -85,12 +95,13 @@ export default function TryLookbookPage() {
               )}
             </header>
 
+            {lastJob && <a className="mb-8 inline-block rounded-full border border-neutral-600 px-5 py-3 text-sm" href={`/look/${lastJob}`}>Open your latest fitting →</a>}
             <section className="grid grid-cols-1 gap-8 sm:grid-cols-2">
               {query.data.dresses.map((dress) => (
                 <article key={dress.id} className="group">
                   <button
                     type="button"
-                    disabled={!query.data.usable}
+                    disabled={!query.data.usable || !dress.frontImageObjectKey}
                     onClick={() => setActiveDress(dress)}
                     className="block w-full overflow-hidden rounded-lg bg-neutral-900 text-left ring-1 ring-neutral-800 transition hover:ring-neutral-600 disabled:cursor-not-allowed disabled:opacity-60"
                   >
@@ -113,7 +124,7 @@ export default function TryLookbookPage() {
                         {dressLine(dress) || " "}
                       </p>
                       {query.data.usable && (
-                        <p className="mt-3 text-sm text-neutral-300 opacity-0 transition group-hover:opacity-100">
+                        <p className="mt-3 text-sm text-neutral-300 transition group-hover:underline">
                           See it on you →
                         </p>
                       )}
@@ -143,6 +154,7 @@ export default function TryLookbookPage() {
             dress={activeDress}
             shopSlug={query.data.shopSlug}
             uploadToken={query.data.uploadToken}
+            remember={remember}
             onClose={() => setActiveDress(null)}
           />
         )}
@@ -158,12 +170,14 @@ function TryOnPanel({
   dress,
   shopSlug,
   uploadToken,
+  remember,
   onClose,
 }: {
   token: string;
   dress: TryDress;
   shopSlug: string;
   uploadToken: string;
+  remember: (token: string) => void;
   onClose: () => void;
 }) {
   const [step, setStep] = useState<TryOnStep>("form");
@@ -178,7 +192,29 @@ function TryOnPanel({
     venueSlug: shopSlug,
     uploadToken,
   });
-  const generate = useGenerateTryonLook();
+  const startJob = useStartTryonJob();
+  const [jobToken, setJobToken] = useState("");
+  const queryClient = useQueryClient();
+  const lead = useCreateLead();
+  const busy = useRef(false);
+  const job = useGetSessionByToken(jobToken, {
+    query: {
+      queryKey: getGetSessionByTokenQueryKey(jobToken), enabled: Boolean(jobToken),
+      refetchInterval: q => ["ready", "failed"].includes(q.state.data?.status ?? "") ? false : 3000,
+    },
+  });
+  useEffect(() => {
+    const data = job.data;
+    if (!data) return;
+    if (data.status === "failed") {
+      setErrorMessage(data.errorMessage || "Your look could not be delivered.");
+      setStep("error");
+    }
+    if (data.status === "ready" && data.generatedAssets[0]) {
+      setResult({ shareToken: jobToken, objectKey: data.generatedAssets[0].objectKey, disclaimer: VISUALIZATION_DISCLAIMER, consultantReview: false });
+      setStep("done");
+    }
+  }, [job.data, jobToken]);
   const forget = useForgetTryonLook();
   const [forgotten, setForgotten] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -209,13 +245,15 @@ function TryOnPanel({
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!file || !email.trim() || !consent) return;
+    if (!file || !email.trim() || !consent || busy.current) return;
+    busy.current = true;
+    setJobToken("");
     setStep("generating");
     setErrorMessage("");
     try {
       const uploaded = await uploadFile(file);
       if (!uploaded) throw new Error("We couldn't read that photo. Try a clear, full-length one.");
-      const look = await generate.mutateAsync({
+      const accepted = await startJob.mutateAsync({
         lookbookToken: token,
         data: {
           dressId: dress.id,
@@ -224,14 +262,17 @@ function TryOnPanel({
           consent: true,
         },
       });
-      setResult(look);
-      setStep("done");
+      remember(accepted.shareToken);
+      setJobToken(accepted.shareToken);
+      void queryClient.invalidateQueries({ queryKey: getGetLookbookByTokenQueryKey(token) });
     } catch (err) {
       const message =
         (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
         (err instanceof Error ? err.message : "We couldn't create this look. Please try again.");
       setErrorMessage(message);
       setStep("error");
+    } finally {
+      busy.current = false;
     }
   };
 
@@ -241,7 +282,7 @@ function TryOnPanel({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      onClick={onClose}
+      onClick={() => { if (step !== "generating" || jobToken) onClose(); }}
     >
       <motion.div
         className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-neutral-900 p-6 ring-1 ring-neutral-800 sm:rounded-2xl"
@@ -261,6 +302,7 @@ function TryOnPanel({
           <button
             type="button"
             onClick={onClose}
+            disabled={step === "generating" && !jobToken}
             className="rounded-full p-1 text-neutral-400 hover:text-neutral-100"
             aria-label="Close"
           >
@@ -271,16 +313,16 @@ function TryOnPanel({
         {(step === "form" || step === "generating") && (
           <form onSubmit={submit} className="space-y-5">
             <div>
-              <label className="mb-2 block text-sm text-neutral-300">Your photo</label>
+              <label htmlFor="bride-photo" className="mb-2 block text-sm text-neutral-300">Your full-length photo</label>
               <input
-                type="file"
+                id="bride-photo" type="file"
                 accept="image/jpeg,image/png,image/webp"
                 disabled={step === "generating"}
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)}
                 className="block w-full text-sm text-neutral-400 file:mr-4 file:rounded-full file:border-0 file:bg-neutral-100 file:px-4 file:py-2 file:text-sm file:font-medium file:text-neutral-900 hover:file:bg-white"
               />
               <p className="mt-2 text-xs text-neutral-500">
-                A clear, full-length photo of you facing forward works best.
+                Stand alone in even light, facing the camera with your arms clear of your waist. Include your head and feet.
               </p>
             </div>
 
@@ -326,6 +368,7 @@ function TryOnPanel({
                 : "See it on you"}
             </button>
 
+            {jobToken && <p role="status" className="text-sm text-neutral-300">Your fitting is in progress. <a className="underline" href={`/look/${jobToken}`}>Open its private status page</a> to come back later.</p>}
             <p className="text-center text-xs text-neutral-500">{VISUALIZATION_DISCLAIMER}</p>
           </form>
         )}
@@ -334,7 +377,7 @@ function TryOnPanel({
           <div className="space-y-4 py-6 text-center">
             <p className="text-lg">Your try-on has been deleted.</p>
             <p className="text-sm text-neutral-400">
-              The image and your photo have been removed. Nothing about this try-on is kept.
+              The fitting image and its source photo have been removed.
             </p>
             <button
               type="button"
@@ -362,12 +405,17 @@ function TryOnPanel({
                 transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
               />
             </div>
-            {result.consultantReview && (
-              <p className="rounded-md bg-amber-950/60 px-3 py-2 text-sm text-amber-200">
-                Your consultant is reviewing this look to make sure it's just right.
-              </p>
-            )}
             <p className="text-xs text-neutral-500">{result.disclaimer}</p>
+            <div className="rounded-lg border border-neutral-700 p-4">
+              <h3 className="font-display text-xl">Try it in the boutique</h3>
+              <p className="mt-1 text-sm text-neutral-300">Ask your stylist to email you about an in-person fitting.</p>
+              <button type="button" disabled={lead.isPending || lead.isSuccess}
+                onClick={() => lead.mutate({ data: { lookbookToken: token, email: email.trim() } })}
+                className="mt-3 underline underline-offset-4">
+                {lead.isSuccess ? "Fitting request sent" : lead.isPending ? "Sending…" : "Request a fitting"}
+              </button>
+              {lead.isError && <p role="alert" className="text-sm">Your request could not be sent. Please try again.</p>}
+            </div>
             <button
               type="button"
               onClick={shareWithPeople}
@@ -399,7 +447,7 @@ function TryOnPanel({
               {errorMessage}
             </p>
             <p className="text-xs text-neutral-500">
-              Your credit was not used. You can try again or pick another dress.
+              Check the message above before starting another fitting.
             </p>
             <button
               type="button"
