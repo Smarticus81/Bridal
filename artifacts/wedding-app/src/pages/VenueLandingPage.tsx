@@ -57,8 +57,43 @@ function SalesHeader() {
   );
 }
 
+const walkthroughSteps = [
+  {
+    at: 5.375,
+    title: "Choose gowns",
+    detail:
+      "Click a gown to add it to Maya’s shortlist. Choose Build lookbook when the selection is ready.",
+  },
+  {
+    at: 17.75,
+    title: "Set limits and share",
+    detail:
+      "Choose how many days the link stays open and the maximum credits it can use. In the shop workspace, choose Send lookbook, then copy the private link into your message to the bride.",
+  },
+  {
+    at: 37,
+    title: "Preview a gown",
+    detail:
+      "Choose Open bride’s view in the demo. On a live link, the bride selects a style, adds a full-length photo and email, gives permission, and chooses See it on you. The demo provides an example photo and try-on.",
+  },
+  {
+    at: 63.58,
+    title: "Follow up on a fitting",
+    detail:
+      "The bride chooses Request a fitting. Open Fitting requests in your shop and use her email address to arrange an appointment.",
+  },
+];
+
 function Walkthrough({ onClose }: { onClose: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const player = useRef<HTMLVideoElement>(null);
+  function playStep(seconds: number) {
+    const video = player.current;
+    if (!video) return;
+    video.currentTime = seconds;
+    void video.play().catch(() => video.focus());
+    video.scrollIntoView({ block: "nearest" });
+  }
   useEffect(() => {
     dialog.current?.showModal();
   }, []);
@@ -74,7 +109,7 @@ function Walkthrough({ onClose }: { onClose: () => void }) {
     >
       <div className="film-inner">
         <header>
-          <span>Product walkthrough</span>
+          <span>Narrated walkthrough · 1:22</span>
           <button
             aria-label="Close walkthrough"
             autoFocus
@@ -84,13 +119,42 @@ function Walkthrough({ onClose }: { onClose: () => void }) {
           </button>
         </header>
         <video
+          ref={player}
           autoPlay
           controls
           playsInline
           preload="metadata"
           aria-label="An Aislework sample shop creates a lookbook and receives a fitting request"
-          src="/aislework/shop-walkthrough.mp4"
-        />
+          src="/aislework/shop-walkthrough.mp4?narrated=1"
+        >
+          <track
+            kind="captions"
+            src="/aislework/shop-walkthrough.en.vtt"
+            srcLang="en"
+            label="English"
+          />
+        </video>
+        <details className="film-guide">
+          <summary>Step-by-step instructions</summary>
+          <ol>
+            {walkthroughSteps.map(({ at, title, detail }) => (
+              <li key={at}>
+                <button
+                  type="button"
+                  aria-label={`Play from ${title.toLowerCase()}`}
+                  onClick={() => playStep(at)}
+                >
+                  <span>
+                    {Math.floor(at / 60)}:
+                    {String(Math.floor(at % 60)).padStart(2, "0")}
+                  </span>
+                  {title}
+                </button>
+                <p>{detail}</p>
+              </li>
+            ))}
+          </ol>
+        </details>
         <a href="/demo">
           Try this workflow yourself <ArrowRight size={16} />
         </a>
