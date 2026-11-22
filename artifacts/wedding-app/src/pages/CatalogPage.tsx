@@ -107,13 +107,13 @@ function CatalogContent() {
   };
 
   return (
-    <main className="min-h-screen bg-neutral-50 text-neutral-900">
+    <main className="workroom min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-5xl px-6 py-12">
         <BoutiqueNav />
         <header className="mb-8 flex items-baseline justify-between">
           <div>
             <h1 className="text-3xl font-semibold">Catalog</h1>
-            <p className="mt-1 text-sm text-neutral-500">
+            <p className="mt-1 text-sm text-muted-foreground">
               {dresses.length} dress{dresses.length === 1 ? "" : "es"}
               {notReady > 0 && (
                 <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-amber-800">
@@ -129,7 +129,7 @@ function CatalogContent() {
             aria-label="Filter by status"
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as "" | (typeof STATUSES)[number])}
-            className="h-9 rounded-md border border-neutral-300 bg-white px-3 text-sm"
+            className="h-9 rounded-md border border-input bg-card px-3 text-sm"
           >
             <option value="">All statuses</option>
             {STATUSES.map((s) => (
@@ -156,7 +156,7 @@ function CatalogContent() {
           {hasFilters && (
             <button
               type="button"
-              className="text-sm text-neutral-500 underline"
+              className="text-sm text-muted-foreground underline"
               onClick={() => {
                 setFilterStatus("");
                 setFilterSilhouette("");
@@ -168,7 +168,7 @@ function CatalogContent() {
           )}
         </div>
 
-        <form onSubmit={submit} className="mb-10 grid grid-cols-1 gap-4 rounded-lg border border-neutral-200 bg-white p-5 sm:grid-cols-4">
+        <form onSubmit={submit} className="mb-10 grid grid-cols-1 gap-4 rounded-sm border border-border bg-card p-5 sm:grid-cols-4">
           <div className="sm:col-span-1">
             <Label htmlFor="sku">SKU</Label>
             <Input id="sku" value={sku} onChange={(e) => setSku(e.target.value)} placeholder="AUR-2027" />
@@ -183,7 +183,7 @@ function CatalogContent() {
               id="status"
               value={status}
               onChange={(e) => setStatus(e.target.value as (typeof STATUSES)[number])}
-              className="mt-1 h-10 w-full rounded-md border border-neutral-300 bg-white px-3 text-sm"
+              className="mt-1 h-10 w-full rounded-md border border-input bg-card px-3 text-sm"
             >
               {STATUSES.map((s) => (
                 <option key={s} value={s}>
@@ -199,9 +199,9 @@ function CatalogContent() {
           </div>
         </form>
 
-        {dressesQuery.isLoading && <p className="text-neutral-500">Loading your catalog…</p>}
+        {dressesQuery.isLoading && <p className="text-muted-foreground">Loading your catalog…</p>}
         {dresses.length === 0 && !dressesQuery.isLoading && (
-          <p className="text-neutral-500">Add your first dress.</p>
+          <p className="text-muted-foreground">Add your first dress.</p>
         )}
 
         <ul className="divide-y divide-neutral-200">
@@ -209,7 +209,7 @@ function CatalogContent() {
             <li key={dress.id} className="flex flex-wrap items-center justify-between gap-3 py-4">
               <div>
                 <p className="font-serif text-lg">{dress.styleName}</p>
-                <p className="font-mono text-xs uppercase tracking-wider text-neutral-500">
+                <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
                   {dress.sku}
                   {dress.sizeRange ? ` · ${dress.sizeRange}` : ""}
                   {` · ${dress.status.replace("_", " ")}`}
@@ -217,7 +217,7 @@ function CatalogContent() {
               </div>
               <div className="flex flex-wrap items-center justify-end gap-2">
                 {dress.tryOnReady && <span className="text-xs text-emerald-800">Try-on ready</span>}
-                <select className="rounded border border-neutral-300 bg-white p-2 text-sm" aria-label={`Reference angle for ${dress.styleName}`}
+                <select className="rounded border border-input bg-card p-2 text-sm" aria-label={`Reference angle for ${dress.styleName}`}
                   value={views[dress.id] ?? (dress.tryOnReady ? "detail" : "front")} onChange={e => setViews({ ...views, [dress.id]: e.target.value as DressMediaCoverage })}>
                   <option value="front">Full-length front</option><option value="back">Full-length back</option><option value="detail">Lace / neckline</option><option value="fabric">Fabric close-up</option><option value="on_model">On model</option>
                 </select>

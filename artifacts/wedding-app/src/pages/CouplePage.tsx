@@ -28,8 +28,6 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { GlimpseShell } from "@/components/layout/GlimpseShell";
-import { FrameTicks } from "@/components/motion";
 
 function venueMediaUrl(objectKey: string | undefined, venueSlug: string): string {
   if (!objectKey) return "";
@@ -347,7 +345,7 @@ function VenueShowcase({ venue, onNext }: VenueShowcaseProps) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-0 overflow-hidden bg-background"
+      className="venue-photo-cover fixed inset-0 z-0 overflow-hidden bg-background"
     >
       <div className="absolute inset-0 z-0">
         {hasMedia ? (
@@ -511,7 +509,7 @@ function UploadStep({ previews, isUploading, onFileChange, onRemovePhoto, onCont
           data-testid="couple-photo-input"
         />
         <div className="relative w-16 h-16 bg-card flex items-center justify-center mb-6 border border-border text-rose">
-          <FrameTicks size={8} className="text-foreground/40" />
+
           <Camera className="h-7 w-7" />
         </div>
         <p className="font-display text-xl font-medium text-foreground mb-3">Tap to add photographs</p>
@@ -534,7 +532,7 @@ function UploadStep({ previews, isUploading, onFileChange, onRemovePhoto, onCont
             >
               <img src={src} className="w-full h-full object-cover" alt={`${COUPLE_REFERENCE_ROLES[i] ?? "Reference"} preview`} />
               <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-              <FrameTicks size={14} className="text-foreground/40" />
+
               <p className="absolute left-4 bottom-4 mono-label text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
                 {COUPLE_REFERENCE_ROLES[i] ?? `Reference ${i + 1}`}
               </p>
@@ -776,7 +774,7 @@ function SubmittingStep() {
       className="flex-1 flex flex-col items-center justify-center p-6 text-center max-w-2xl mx-auto"
     >
       <div className="relative w-20 h-20 bg-card border border-border flex items-center justify-center mb-8">
-        <FrameTicks size={10} className="text-foreground/40" />
+
         <Loader2 className="h-8 w-8 animate-spin text-rose" />
       </div>
       <p className="mono-label text-rose mb-4">Developing…</p>

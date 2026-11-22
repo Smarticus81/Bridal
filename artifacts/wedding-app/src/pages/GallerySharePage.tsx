@@ -29,7 +29,6 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { GlimpseLogo } from "@/components/brand/GlimpseLogo";
-import { FrameTicks } from "@/components/motion";
 
 function storageAssetUrl(objectKey: string, shareToken?: string | null): string {
   const token = shareToken ? `?shareToken=${encodeURIComponent(shareToken)}` : "";
@@ -672,7 +671,7 @@ function GalleryVisionView({ session, reel, stills, onRestart }: GalleryVisionVi
           />
           <div className="absolute inset-0 z-[2] pointer-events-none bg-gradient-to-t from-black via-transparent to-black/30" />
           <div aria-hidden className="pointer-events-none absolute inset-3 md:inset-5 z-10">
-            <FrameTicks size={14} className="text-foreground/40" />
+
           </div>
 
           {!reelError && !reelReady && (
@@ -732,7 +731,7 @@ function GalleryVisionView({ session, reel, stills, onRestart }: GalleryVisionVi
           
           {contactAction && (
             <div className="mb-16 -mt-32 md:-mt-40 relative z-10 border border-card-border bg-card p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-8">
-              <FrameTicks size={16} className="text-foreground/40" />
+
               <div className="text-center md:text-left max-w-xl">
                 <p className="mono-label text-rose mb-3">
                   Take the next step
@@ -795,7 +794,7 @@ function GalleryVisionView({ session, reel, stills, onRestart }: GalleryVisionVi
                       />
                     </div>
                   </button>
-                  <FrameTicks size={14} className="text-foreground/40" />
+
                   <div
                     className={`absolute inset-x-0 bottom-0 p-4 flex items-center justify-between pointer-events-none bg-gradient-to-t from-black/60 via-black/20 to-transparent transition-opacity duration-300 ${
                       selected
@@ -822,7 +821,7 @@ function GalleryVisionView({ session, reel, stills, onRestart }: GalleryVisionVi
           </div>
 
           <div className="relative border border-card-border bg-card p-4 md:p-8">
-            <FrameTicks size={14} className="text-foreground/40" />
+
             <p className="mono-label text-muted-foreground mb-4">
               Frame {String(activeStill + 1).padStart(2, "0")} / {String(stills.length).padStart(2, "0")}
             </p>

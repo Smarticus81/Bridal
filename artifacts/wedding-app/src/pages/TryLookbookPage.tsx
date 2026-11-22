@@ -1,3 +1,4 @@
+import { StudioMasthead } from "@/components/layout/StudioPage";
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useParams } from "wouter";
@@ -63,14 +64,15 @@ export default function TryLookbookPage() {
   const [activeDress, setActiveDress] = useState<TryDress | null>(null);
 
   return (
-    <main className="min-h-screen bg-neutral-950 text-neutral-100">
+    <main className="fitting-house min-h-screen bg-background text-foreground">
+      <StudioMasthead section="Private fitting"/>
       <div className="mx-auto max-w-4xl px-6 py-16">
-        {query.isLoading && <p className="text-neutral-400">Loading your lookbook…</p>}
+        {query.isLoading && <p className="text-muted-foreground">Loading your lookbook…</p>}
 
         {query.isError && (
           <div className="space-y-2">
             <h1 className="text-2xl font-semibold">This link isn't valid.</h1>
-            <p className="text-neutral-400">
+            <p className="text-muted-foreground">
               Double-check the link your shop sent, or ask them for a new one.
             </p>
           </div>
@@ -78,34 +80,36 @@ export default function TryLookbookPage() {
 
         {query.data && (
           <>
-            <header className="mb-12">
-              <p className="text-sm uppercase tracking-widest text-neutral-500">
+            <header className="invitation-heading"><div>
+              <p className="text-sm uppercase tracking-widest text-muted-foreground">
                 {query.data.shopName}
               </p>
-              <h1 className="mt-3 font-display text-5xl leading-tight">Your private fitting</h1>
+              <h1 className="mt-3 font-display text-5xl leading-tight">Your private <em>fitting.</em></h1>
               {query.data.usable ? (
-                <p className="mt-2 text-neutral-400">
+                <p className="mt-2 text-muted-foreground">
                   {query.data.remainingCredits} tries left. Choose a dress to see it on you.
                 </p>
               ) : (
-                <p className="mt-2 text-amber-300">
+                <p className="mt-2 text-amber-800">
                   {UNUSABLE_MESSAGE[query.data.reason ?? ""] ??
                     "This lookbook is no longer available."}
                 </p>
               )}
+              </div>
+              <div className="invitation-count"><strong>{query.data.dresses.length}</strong><span>{query.data.dresses.length === 1 ? "selected gown" : "selected gowns"}</span></div>
             </header>
 
             {lastJob && <a className="mb-8 inline-block rounded-full border border-neutral-600 px-5 py-3 text-sm" href={`/look/${lastJob}`}>Open your latest fitting →</a>}
-            <section className="grid grid-cols-1 gap-8 sm:grid-cols-2">
+            <section className="invitation-rail grid grid-cols-1 gap-8 sm:grid-cols-2">
               {query.data.dresses.map((dress) => (
                 <article key={dress.id} className="group">
                   <button
                     type="button"
                     disabled={!query.data.usable || !dress.frontImageObjectKey}
                     onClick={() => setActiveDress(dress)}
-                    className="block w-full overflow-hidden rounded-lg bg-neutral-900 text-left ring-1 ring-neutral-800 transition hover:ring-neutral-600 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="block w-full overflow-hidden rounded-sm bg-card text-left ring-1 ring-border transition hover:ring-neutral-600 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    <div className="aspect-[3/4] w-full overflow-hidden bg-neutral-900">
+                    <div className="aspect-[3/4] w-full overflow-hidden bg-card">
                       {dress.frontImageObjectKey ? (
                         <img
                           src={storageImageUrl(dress.frontImageObjectKey)}
@@ -113,18 +117,18 @@ export default function TryLookbookPage() {
                           className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.02]"
                         />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center text-neutral-600">
+                        <div className="flex h-full w-full items-center justify-center text-muted-foreground">
                           <span className="font-serif text-lg">{dress.styleName}</span>
                         </div>
                       )}
                     </div>
                     <div className="p-4">
                       <h2 className="font-serif text-xl">{dress.styleName}</h2>
-                      <p className="mt-1 font-mono text-xs uppercase tracking-wider text-neutral-500">
+                      <p className="mt-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">
                         {dressLine(dress) || " "}
                       </p>
                       {query.data.usable && (
-                        <p className="mt-3 text-sm text-neutral-300 transition group-hover:underline">
+                        <p className="mt-3 text-sm text-muted-foreground transition group-hover:underline">
                           See it on you →
                         </p>
                       )}
@@ -133,14 +137,14 @@ export default function TryLookbookPage() {
                 </article>
               ))}
               {query.data.dresses.length === 0 && (
-                <p className="text-neutral-400">
+                <p className="text-muted-foreground">
                   Your shop hasn't added dresses to this lookbook yet.
                 </p>
               )}
             </section>
 
             <footer className="mt-16 border-t border-neutral-800 pt-6">
-              <p className="text-xs text-neutral-500">{VISUALIZATION_DISCLAIMER}</p>
+              <p className="text-xs text-muted-foreground">{VISUALIZATION_DISCLAIMER}</p>
             </footer>
           </>
         )}
@@ -285,7 +289,7 @@ function TryOnPanel({
       onClick={() => { if (step !== "generating" || jobToken) onClose(); }}
     >
       <motion.div
-        className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-neutral-900 p-6 ring-1 ring-neutral-800 sm:rounded-2xl"
+        className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-card p-6 ring-1 ring-border sm:rounded-2xl"
         initial={{ y: 40, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 40, opacity: 0 }}
@@ -295,7 +299,7 @@ function TryOnPanel({
         <div className="mb-5 flex items-start justify-between">
           <div>
             <h2 className="font-serif text-2xl">{dress.styleName}</h2>
-            <p className="mt-1 font-mono text-xs uppercase tracking-wider text-neutral-500">
+            <p className="mt-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">
               {dressLine(dress)}
             </p>
           </div>
@@ -303,7 +307,7 @@ function TryOnPanel({
             type="button"
             onClick={onClose}
             disabled={step === "generating" && !jobToken}
-            className="rounded-full p-1 text-neutral-400 hover:text-neutral-100"
+            className="rounded-full p-1 text-muted-foreground hover:text-foreground"
             aria-label="Close"
           >
             ✕
@@ -313,21 +317,21 @@ function TryOnPanel({
         {(step === "form" || step === "generating") && (
           <form onSubmit={submit} className="space-y-5">
             <div>
-              <label htmlFor="bride-photo" className="mb-2 block text-sm text-neutral-300">Your full-length photo</label>
+              <label htmlFor="bride-photo" className="mb-2 block text-sm text-muted-foreground">Your full-length photo</label>
               <input
                 id="bride-photo" type="file"
                 accept="image/jpeg,image/png,image/webp"
                 disabled={step === "generating"}
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                className="block w-full text-sm text-neutral-400 file:mr-4 file:rounded-full file:border-0 file:bg-neutral-100 file:px-4 file:py-2 file:text-sm file:font-medium file:text-neutral-900 hover:file:bg-white"
+                className="block w-full text-sm text-muted-foreground file:mr-4 file:rounded-full file:border-0 file:bg-primary file:px-4 file:py-2 file:text-sm file:font-medium file:text-primary-foreground hover:file:bg-primary"
               />
-              <p className="mt-2 text-xs text-neutral-500">
+              <p className="mt-2 text-xs text-muted-foreground">
                 Stand alone in even light, facing the camera with your arms clear of your waist. Include your head and feet.
               </p>
             </div>
 
             <div>
-              <label htmlFor="bride-email" className="mb-2 block text-sm text-neutral-300">
+              <label htmlFor="bride-email" className="mb-2 block text-sm text-muted-foreground">
                 Your email
               </label>
               <input
@@ -338,11 +342,11 @@ function TryOnPanel({
                 disabled={step === "generating"}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full rounded-md border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-600 focus:border-neutral-400 focus:outline-none"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-neutral-400 focus:outline-none"
               />
             </div>
 
-            <label className="flex items-start gap-3 text-sm text-neutral-300">
+            <label className="flex items-start gap-3 text-sm text-muted-foreground">
               <input
                 type="checkbox"
                 checked={consent}
@@ -359,7 +363,7 @@ function TryOnPanel({
             <button
               type="submit"
               disabled={!formReady || step === "generating"}
-              className="w-full rounded-full bg-neutral-100 py-3 text-sm font-medium text-neutral-900 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded-full bg-primary py-3 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {step === "generating"
                 ? isUploading
@@ -368,21 +372,21 @@ function TryOnPanel({
                 : "See it on you"}
             </button>
 
-            {jobToken && <p role="status" className="text-sm text-neutral-300">Your fitting is in progress. <a className="underline" href={`/look/${jobToken}`}>Open its private status page</a> to come back later.</p>}
-            <p className="text-center text-xs text-neutral-500">{VISUALIZATION_DISCLAIMER}</p>
+            {jobToken && <p role="status" className="text-sm text-muted-foreground">Your fitting is in progress. <a className="underline" href={`/look/${jobToken}`}>Open its private status page</a> to come back later.</p>}
+            <p className="text-center text-xs text-muted-foreground">{VISUALIZATION_DISCLAIMER}</p>
           </form>
         )}
 
         {step === "done" && result && forgotten && (
           <div className="space-y-4 py-6 text-center">
             <p className="text-lg">Your try-on has been deleted.</p>
-            <p className="text-sm text-neutral-400">
+            <p className="text-sm text-muted-foreground">
               The fitting image and its source photo have been removed.
             </p>
             <button
               type="button"
               onClick={onClose}
-              className="w-full rounded-full border border-neutral-700 py-3 text-sm text-neutral-200 hover:border-neutral-500"
+              className="w-full rounded-full border border-input py-3 text-sm text-foreground hover:border-neutral-500"
             >
               Try another dress
             </button>
@@ -391,7 +395,7 @@ function TryOnPanel({
 
         {step === "done" && result && !forgotten && (
           <div className="space-y-4">
-            <div className="relative overflow-hidden rounded-lg bg-neutral-950">
+            <div className="relative overflow-hidden rounded-sm bg-background">
               <img
                 src={storageImageUrl(result.objectKey, result.shareToken)}
                 alt={`${dress.styleName} on you`}
@@ -399,16 +403,16 @@ function TryOnPanel({
               />
               {/* Drape reveal — a soft curtain lifting off the finished look. */}
               <motion.div
-                className="pointer-events-none absolute inset-0 bg-neutral-900"
+                className="pointer-events-none absolute inset-0 bg-card"
                 initial={{ y: 0 }}
                 animate={{ y: "-100%" }}
                 transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
               />
             </div>
-            <p className="text-xs text-neutral-500">{result.disclaimer}</p>
-            <div className="rounded-lg border border-neutral-700 p-4">
+            <p className="text-xs text-muted-foreground">{result.disclaimer}</p>
+            <div className="rounded-sm border border-input p-4">
               <h3 className="font-display text-xl">Try it in the boutique</h3>
-              <p className="mt-1 text-sm text-neutral-300">Ask your stylist to email you about an in-person fitting.</p>
+              <p className="mt-1 text-sm text-muted-foreground">Ask your stylist to email you about an in-person fitting.</p>
               <button type="button" disabled={lead.isPending || lead.isSuccess}
                 onClick={() => lead.mutate({ data: { lookbookToken: token, email: email.trim() } })}
                 className="mt-3 underline underline-offset-4">
@@ -419,14 +423,14 @@ function TryOnPanel({
             <button
               type="button"
               onClick={shareWithPeople}
-              className="w-full rounded-full bg-neutral-100 py-3 text-sm font-medium text-neutral-900 transition hover:bg-white"
+              className="w-full rounded-full bg-primary py-3 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
             >
               {shareCopied ? "Link copied — share it with your people" : "Share with your people"}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="w-full rounded-full border border-neutral-700 py-3 text-sm text-neutral-200 hover:border-neutral-500"
+              className="w-full rounded-full border border-input py-3 text-sm text-foreground hover:border-neutral-500"
             >
               Try another dress
             </button>
@@ -434,7 +438,7 @@ function TryOnPanel({
               type="button"
               onClick={forgetLook}
               disabled={forget.isPending}
-              className="w-full py-2 text-center text-xs text-neutral-500 underline hover:text-neutral-300 disabled:opacity-50"
+              className="w-full py-2 text-center text-xs text-muted-foreground underline hover:text-muted-foreground disabled:opacity-50"
             >
               {forget.isPending ? "Deleting…" : "Delete my try-on and photo"}
             </button>
@@ -443,16 +447,16 @@ function TryOnPanel({
 
         {step === "error" && (
           <div className="space-y-4">
-            <p className="rounded-md bg-red-950/60 px-3 py-3 text-sm text-red-200">
+            <p className="rounded-md bg-red-100 px-3 py-3 text-sm text-red-900">
               {errorMessage}
             </p>
-            <p className="text-xs text-neutral-500">
+            <p className="text-xs text-muted-foreground">
               Check the message above before starting another fitting.
             </p>
             <button
               type="button"
               onClick={() => setStep("form")}
-              className="w-full rounded-full bg-neutral-100 py-3 text-sm font-medium text-neutral-900 hover:bg-white"
+              className="w-full rounded-full bg-primary py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
             >
               Try again
             </button>
