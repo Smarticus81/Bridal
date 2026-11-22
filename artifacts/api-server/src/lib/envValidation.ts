@@ -140,8 +140,8 @@ function clerkPublishableKeyError(env: EnvLike): string | null {
 function stripeSecretError(env: EnvLike): string | null {
   const secret = env.STRIPE_SECRET_KEY?.trim() ?? "";
   if (!secret) return null;
-  if (!/^sk_live_[A-Za-z0-9]+/.test(secret)) {
-    return "STRIPE_SECRET_KEY must be a live Stripe secret key in production";
+  if (!/^(?:sk|rk)_live_[A-Za-z0-9]+$/.test(secret)) {
+    return "STRIPE_SECRET_KEY must be a live Stripe secret key or restricted key in production";
   }
   return null;
 }

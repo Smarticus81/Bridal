@@ -33,23 +33,23 @@ const BILLING_PRODUCTS: Array<{
 }> = [
   {
     id: "starter",
-    kicker: "Plan 01",
+    kicker: "USD $149 / month",
     title: "Starter",
-    description: "For a single active venue building post-tour follow-up into the sales flow.",
+    description: "For boutiques sending brides a curated shortlist before their fittings.",
     credits: "25 credits / month",
     cta: "Subscribe to Starter",
   },
   {
     id: "growth",
-    kicker: "Plan 02",
+    kicker: "USD $399 / month",
     title: "Growth",
-    description: "For organizations running several venues or a full tour calendar.",
+    description: "For a full fitting calendar or a team serving several boutiques.",
     credits: "100 credits / month",
     cta: "Subscribe to Growth",
   },
   {
     id: "credit_pack",
-    kicker: "Top-up",
+    kicker: "USD $49 once",
     title: "Credit pack",
     description: "One-off boost when a busy weekend outruns the monthly allowance.",
     credits: "+10 credits, one time",
@@ -167,6 +167,7 @@ function DashboardInner() {
     query: { queryKey: getGetOrganizationQueryKey() },
   });
   const organization = orgQuery.data?.organization;
+  const hasSubscription = organization?.plan === "starter" || organization?.plan === "growth";
   const orgVenues = orgQuery.data?.venues ?? [];
 
   useEffect(() => {
@@ -582,7 +583,7 @@ function DashboardInner() {
     void queryClient.invalidateQueries({ queryKey: getGetOrganizationQueryKey() });
     if (billing === "success") {
       toast({
-        title: "Billing updated",
+        title: "Checkout complete",
         description: "Credits apply as soon as Stripe confirms the payment.",
       });
     }
@@ -1091,9 +1092,6 @@ function DashboardInner() {
           </div>
         </section>
 
-        {/* Billing lives on the organization: one plan and one credit pool
-            shared by every venue. Checkout + payment methods are Clerk
-            Billing; credits are granted server-side by the Clerk webhook. */}
         <section className="border-t border-border pt-6">
           <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
             <div>
@@ -1102,8 +1100,7 @@ function DashboardInner() {
                 {organization?.name ?? "Your organization"}
               </h2>
               <p className="mt-3 max-w-xl text-base font-light leading-relaxed text-muted-foreground">
-                One subscription covers every venue in your organization. Each
-                couple gallery uses one credit from the shared balance.
+                Your boutiques share a balance. A delivered bridal fitting or couple gallery uses one credit.
               </p>
             </div>
             <div className="flex items-end gap-10">
@@ -1146,16 +1143,16 @@ function DashboardInner() {
                 <Button
                   variant={organization?.plan === product.id ? "outline" : "rose"}
                   disabled={
-                    startCheckout.isPending || organization?.plan === product.id
+                    !organization?.billingConfigured || startCheckout.isPending || openPortal.isPending || organization.plan === product.id
                   }
-                  onClick={() => handleCheckout(product.id)}
+                  onClick={() => hasSubscription && product.id !== "credit_pack" ? handleOpenPortal() : handleCheckout(product.id)}
                   className="mt-4 w-full rounded-none"
                   data-testid={`billing-${product.id}`}
                 >
                   {startCheckout.isPending && checkoutProduct === product.id ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : null}
-                  {organization?.plan === product.id ? "Current plan" : product.cta}
+                  {organization?.plan === product.id ? "Current plan" : hasSubscription && product.id !== "credit_pack" ? "Manage subscription" : product.cta}
                 </Button>
               </div>
             ))}
@@ -1163,13 +1160,14 @@ function DashboardInner() {
 
           <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="mono-label normal-case tracking-[0.08em] text-muted-foreground/70">
-              Stripe billing, owned by the organization · renewals refresh the
-              shared credit pool · 1 credit = 1 couple's complete gallery
+              {organization?.billingConfigured
+                ? "Each monthly renewal resets the shared balance to your plan allowance."
+                : "Billing is currently unavailable."}
             </p>
             <Button
               variant="ghost"
               size="sm"
-              disabled={openPortal.isPending}
+              disabled={!organization?.billingConfigured || openPortal.isPending}
               onClick={handleOpenPortal}
               className="text-muted-foreground hover:text-foreground"
               data-testid="billing-portal"

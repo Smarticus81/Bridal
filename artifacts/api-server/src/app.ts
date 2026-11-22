@@ -55,7 +55,7 @@ app.use(securityHeaders);
 app.use(cors(corsOptions()));
 app.use(cookieParser());
 app.use("/api", (req, res, next) => {
-  if (process.env.DATABASE_URL || ["/healthz", "/readyz"].includes(req.path)) return next();
+  if (process.env.DATABASE_URL || ["/healthz", "/readyz", "/billing/webhook"].includes(req.path)) return next();
   res.status(503).json({ error: "Boutique services are temporarily unavailable." });
 });
 logStripeMissing();

@@ -1407,13 +1407,13 @@ try {
   );
   assert.match(
     billingRoute,
-    /router\.post\("\/org\/billing\/checkout"[\s\S]*requireOwnerMutationOrigin\(req, res\)[\s\S]*requireOrg\(req, res\)[\s\S]*organizationId: String\(ctx\.org\.id\)[\s\S]*router\.post\("\/org\/billing\/portal"[\s\S]*requireOrg\(req, res\)/s,
+    /router\.post\("\/org\/billing\/checkout"[\s\S]*requireOwnerMutationOrigin\(req, res\)[\s\S]*requireOrg\(req, res\)[\s\S]*bridalMetadata\(ctx\.org\.id, product\)[\s\S]*router\.post\("\/org\/billing\/portal"[\s\S]*requireOrg\(req, res\)/s,
     "Stripe checkout and portal are organization-scoped and origin-guarded",
   );
   assert.match(
     billingRoute,
-    /handleStripeWebhook[\s\S]*constructEvent\(req\.body as Buffer, sig, webhookSecret\)[\s\S]*eq\(creditTransactionsTable\.stripeEventId, event\.id\)[\s\S]*grantCreditsToOrg\(organizationId, CREDIT_PACK_AMOUNT, "pack_purchase", event\.id\)[\s\S]*setOrgCreditsBalance\(org\.id, credits, "subscription_grant", event\.id\)/s,
-    "Stripe webhook verifies signatures and grants organization credits idempotently by event id",
+    /handleStripeWebhook[\s\S]*constructEvent\(req\.body as Buffer, sig, webhookSecret\)[\s\S]*bridalBillingAction\(event, STRIPE_PRICES\)[\s\S]*eq\(organizationsTable\.stripeCustomerId, action\.customer\)[\s\S]*stripeEventId: action\.reference[\s\S]*onConflictDoNothing/s,
+    "Stripe webhook verifies signatures and settles Bridal checkouts and invoices idempotently by payment reference",
   );
   assert.match(
     billingRoute,

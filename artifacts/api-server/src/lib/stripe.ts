@@ -26,7 +26,7 @@ export function requireStripe(): Stripe {
 }
 
 export function isStripeConfigured(): boolean {
-  return !!stripe && !!STRIPE_PRICES.starter && !!STRIPE_PRICES.growth && !!STRIPE_PRICES.credit_pack;
+  return !!stripe && !!process.env.STRIPE_WEBHOOK_SECRET?.trim() && !!STRIPE_PRICES.starter && !!STRIPE_PRICES.growth && !!STRIPE_PRICES.credit_pack;
 }
 
 export function logStripeMissing(): void {
