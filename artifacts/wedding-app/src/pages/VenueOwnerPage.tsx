@@ -77,7 +77,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FrameTicks } from "@/components/motion";
 import { useToast } from "@/hooks/use-toast";
 import { GlimpseLogo } from "@/components/brand/GlimpseLogo";
 
@@ -602,7 +601,7 @@ function DashboardInner() {
       <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-sm">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-4">
-            <GlimpseLogo className="h-12" />
+            <GlimpseLogo />
             <div className="hidden h-4 w-px bg-border sm:block"></div>
             <p className="mono-label hidden normal-case tracking-normal text-muted-foreground sm:block">
               {organization?.name ?? ""}
@@ -644,7 +643,7 @@ function DashboardInner() {
           </div>
         </div>
       </header>
-      <div className="px-5 pt-4"><BoutiqueNav /></div>
+      <div className="px-5 pt-4"><BoutiqueNav showBrand={false} /></div>
 
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:py-12 space-y-14">
         <section className="grid gap-10 lg:grid-cols-[1fr_360px]">
@@ -799,7 +798,7 @@ function DashboardInner() {
                       {preview ? (
                         <>
                           <img src={preview} alt={`Couple reference ${slot + 1}`} className="h-full w-full object-cover" />
-                          <FrameTicks size={14} className="text-foreground/40" />
+
                           <span
                             role="button"
                             tabIndex={0}
@@ -969,7 +968,7 @@ function DashboardInner() {
                       }}
                       className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                     />
-                    <FrameTicks size={14} className="text-foreground/40" />
+
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
                     <button
                       type="button"
@@ -1030,7 +1029,7 @@ function DashboardInner() {
                           <ImageIcon className="h-6 w-6" />
                         </div>
                       )}
-                      <FrameTicks size={14} className="text-foreground/40" />
+
                     </div>
                     <div>
                       <div className="flex flex-wrap items-center gap-3 mb-1">

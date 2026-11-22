@@ -1,3 +1,4 @@
+import { StudioMasthead } from "@/components/layout/StudioPage";
 import { useMemo, useState } from "react";
 import { useParams } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
@@ -86,29 +87,25 @@ export default function LookSharePage() {
   };
 
   return (
-    <main className="min-h-screen bg-neutral-950 text-neutral-100">
+    <main className="fitting-house min-h-screen bg-background text-foreground">
+      <StudioMasthead section="Shared look"/>
       <div className="mx-auto max-w-2xl px-6 py-14">
-        {sessionQuery.isLoading && <p className="text-neutral-400">Loading…</p>}
+        {sessionQuery.isLoading && <p className="text-muted-foreground">Loading…</p>}
 
-        {sessionQuery.data?.status === "processing" && <section aria-live="polite"><h1 className="font-display text-4xl">Preparing your fitting</h1><p className="mt-4 text-neutral-300">Your look will appear here after its quality check. You can return to this link later.</p></section>}
+        {sessionQuery.data?.status === "processing" && <section aria-live="polite"><h1 className="font-display text-4xl">Preparing your fitting</h1><p className="mt-4 text-muted-foreground">Your look will appear here after its quality check. You can return to this link later.</p></section>}
         {(sessionQuery.isError || (sessionQuery.data && sessionQuery.data.status !== "processing" && !look)) && (
           <div className="space-y-2">
             <h1 className="text-2xl font-semibold">This look isn't available.</h1>
-            <p className="text-neutral-400">{sessionQuery.data?.errorMessage || "The link may have expired, or the look was deleted."}</p>
+            <p className="text-muted-foreground">{sessionQuery.data?.errorMessage || "The link may have expired, or the look was deleted."}</p>
           </div>
         )}
 
         {look && (
-          <>
-            <header className="mb-8 text-center">
-              <p className="text-sm uppercase tracking-widest text-neutral-500">Help her choose</p>
-              <h1 className="mt-2 text-3xl font-semibold">What do you think?</h1>
-            </header>
-
-            <div className="overflow-hidden rounded-xl bg-neutral-900 ring-1 ring-neutral-800">
-              <img src={storageImageUrl(look.objectKey, token)} alt="Her look" className="w-full" />
-            </div>
-
+          <section className="shared-folio">
+            <figure><img src={storageImageUrl(look.objectKey, token)} alt="Her bridal fitting" /></figure>
+            <div className="shared-opinion">
+              <p className="studio-label">Help her choose</p>
+              <h1>What do <em>you think?</em></h1>
             <div className="mt-6 grid grid-cols-3 gap-3">
               {VOTES.map((option) => {
                 const active = myVote === option.kind;
@@ -116,12 +113,13 @@ export default function LookSharePage() {
                   <button
                     key={option.kind}
                     type="button"
+                    aria-pressed={active}
                     onClick={() => vote(option.kind)}
                     disabled={createReaction.isPending}
-                    className={`flex flex-col items-center gap-1 rounded-lg py-4 text-sm ring-1 transition disabled:opacity-60 ${
+                    className={`flex flex-col items-center gap-1 rounded-sm py-4 text-sm ring-1 transition disabled:opacity-60 ${
                       active
-                        ? "bg-neutral-100 text-neutral-900 ring-neutral-100"
-                        : "bg-neutral-900 text-neutral-200 ring-neutral-700 hover:ring-neutral-500"
+                        ? "bg-primary text-primary-foreground ring-neutral-100"
+                        : "bg-card text-foreground ring-border hover:ring-neutral-500"
                     }`}
                   >
                     <span className="text-xl" aria-hidden>
@@ -135,7 +133,7 @@ export default function LookSharePage() {
 
             {createReaction.isError && <p role="alert">Your vote could not be saved. Please try again.</p>}
             {tally && tally.total > 0 && (
-              <p className="mt-5 text-center text-sm text-neutral-400">
+              <p className="mt-5 text-center text-sm text-muted-foreground">
                 {tally.total} {tally.total === 1 ? "vote" : "votes"} so far
                 {typeof tally.byKind.love === "number" && tally.byKind.love > 0
                   ? ` · ${tally.byKind.love} love ${tally.byKind.love === 1 ? "it" : "it"}`
@@ -144,13 +142,14 @@ export default function LookSharePage() {
             )}
 
             {tally?.bookFitting && (
-              <div className="mt-6 rounded-lg bg-emerald-950/60 px-4 py-3 text-center text-sm text-emerald-200">
+              <div className="mt-6 rounded-sm bg-emerald-100 px-4 py-3 text-center text-sm text-emerald-900">
                 Her people love this one. Time to book a fitting.
               </div>
             )}
 
-            <p className="mt-10 text-center text-xs text-neutral-500">{VISUALIZATION_DISCLAIMER}</p>
-          </>
+            <p className="mt-10 text-center text-xs text-muted-foreground">{VISUALIZATION_DISCLAIMER}</p>
+            </div>
+          </section>
         )}
       </div>
     </main>

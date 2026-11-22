@@ -13,24 +13,24 @@ function LeadsContent() {
   const leads = leadsQuery.data?.leads ?? [];
 
   return (
-    <main className="min-h-screen bg-neutral-50 text-neutral-900">
+    <main className="workroom min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-4xl px-6 py-12">
         <BoutiqueNav />
         <h1 className="text-3xl font-semibold">Fitting requests</h1>
-        <p className="mt-1 text-sm text-neutral-500">
+        <p className="mt-1 text-sm text-muted-foreground">
           Brides who shared their details from a try-on link.
         </p>
 
-        {leadsQuery.isLoading && <p className="mt-6 text-neutral-500">Loading…</p>}
+        {leadsQuery.isLoading && <p className="mt-6 text-muted-foreground">Loading…</p>}
         {leadsQuery.isError && <p role="alert">Fitting requests could not be loaded. <button onClick={() => leadsQuery.refetch()} className="underline">Retry</button></p>}
         {leads.length === 0 && !leadsQuery.isLoading && !leadsQuery.isError && (
-          <p className="mt-6 text-neutral-500">Requests appear here when brides ask for a fitting.</p>
+          <p className="mt-6 text-muted-foreground">Requests appear here when brides ask for a fitting.</p>
         )}
 
         {leads.length > 0 && (
-          <table className="mt-6 w-full border-collapse text-sm">
+          <div className="mt-6 overflow-x-auto"><table className="w-full border-collapse text-sm">
             <thead>
-              <tr className="border-b border-neutral-200 text-left text-neutral-500">
+              <tr className="border-b border-border text-left text-muted-foreground">
                 <th className="py-2 font-medium">Email</th>
                 <th className="py-2 font-medium">Name</th>
                 <th className="py-2 font-medium">Phone</th>
@@ -43,13 +43,13 @@ function LeadsContent() {
                   <td className="py-3 font-mono text-xs">{lead.email}</td>
                   <td className="py-3">{lead.name ?? "—"}</td>
                   <td className="py-3">{lead.phone ?? "—"}</td>
-                  <td className="py-3 text-neutral-500">
+                  <td className="py-3 text-muted-foreground">
                     {new Date(lead.createdAt).toLocaleDateString()}
                   </td>
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         )}
       </div>
     </main>

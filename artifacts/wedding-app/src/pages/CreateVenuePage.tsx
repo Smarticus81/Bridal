@@ -2,16 +2,15 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { SignedIn, SignedOut, SignUp, useUser } from "@clerk/clerk-react";
-import { ArrowLeft, ArrowRight, Building2, Loader2 } from "lucide-react";
+import { ArrowRight, Building2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { toVenueSlug } from "@/lib/venueSlug";
-import { GlimpseLogo } from "@/components/brand/GlimpseLogo";
-import { FrameTicks } from "@/components/motion";
+import { StudioPage } from "@/components/layout/StudioPage";
 import { ClerkSetupNotice, ClerkWidgetFrame, OrgGate } from "@/components/auth/OrgGate";
-import { clerkConfigured, darkroomAppearance } from "@/lib/clerk";
+import { clerkConfigured, studioAppearance } from "@/lib/clerk";
 
 /**
  * Onboarding: sign up (Clerk profile) → name the organization (billing
@@ -22,20 +21,7 @@ export default function CreateVenuePage() {
   if (!clerkConfigured) return <ClerkSetupNotice />;
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans flex flex-col">
-      <header className="absolute top-0 w-full p-6 sm:p-10 flex items-center justify-between z-10">
-        <GlimpseLogo href="/" />
-        <a
-          href="/"
-          className="mono-label inline-flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" /> Back to site
-        </a>
-      </header>
-
-      <main className="grain flex-1 flex items-center justify-center p-6 relative py-20">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_45%_at_50%_0%,hsl(var(--rose)/0.08),transparent_70%)] pointer-events-none" />
-
+    <StudioPage section="Boutique registration" image="column">
         <ClerkWidgetFrame>
           <SignedOut>
             <div className="relative z-10 mt-10 flex flex-col items-center gap-6">
@@ -50,7 +36,7 @@ export default function CreateVenuePage() {
                 </p>
               </div>
               <SignUp
-                appearance={darkroomAppearance}
+                appearance={studioAppearance}
                 routing="hash"
                 signInUrl="/login"
                 forceRedirectUrl="/create-venue"
@@ -64,8 +50,7 @@ export default function CreateVenuePage() {
             </OrgGate>
           </SignedIn>
         </ClerkWidgetFrame>
-      </main>
-    </div>
+    </StudioPage>
   );
 }
 
@@ -135,7 +120,7 @@ function VenueForm() {
       className="w-full max-w-md mt-10"
     >
       <div className="relative bg-card p-8">
-        <FrameTicks size={16} className="text-foreground/40" />
+
 
         <div className="mb-8">
           <p className="mono-label mb-4 text-rose">For boutiques</p>

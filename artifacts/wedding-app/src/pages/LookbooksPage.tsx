@@ -86,18 +86,18 @@ function LookbooksContent() {
   };
 
   return (
-    <main className="min-h-screen bg-neutral-50 text-neutral-900">
+    <main className="workroom min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-5xl px-6 py-12">
         <BoutiqueNav />
         <h1 className="text-3xl font-semibold">Lookbooks</h1>
-        <p className="mt-1 text-sm text-neutral-500">Send a bride a curated try-on link. Always capped, always expiring.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Choose the gowns, set the fitting allowance, and send a private invitation.</p>
 
-        <form onSubmit={submit} className="mt-8 rounded-lg border border-neutral-200 bg-white p-5">
+        <form onSubmit={submit} className="mt-8 rounded-sm border border-border bg-card p-5">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
             <div>
               <Label htmlFor="shop">Shop</Label>
               <select id="shop" value={shopId} onChange={(e) => setShopId(e.target.value ? Number(e.target.value) : "")}
-                className="mt-1 h-10 w-full rounded-md border border-neutral-300 bg-white px-3 text-sm">
+                className="mt-1 h-10 w-full rounded-md border border-input bg-card px-3 text-sm">
                 {shops.length === 0 && <option value="">No shops yet</option>}
                 {shops.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
@@ -105,7 +105,7 @@ function LookbooksContent() {
             <div className="sm:col-span-2">
               <Label htmlFor="purpose">Purpose</Label>
               <select id="purpose" value={purpose} onChange={(e) => setPurpose(e.target.value as typeof purpose)}
-                className="mt-1 h-10 w-full rounded-md border border-neutral-300 bg-white px-3 text-sm">
+                className="mt-1 h-10 w-full rounded-md border border-input bg-card px-3 text-sm">
                 {PURPOSES.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
               </select>
             </div>
@@ -133,7 +133,7 @@ function LookbooksContent() {
                   <span className="font-mono text-xs text-neutral-400">{d.sku}</span>
                 </label>
               ))}
-              {dresses.length === 0 && <p className="text-sm text-neutral-500">Add dresses in the catalog first.</p>}
+              {dresses.length === 0 && <p className="text-sm text-muted-foreground">Add dresses in the catalog first.</p>}
             </div>
           </div>
 
@@ -153,13 +153,13 @@ function LookbooksContent() {
         <section className="mt-12">
           <h2 className="text-lg font-semibold">Sent lookbooks</h2>
           {lookbooks.length === 0 ? (
-            <p className="mt-2 text-sm text-neutral-500">No lookbooks yet.</p>
+            <p className="mt-2 text-sm text-muted-foreground">No lookbooks yet.</p>
           ) : (
             <ul className="mt-3 divide-y divide-neutral-200">
               {lookbooks.map((lb) => (
                 <li key={lb.id} className="flex items-center justify-between py-3">
                   <div>
-                    <p className="font-mono text-xs text-neutral-500">/try/{lb.token.slice(0, 10)}…</p>
+                    <p className="font-mono text-xs text-muted-foreground">/try/{lb.token.slice(0, 10)}…</p>
                     <p className="text-sm text-neutral-700">
                       {lb.remainingCredits}/{lb.creditCap} tries left · expires {new Date(lb.expiresAt).toLocaleDateString()}
                     </p>

@@ -1,3 +1,4 @@
+import { StudioPage } from "@/components/layout/StudioPage";
 import { useEffect, useState, type ReactNode } from "react";
 import {
   ClerkFailed,
@@ -10,33 +11,29 @@ import {
 } from "@clerk/clerk-react";
 import { useLocation } from "wouter";
 import { Loader2 } from "lucide-react";
-import { FrameTicks } from "@/components/motion";
 import {
   clerkConfigured,
   clerkExpectedDomain,
   clerkStatus,
-  darkroomAppearance,
+  studioAppearance,
 } from "@/lib/clerk";
 
 export function ClerkSetupNotice() {
   const destination = clerkStatus === "domain-mismatch" && clerkExpectedDomain
     ? `https://${clerkExpectedDomain}${window.location.pathname}` : "/#sample";
-  return (
-    <main className="min-h-screen grid place-items-center bg-[#392a32] p-6 text-[#f2f0e9]">
-      <section className="max-w-lg">
-        <a href="/" className="font-display text-2xl tracking-tight">glimpse</a>
-        <h1 className="mt-10 font-display text-4xl leading-tight">{clerkStatus === "domain-mismatch" ? "Continue to boutique sign in" : "Boutique sign-in is unavailable"}</h1>
-        <p className="my-5 text-neutral-300">{clerkStatus === "domain-mismatch" ? "Sign in at your boutique’s registered address." : "You can still explore the sample fitting and inspect the gown references."}</p>
-        <a className="inline-block border-b border-current py-2" href={destination}>{clerkStatus === "domain-mismatch" ? "Open sign in" : "Explore the sample fitting"} →</a>
-      </section>
-    </main>
-  );
+  const mismatch = clerkStatus === "domain-mismatch";
+  return <StudioPage section="Boutique access" image="lace">
+    <p className="studio-label">Boutique studio</p>
+    <h1>{mismatch ? <>Your studio <em>sign-in.</em></> : <>Studio access <em>is paused.</em></>}</h1>
+    <p>{mismatch ? "Sign in at your boutique’s registered address." : "Boutique sign-in is currently unavailable. The collection and sample fitting are open to explore."}</p>
+    <a className="studio-action" href={destination}>{mismatch ? "Open sign in" : "Explore the sample fitting"} ↗</a>
+  </StudioPage>;
 }
 
 function ClerkConnectionFailed() {
   return (
     <div className="relative w-full max-w-md bg-card p-8 text-center">
-      <FrameTicks size={16} className="text-foreground/40" />
+
       <p className="mono-label mb-4 text-rose">Connection issue</p>
       <h2 className="font-display text-xl font-medium mb-3">Sign-in couldn't load</h2>
       <p className="text-sm leading-relaxed text-muted-foreground">
@@ -166,7 +163,7 @@ export function OrgGate({ children }: { children: ReactNode }) {
           </p>
         </div>
         <CreateOrganization
-          appearance={darkroomAppearance}
+          appearance={studioAppearance}
           skipInvitationScreen
           hideSlug
         />
