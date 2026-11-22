@@ -27,6 +27,7 @@ export const ReadinessCheckState = {
 
 export type ReadinessStatusChecks = {
   env: ReadinessCheckState;
+  auth: ReadinessCheckState;
   database: ReadinessCheckState;
   storage: ReadinessCheckState;
   ai: ReadinessCheckState;

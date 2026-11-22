@@ -1357,10 +1357,12 @@ components:
           enum: [ok, degraded]
         checks:
           type: object
-          required: [env, database, storage, ai, billing, email, qualityGate, imageModel, ffmpeg]
+          required: [env, auth, database, storage, ai, billing, email, qualityGate, imageModel, ffmpeg]
           additionalProperties: false
           properties:
             env:
+              $ref: "#/components/schemas/ReadinessCheckState"
+            auth:
               $ref: "#/components/schemas/ReadinessCheckState"
             database:
               $ref: "#/components/schemas/ReadinessCheckState"

@@ -1,3 +1,4 @@
+import { DEFAULT_REVIEW_MODEL } from "../lib/geminiReview.js";
 import dotenv from "dotenv";
 import { createHash } from "node:crypto";
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
@@ -565,7 +566,7 @@ async function main(): Promise<void> {
       image: configuredImageModels()[0] ?? "gemini-3-pro-image",
       imageFallbacks: configuredImageModels().slice(1),
       imageSize: process.env.GEMINI_IMAGE_SIZE ?? "2K",
-      quality: process.env.GEMINI_QUALITY_MODEL ?? "gemini-2.5-pro",
+      quality: process.env.GEMINI_QUALITY_MODEL ?? DEFAULT_REVIEW_MODEL,
       qualityGate: process.env.GALLERY_QUALITY_GATE === "off" ? "off" : "on",
     },
     inputs: {

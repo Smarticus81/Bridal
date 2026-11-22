@@ -495,7 +495,7 @@ try {
     GOOGLE_AI_API_KEY: "AIzaProductionLikeKey123",
     GEMINI_IMAGE_MODEL: "gemini-3-pro-image",
     GEMINI_IMAGE_FALLBACK_MODELS: "gemini-3.1-flash-image",
-    GEMINI_QUALITY_MODEL: "gemini-2.5-pro",
+    GEMINI_QUALITY_MODEL: "gemini-3.8-flash",
     GEMINI_IMAGE_SIZE: "2K",
     GALLERY_FRAME_ATTEMPTS: "4",
     GALLERY_QUALITY_GATE: "on",
@@ -635,7 +635,7 @@ try {
   );
   assert.ok(
     envErrors.some((error) => error.includes("GEMINI_QUALITY_MODEL")),
-    "production env requires a Pro quality judge",
+    "production env rejects an unsupported quality judge",
   );
   assert.ok(
     envErrors.some((error) => error.includes("v1beta Gemini API")),

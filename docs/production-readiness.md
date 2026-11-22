@@ -132,7 +132,7 @@ Production startup refuses:
 - generated image minimum edge below 1024px
 - generated image local contrast or sharpness floors below the production
   defaults
-- non-Pro quality judge models
+- quality reviewers outside Gemini 3.8 Flash and the supported Gemini Pro family
 - Gemini `v1` API base URLs (image generation config requires `v1beta`)
 
 Manual review is still required before launch: both partners must be instantly

@@ -9,6 +9,7 @@ import type { ReadinessCheckState } from "./readinessCheckState";
 
 export type ReadinessStatusChecks = {
   env: ReadinessCheckState;
+  auth: ReadinessCheckState;
   database: ReadinessCheckState;
   storage: ReadinessCheckState;
   ai: ReadinessCheckState;

@@ -38,15 +38,12 @@ hard crash-on-incomplete-env guard for the final launch cutover.
 
 ## 2. AI model chain — production defaults; the guard rejects weaker values
 
-These already default to safe values in code; set them explicitly so nothing
-drifts. The guard **refuses to boot** if the chain doesn't start with
-`gemini-3-pro-image`, if the judge isn't a Gemini Pro model, if the gate is off,
-if any threshold/attempt/edge is lowered, or if the base URL isn't `v1beta`.
+The app uses Gemini 3 Pro Image for rendering and Gemini 3.8 Flash for photo and output review. Production validation checks the model chain, quality thresholds, retries, image resolution and API version. The public readiness endpoint reports configuration problems during setup.
 
 ```
 GEMINI_IMAGE_MODEL=gemini-3-pro-image
 GEMINI_IMAGE_FALLBACK_MODELS=gemini-3.1-flash-image
-GEMINI_QUALITY_MODEL=gemini-2.5-pro
+GEMINI_QUALITY_MODEL=gemini-3.8-flash
 GEMINI_IMAGE_SIZE=2K                       # one of 1K, 2K, 4K
 GENERATED_IMAGE_MIN_EDGE_PX=1024           # >= 1024
 GENERATED_IMAGE_MIN_CONTRAST=8             # >= 8
