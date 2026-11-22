@@ -1,5 +1,5 @@
-import { Router, type IRouter } from "express";
-import { and, eq, gte, sql } from "drizzle-orm";
+import { Router, type IRouter, type Request, type Response } from "express";
+import { and, eq, gte, isNull, sql } from "drizzle-orm";
 import { createHash, randomUUID } from "crypto";
 import {
   db,
@@ -8,6 +8,8 @@ import {
   dressesTable,
   dressMediaTable,
   coupleSessionsTable,
+  coupleMediaTable,
+  uploadIntentsTable,
   generatedAssetsTable,
   creditTransactionsTable,
   organizationsTable,
@@ -23,6 +25,8 @@ import { orderDressMediaForGeneration, type DressMediaCoverage } from "../lib/dr
 import { runTryonLook, type DressReference } from "../lib/runTryonLook.js";
 import { VISUALIZATION_DISCLAIMER } from "../lib/tryonQuality.js";
 import { ObjectStorageService, mimeTypeFromObjectPath } from "../lib/objectStorage.js";
+import { refundCreditsForSession } from "../lib/credits.js";
+import { reviewBridePhoto } from "../lib/bridePhotoReview.js";
 import { assertReferenceImageQuality } from "../lib/referenceImageQuality.js";
 import { runRetentionPurge } from "../lib/retentionPurgeExecutor.js";
 import {
@@ -64,39 +68,34 @@ async function uploadBuffer(buffer: Buffer, contentType: string): Promise<string
   return objectKey;
 }
 
-/** Reverse a look debit when generation fails, so a failed look never costs a credit. */
-async function refundLook(lookbookId: number, organizationId: number, sessionId: number): Promise<void> {
-  await db.transaction(async (tx) => {
-    await tx
-      .update(lookbooksTable)
-      .set({ creditsUsed: sql`GREATEST(${lookbooksTable.creditsUsed} - 1, 0)` })
-      .where(eq(lookbooksTable.id, lookbookId));
-    await tx
-      .update(organizationsTable)
-      .set({ creditsBalance: sql`${organizationsTable.creditsBalance} + 1` })
-      .where(eq(organizationsTable.id, organizationId));
-    await tx.insert(creditTransactionsTable).values({
-      organizationId,
-      delta: 1,
-      reason: "session_refund",
-      sessionId,
-    });
-    await tx
-      .update(coupleSessionsTable)
-      .set({ status: "failed", errorMessage: "Look generation failed; credit refunded." })
-      .where(eq(coupleSessionsTable.id, sessionId));
-  });
-}
+class LookConflict extends Error {}
 
-// POST /try/:lookbookToken/looks — bride generates a look for a chosen dress.
-router.post("/try/:lookbookToken/looks", async (req, res): Promise<void> => {
+// Bound concurrent image buffers and provider spend on this single-replica service.
+let activeLooks = 0;
+const MAX_CONCURRENT_LOOKS = 2;
+
+// Both entry points share validation, debit, render and settlement.
+router.post(["/try/:lookbookToken/looks", "/try/:lookbookToken/jobs"], async (req, res): Promise<void> => {
   if (!rateLimit(`tryonlook:${clientKey(req)}`, 30, 60 * 60 * 1000)) {
     res.status(429).json({ error: "Too many tries from this address. Please wait a bit." });
     return;
   }
 
+  if (activeLooks >= MAX_CONCURRENT_LOOKS) {
+    res.set("Retry-After", "15").status(429).json({ error: "The fitting studio is busy. Please try again in a moment." });
+    return;
+  }
+  activeLooks++;
+  try {
+    await createLook(req, res);
+  } finally {
+    activeLooks--;
+  }
+});
+
+async function createLook(req: Request, res: Response): Promise<void> {
   const token = req.params.lookbookToken;
-  if (!isWellFormedLookbookToken(token)) {
+  if (typeof token !== "string" || !isWellFormedLookbookToken(token)) {
     res.status(404).json({ error: "This link isn't valid." });
     return;
   }
@@ -144,15 +143,38 @@ router.post("/try/:lookbookToken/looks", async (req, res): Promise<void> => {
     res.status(400).json({ error: "Your photo upload is not valid. Please upload it again." });
     return;
   }
+  const availableUpload = () => and(
+    eq(uploadIntentsTable.objectKey, body.bridePhotoObjectKey),
+    eq(uploadIntentsTable.venueId, lookbook.shopId),
+    eq(uploadIntentsTable.purpose, "couple"),
+    isNull(uploadIntentsTable.consumedAt),
+    gte(uploadIntentsTable.expiresAt, new Date()),
+  );
+  const [intent] = await db.select({ id: uploadIntentsTable.id }).from(uploadIntentsTable).where(availableUpload()).limit(1);
+  if (!intent) {
+    res.status(409).json({ error: "Please upload a fresh photo for this lookbook." });
+    return;
+  }
   const brideBuffer = await fetchBuffer(body.bridePhotoObjectKey);
   if (!brideBuffer) {
     res.status(400).json({ error: "We couldn't find your photo. Please upload it again." });
     return;
   }
+  let photoQuality;
   try {
-    await assertReferenceImageQuality({ buffer: brideBuffer, label: "Your photo", minEdgePx: 256, profile: "couple" });
+    photoQuality = await assertReferenceImageQuality({ buffer: brideBuffer, label: "Your photo", minEdgePx: 256, profile: "couple" });
   } catch (err) {
     res.status(400).json({ error: err instanceof Error ? err.message : "Please upload a clearer, full-length photo." });
+    return;
+  }
+  try {
+    const review = await reviewBridePhoto(brideBuffer, photoQuality);
+    if (!review.ok) {
+      res.status(422).json({ error: review.reason });
+      return;
+    }
+  } catch {
+    res.status(503).json({ error: "Photo review is temporarily unavailable. Please try again later." });
     return;
   }
   const brideMime = mimeTypeFromObjectPath(body.bridePhotoObjectKey);
@@ -162,7 +184,8 @@ router.post("/try/:lookbookToken/looks", async (req, res): Promise<void> => {
   const media = await db
     .select({ objectKey: dressMediaTable.objectKey, coverage: dressMediaTable.coverage })
     .from(dressMediaTable)
-    .where(eq(dressMediaTable.dressId, dress.id));
+    .where(eq(dressMediaTable.dressId, dress.id))
+    .orderBy(dressMediaTable.displayOrder, dressMediaTable.id);
   const ordered = orderDressMediaForGeneration(media);
   if (!ordered.some((m) => m.coverage === "front")) {
     res.status(400).json({ error: "This dress isn't ready to try on yet." });
@@ -175,7 +198,7 @@ router.post("/try/:lookbookToken/looks", async (req, res): Promise<void> => {
       dressReferences.push({ buffer: buf, mimeType: mimeTypeFromObjectPath(m.objectKey), coverage: m.coverage as DressMediaCoverage });
     }
   }
-  if (dressReferences.length === 0) {
+  if (!dressReferences.some(ref => ref.coverage === "front")) {
     res.status(400).json({ error: "This dress isn't ready to try on yet." });
     return;
   }
@@ -185,11 +208,12 @@ router.post("/try/:lookbookToken/looks", async (req, res): Promise<void> => {
   const shareToken = randomUUID().replace(/-/g, "") + randomUUID().replace(/-/g, "").slice(0, 8);
   const charge = await db.transaction(async (tx) => {
     const [lb] = await tx
-      .select({ creditCap: lookbooksTable.creditCap, creditsUsed: lookbooksTable.creditsUsed, organizationId: lookbooksTable.organizationId, shopId: lookbooksTable.shopId })
+      .select()
       .from(lookbooksTable)
       .where(eq(lookbooksTable.id, lookbook.id))
-      .limit(1);
+      .limit(1).for("update");
     if (!lb) return null;
+    if (!lookbookUsability(lb, new Date()).usable) throw new LookConflict("This lookbook is no longer available.");
     const [org] = await tx
       .select({ id: organizationsTable.id, creditsBalance: organizationsTable.creditsBalance })
       .from(organizationsTable)
@@ -212,13 +236,17 @@ router.post("/try/:lookbookToken/looks", async (req, res): Promise<void> => {
       .set({ creditsBalance: sql`${organizationsTable.creditsBalance} - 1` })
       .where(and(eq(organizationsTable.id, org.id), gte(organizationsTable.creditsBalance, 1)))
       .returning({ id: organizationsTable.id });
-    if (orgUpdated.length === 0) return { failed: "insufficient_org_credits" as const };
+    if (orgUpdated.length === 0) throw new LookConflict("The shop is temporarily out of credits.");
+    const consumed = await tx.update(uploadIntentsTable).set({ consumedAt: new Date() })
+      .where(availableUpload()).returning({ id: uploadIntentsTable.id });
+    if (!consumed.length) throw new LookConflict("Please upload a fresh photo for this lookbook.");
 
     const [session] = await tx
       .insert(coupleSessionsTable)
       .values({ venueId: lb.shopId, status: "processing", coupleEmail: body.brideEmail.trim().toLowerCase(), shareToken, creditsCharged: 1 })
       .returning({ id: coupleSessionsTable.id });
 
+    await tx.insert(coupleMediaTable).values({ sessionId: session!.id, objectKey: body.bridePhotoObjectKey });
     await tx.insert(consentRecordsTable).values({
       sessionId: session!.id,
       lookbookId: lookbook.id,
@@ -238,7 +266,14 @@ router.post("/try/:lookbookToken/looks", async (req, res): Promise<void> => {
     });
 
     return { session: session!, organizationId: org.id };
+  }).catch((err: unknown) => {
+    if (!(err instanceof LookConflict)) throw err;
+    return { conflict: err.message };
   });
+  if (charge && "conflict" in charge) {
+    res.status(409).json({ error: charge.conflict });
+    return;
+  }
 
   if (!charge) {
     res.status(404).json({ error: "This link isn't valid." });
@@ -252,6 +287,9 @@ router.post("/try/:lookbookToken/looks", async (req, res): Promise<void> => {
 
   // Generate the look (garment-fidelity gate + adaptive retry). On any failure,
   // refund the credit so a failed look never costs the shop.
+  const asynchronous = req.path.endsWith("/jobs");
+  if (asynchronous) res.status(202).json({ shareToken });
+  let storedKey: string | undefined;
   try {
     const look = await runTryonLook({
       sessionId: charge.session.id,
@@ -269,21 +307,27 @@ router.post("/try/:lookbookToken/looks", async (req, res): Promise<void> => {
       dressReferences,
     });
 
+    if (look.consultantReview) throw new Error("Look did not meet the bridal publication thresholds");
     const objectKey = await uploadBuffer(look.polished, look.mimeType);
-    await db.insert(generatedAssetsTable).values({
-      sessionId: charge.session.id,
-      objectKey,
-      assetType: "image",
-      displayOrder: 1,
-      generationModel: look.model,
-      generationAttempts: look.attempts,
-      qualityReport: look.report as unknown as Record<string, unknown>,
+    storedKey = objectKey;
+    await db.transaction(async tx => {
+      const [claimed] = await tx.update(coupleSessionsTable)
+        .set({ status: "ready", completedAt: new Date() })
+        .where(and(eq(coupleSessionsTable.id, charge.session.id), eq(coupleSessionsTable.status, "processing")))
+        .returning({ id: coupleSessionsTable.id });
+      if (!claimed) throw new Error("Render was already settled");
+      await tx.insert(generatedAssetsTable).values({
+        sessionId: charge.session.id,
+        objectKey,
+        assetType: "image",
+        displayOrder: 1,
+        generationModel: look.model,
+        generationAttempts: look.attempts,
+        qualityReport: look.report as unknown as Record<string, unknown>,
+      });
     });
-    await db
-      .update(coupleSessionsTable)
-      .set({ status: "ready", completedAt: new Date() })
-      .where(eq(coupleSessionsTable.id, charge.session.id));
-
+    storedKey = undefined;
+    if (asynchronous) return;
     res.status(201).json({
       objectKey,
       shareToken,
@@ -295,10 +339,17 @@ router.post("/try/:lookbookToken/looks", async (req, res): Promise<void> => {
     });
   } catch (err) {
     logger.error({ err, sessionId: charge.session.id }, "try-on look generation failed");
-    await refundLook(lookbook.id, charge.organizationId, charge.session.id).catch(() => {});
-    res.status(502).json({ error: "We couldn't create this look. Your credit was not used — please try another dress." });
+    if (storedKey) await storage.deleteObjectEntity(storedKey).catch(err => logger.error({ err }, "Could not remove unpublished image"));
+    try {
+      await refundCreditsForSession(charge.session.id, "This look did not pass review. Try another reference photo.");
+    } catch (refundError) {
+      logger.error({ err: refundError, sessionId: charge.session.id }, "Render refund needs recovery");
+      if (!asynchronous) res.status(503).json({ error: "The look could not be completed. Its credit is awaiting reconciliation." });
+      return;
+    }
+    if (!asynchronous) res.status(502).json({ error: "This look could not be delivered. Your credit has been returned." });
   }
-});
+}
 
 // POST /try/looks/:shareToken/forget — the bride's "delete everything about me"
 // (spec §6.3). No account: the share token is the capability. Immediately hard-

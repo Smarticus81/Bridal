@@ -32,24 +32,24 @@ export default function OwnerLoginPage() {
         <ClerkWidgetFrame>
           <SignedOut>
             <div className="text-center">
-              <p className="mono-label mb-3 text-rose">Venue teams</p>
+              <p className="mono-label mb-3 text-rose">Boutique teams</p>
               <h1 className="font-display text-3xl font-medium">Sign in to your profile</h1>
             </div>
             <SignIn
               appearance={darkroomAppearance}
               routing="hash"
               signUpUrl="/create-venue"
-              forceRedirectUrl="/dashboard"
+              forceRedirectUrl="/catalog"
             />
             <a
               href="/create-venue"
               className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
             >
-              New here? Create your organization and first venue
+              New here? Create your organization and first boutique
             </a>
           </SignedOut>
           <SignedIn>
-            <Redirect to="/dashboard" />
+            <Redirect to="/catalog" />
           </SignedIn>
         </ClerkWidgetFrame>
       </main>

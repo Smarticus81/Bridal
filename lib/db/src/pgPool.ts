@@ -34,11 +34,9 @@ function normalizeDatabaseUrl(raw: string): { url: string; needsSsl: boolean } {
 
 export function createDatabasePool(): pg.Pool {
   const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) {
-    throw new Error(
-      "DATABASE_URL must be set. Add your Supabase connection string to .env at the monorepo root.",
-    );
-  }
+  // pg creates connections on demand. Setup mode serves the public site and
+  // health endpoints without running queries or starting database workers.
+  if (!connectionString) return new Pool({ allowExitOnIdle: true });
 
   const { url, needsSsl } = normalizeDatabaseUrl(connectionString);
 

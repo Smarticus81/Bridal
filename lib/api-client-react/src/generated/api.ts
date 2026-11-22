@@ -60,6 +60,7 @@ import type {
   SessionDetailResponse,
   SessionReactionsResponse,
   SessionResponse,
+  StartTryonJob202,
   TryLookbookResponse,
   TryonLookResponse,
   UpdateVenueBody,
@@ -2640,7 +2641,7 @@ export const useCreateLookbook = <
 };
 
 /**
- * The bride selects a dress from the lookbook and supplies her uploaded photo and explicit consent. Costs one credit (bounded by the lookbook cap and the shop's balance). Runs the garment-fidelity gate; a below-target look is routed to the consultant, never returned as final.
+ * The bride selects a dress from the lookbook and supplies her uploaded photo and explicit consent. Costs one credit (bounded by the lookbook cap and the shop's balance). Runs the garment-fidelity gate; a below-target look is withheld and the credit refunded.
  * @summary Generate a try-on look for a chosen dress (public, no account)
  */
 export const getGenerateTryonLookUrl = (lookbookToken: string) => {
@@ -2728,6 +2729,94 @@ export const useGenerateTryonLook = <
   TContext
 > => {
   return useMutation(getGenerateTryonLookMutationOptions(options));
+};
+
+/**
+ * The bride selects a dress from the lookbook and supplies her uploaded photo and explicit consent. Costs one credit (bounded by the lookbook cap and the shop's balance). Runs the garment-fidelity gate; a below-target look is withheld and the credit refunded.
+ * @summary Start a try-on and return a token for polling the existing session endpoint
+ */
+export const getStartTryonJobUrl = (lookbookToken: string) => {
+  return `/api/try/${lookbookToken}/jobs`;
+};
+
+export const startTryonJob = async (
+  lookbookToken: string,
+  generateTryonLookBody: GenerateTryonLookBody,
+  options?: RequestInit,
+): Promise<StartTryonJob202> => {
+  return customFetch<StartTryonJob202>(getStartTryonJobUrl(lookbookToken), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(generateTryonLookBody),
+  });
+};
+
+export const getStartTryonJobMutationOptions = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof startTryonJob>>,
+    TError,
+    { lookbookToken: string; data: BodyType<GenerateTryonLookBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof startTryonJob>>,
+  TError,
+  { lookbookToken: string; data: BodyType<GenerateTryonLookBody> },
+  TContext
+> => {
+  const mutationKey = ["startTryonJob"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof startTryonJob>>,
+    { lookbookToken: string; data: BodyType<GenerateTryonLookBody> }
+  > = (props) => {
+    const { lookbookToken, data } = props ?? {};
+
+    return startTryonJob(lookbookToken, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type StartTryonJobMutationResult = NonNullable<
+  Awaited<ReturnType<typeof startTryonJob>>
+>;
+export type StartTryonJobMutationBody = BodyType<GenerateTryonLookBody>;
+export type StartTryonJobMutationError = ErrorType<ErrorEnvelope>;
+
+/**
+ * @summary Start a try-on and return a token for polling the existing session endpoint
+ */
+export const useStartTryonJob = <
+  TError = ErrorType<ErrorEnvelope>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof startTryonJob>>,
+    TError,
+    { lookbookToken: string; data: BodyType<GenerateTryonLookBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof startTryonJob>>,
+  TError,
+  { lookbookToken: string; data: BodyType<GenerateTryonLookBody> },
+  TContext
+> => {
+  return useMutation(getStartTryonJobMutationOptions(options));
 };
 
 /**

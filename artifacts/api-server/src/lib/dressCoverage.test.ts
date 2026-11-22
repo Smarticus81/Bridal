@@ -64,3 +64,8 @@ test("ordering is stable and pushes unknown-coverage rows last", () => {
     [2, 4, 1, 3],
   );
 });
+
+test("duplicate front views cannot crowd out lace or back references", () => {
+  const media = [...Array.from({length: 7}, () => ({coverage: "front"})), {coverage: "detail"}, {coverage: "back"}];
+  assert.deepEqual(orderDressMediaForGeneration(media).slice(0, 3).map(item => item.coverage), ["front", "detail", "back"]);
+});

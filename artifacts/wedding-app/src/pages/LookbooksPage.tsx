@@ -1,3 +1,4 @@
+import { BoutiqueNav } from "@/components/layout/BoutiqueNav";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -87,6 +88,7 @@ function LookbooksContent() {
   return (
     <main className="min-h-screen bg-neutral-50 text-neutral-900">
       <div className="mx-auto max-w-5xl px-6 py-12">
+        <BoutiqueNav />
         <h1 className="text-3xl font-semibold">Lookbooks</h1>
         <p className="mt-1 text-sm text-neutral-500">Send a bride a curated try-on link. Always capped, always expiring.</p>
 

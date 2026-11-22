@@ -54,6 +54,10 @@ app.use(
 app.use(securityHeaders);
 app.use(cors(corsOptions()));
 app.use(cookieParser());
+app.use("/api", (req, res, next) => {
+  if (process.env.DATABASE_URL || ["/healthz", "/readyz"].includes(req.path)) return next();
+  res.status(503).json({ error: "Boutique services are temporarily unavailable." });
+});
 logStripeMissing();
 
 if (clerkEnabled()) {
@@ -161,7 +165,7 @@ function serveIndexHtml(res: Response, extraHeadHtml = ""): void {
 app.get("/v/:shareToken", async (req, res): Promise<void> => {
   try {
     const { shareToken } = req.params;
-    if (!shareToken) {
+    if (!shareToken || !process.env.DATABASE_URL) {
       serveIndexHtml(res);
       return;
     }

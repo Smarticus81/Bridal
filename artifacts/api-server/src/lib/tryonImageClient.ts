@@ -1,3 +1,4 @@
+import { DRESS_MEDIA_COVERAGE_LABELS, type DressMediaCoverage } from "./dressCoverage.js";
 import { configuredImageModels } from "./stillImageClient.js";
 import { logger } from "./logger.js";
 import type { GeneratedLookImage } from "./lookGeneration.js";
@@ -14,9 +15,11 @@ import type { GeneratedLookImage } from "./lookGeneration.js";
 export interface ReferenceImage {
   buffer: Buffer;
   mimeType: string;
+  coverage?: DressMediaCoverage | null;
 }
 
 interface GeminiPart {
+  thought?: boolean;
   text?: string;
   inlineData?: { mimeType: string; data: string };
 }
@@ -42,6 +45,7 @@ export function buildTryonImageParts(
   }
   parts.push({ text: "DRESS REFERENCE IMAGES:" });
   for (const ref of dressReferences.slice(0, MAX_DRESS_TRYON_REFERENCES)) {
+    if (ref.coverage) parts.push({ text: DRESS_MEDIA_COVERAGE_LABELS[ref.coverage] });
     parts.push({ inlineData: { mimeType: ref.mimeType, data: ref.buffer.toString("base64") } });
   }
   parts.push({ text: prompt });
@@ -80,10 +84,11 @@ async function callImageModel(
       ...(imageSize ? { imageConfig: { imageSize, aspectRatio: "3:4" } } : {}),
     },
   };
-  const url = `${GEMINI_API_BASE}/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const url = `${GEMINI_API_BASE}/models/${model}:generateContent`;
   const res = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+    signal: AbortSignal.timeout(120_000),
     body: JSON.stringify(body),
   });
   const text = await res.text();
@@ -94,7 +99,7 @@ async function callImageModel(
   }
   const json = JSON.parse(text) as GeminiImageResponse;
   if (json.error) throw new Error(`Try-on image model ${model} error: ${json.error.message ?? "unknown"}`);
-  const part = (json.candidates?.[0]?.content?.parts ?? []).find((p) => p.inlineData?.data);
+  const part = (json.candidates?.[0]?.content?.parts ?? []).find((p) => !p.thought && p.inlineData?.data);
   if (!part?.inlineData) {
     throw new Error(
       `Try-on image model ${model} returned no image (finishReason=${json.candidates?.[0]?.finishReason ?? "none"}).`,

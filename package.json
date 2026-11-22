@@ -9,6 +9,7 @@
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
     "smoke:security": "node ./scripts/node_modules/tsx/dist/cli.mjs ./scripts/src/security-smoke.ts",
     "verify:production": "node ./scripts/node_modules/tsx/dist/cli.mjs ./scripts/src/verify-production.ts",
+    "tryon:qa": "node ./scripts/node_modules/tsx/dist/cli.mjs ./artifacts/api-server/src/tools/tryonQa.ts",
     "gallery:qa": "node ./scripts/node_modules/tsx/dist/cli.mjs ./artifacts/api-server/src/tools/galleryQa.ts",
     "test:reference-upscaler": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/referenceImagePreparation.test.ts",
     "test:mobile-reel": "node ./scripts/node_modules/tsx/dist/cli.mjs --test ./artifacts/api-server/src/lib/byteRange.test.ts",

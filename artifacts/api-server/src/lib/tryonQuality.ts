@@ -33,7 +33,7 @@ type ImageRef = { buffer: Buffer; mimeType: string; coverage?: DressMediaCoverag
 const GEMINI_API_BASE =
   process.env.GEMINI_API_BASE_URL ?? "https://generativelanguage.googleapis.com/v1beta";
 const QUALITY_MODEL = process.env.GEMINI_QUALITY_MODEL ?? "gemini-2.5-pro";
-const QUALITY_ENABLED = process.env.TRYON_QUALITY_GATE !== "off";
+const QUALITY_ENABLED = process.env.NODE_ENV === "production" || process.env.TRYON_QUALITY_GATE !== "off";
 
 // Strict targets. Garment fidelity is deliberately above venue's 0.80: a generic
 // ballroom disappoints; a wrong dress produces a returned order and a churned shop.
@@ -198,7 +198,7 @@ function dressCoverageLabel(coverage: unknown): string | null {
 }
 
 function numberInRange(value: unknown): number {
-  const n = typeof value === "number" ? value : Number(value);
+  const n = typeof value === "number" || typeof value === "string" ? Number(value) : 0;
   if (!Number.isFinite(n)) return 0;
   return Math.max(0, Math.min(1, n));
 }
@@ -228,8 +228,8 @@ export function normalizeTryonReport(raw: Record<string, unknown>): TryonQuality
     compositionScore: numberInRange(raw.compositionScore),
     exactlyOnePerson: raw.exactlyOnePerson === true,
     faceVisible: raw.faceVisible === true,
-    extraPeople: raw.extraPeople === true,
-    textArtifacts: raw.textArtifacts === true,
+    extraPeople: raw.extraPeople !== false,
+    textArtifacts: raw.textArtifacts !== false,
     pass: raw.pass === true,
     reasons: reasonsRaw
       .filter((reason): reason is string => typeof reason === "string")
@@ -240,10 +240,9 @@ export function normalizeTryonReport(raw: Record<string, unknown>): TryonQuality
 async function normalizeForJudge(image: ImageRef): Promise<Buffer> {
   return sharp(image.buffer)
     .rotate()
-    .resize({ width: 1024, height: 1024, fit: "inside", withoutEnlargement: true })
-    .normalize({ lower: 1, upper: 99 })
-    .sharpen({ sigma: 0.8 })
-    .jpeg({ quality: 88, mozjpeg: true })
+    .resize({ width: 1536, height: 1536, fit: "inside", withoutEnlargement: true })
+    .toColourspace("srgb")
+    .jpeg({ quality: 92, chromaSubsampling: "4:4:4", mozjpeg: true })
     .toBuffer();
 }
 
@@ -325,10 +324,11 @@ export async function assertTryonLookQuality(params: {
     generationConfig: { responseMimeType: "application/json", temperature: 0 },
   };
 
-  const url = `${GEMINI_API_BASE}/models/${QUALITY_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const url = `${GEMINI_API_BASE}/models/${QUALITY_MODEL}:generateContent`;
   const res = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+    signal: AbortSignal.timeout(60_000),
     body: JSON.stringify(body),
   });
   const text = await res.text();

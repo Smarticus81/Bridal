@@ -5,10 +5,9 @@ import { runTryonLook } from "./runTryonLook.js";
 import { TryonQualityError, type TryonQualityReport } from "./tryonQuality.js";
 import type { GeneratedLookImage } from "./lookGeneration.js";
 
-async function solidJpeg(): Promise<Buffer> {
-  return sharp({ create: { width: 64, height: 96, channels: 3, background: { r: 200, g: 190, b: 180 } } })
-    .jpeg()
-    .toBuffer();
+async function samplePortrait(): Promise<Buffer> {
+  const subject = new URL("../../../../samples/tryon/subject.jpg", import.meta.url);
+  return sharp(subject.pathname).resize(1152, 1536, { fit: "cover" }).jpeg({ quality: 95 }).toBuffer();
 }
 
 const pass: TryonQualityReport = {
@@ -26,28 +25,29 @@ const pass: TryonQualityReport = {
 
 const dress = { styleName: "Aurora", neckline: "sweetheart", silhouette: "A-line" };
 
-test("composes generate -> judge -> polish and returns a polished JPEG", async () => {
-  const raw = await solidJpeg();
+test("delivers the same color-preserving JPEG the judge reviewed", async () => {
+  const raw = await samplePortrait();
+  let reviewed: Buffer | undefined;
   const result = await runTryonLook({
     sessionId: 1,
     dress,
     brideReferences: [{ buffer: raw, mimeType: "image/jpeg" }],
     dressReferences: [{ buffer: raw, mimeType: "image/jpeg", coverage: "front" }],
     generate: async (): Promise<GeneratedLookImage> => ({ buffer: raw, mimeType: "image/jpeg", model: "gemini-3-pro-image" }),
-    judge: async () => pass,
+    judge: async image => { reviewed = image.buffer; return pass; },
   });
   assert.equal(result.model, "gemini-3-pro-image");
   assert.equal(result.attempts, 1);
   assert.equal(result.consultantReview, false);
   assert.equal(result.report.garmentFidelityScore, 0.92);
   // The polished output is a valid JPEG (has real bytes and decodes).
-  assert.ok(result.polished.length > 0);
+  assert.deepEqual(result.polished, reviewed);
   const meta = await sharp(result.polished).metadata();
   assert.equal(meta.format, "jpeg");
 });
 
 test("surfaces consultant-review floor delivery from the engine", async () => {
-  const raw = await solidJpeg();
+  const raw = await samplePortrait();
   const nearMiss: TryonQualityReport = { ...pass, pass: false, garmentFidelityScore: 0.84 };
   const result = await runTryonLook({
     sessionId: 2,

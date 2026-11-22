@@ -47,6 +47,7 @@ router.get("/readyz", async (_req, res) => {
   };
 
   try {
+    if (!process.env.DATABASE_URL) throw new Error("Database is not configured");
     await db.execute(sql`select 1`);
     const missingSchema = await missingRequiredDatabaseSchema();
     checks.database = missingSchema.length === 0 ? "ok" : "degraded";

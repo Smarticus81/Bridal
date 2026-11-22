@@ -2,6 +2,8 @@ import {
   db,
   venuesTable,
   organizationsTable,
+  consentRecordsTable,
+  lookbooksTable,
   creditTransactionsTable,
   coupleSessionsTable,
 } from "@workspace/db";
@@ -158,7 +160,7 @@ export async function setOrgCreditsBalance(
 }
 
 
-export async function refundCreditsForSession(sessionId: number): Promise<boolean> {
+export async function refundCreditsForSession(sessionId: number, failureMessage?: string): Promise<boolean> {
   const refunded = await db.transaction(async (tx) => {
     const [session] = await tx
       .select({
@@ -172,7 +174,7 @@ export async function refundCreditsForSession(sessionId: number): Promise<boolea
 
     const [cleared] = await tx
       .update(coupleSessionsTable)
-      .set({ creditsCharged: 0 })
+      .set({ creditsCharged: 0, ...(failureMessage ? { status: "failed", errorMessage: failureMessage, completedAt: new Date() } : {}) })
       .where(
         and(
           eq(coupleSessionsTable.id, sessionId),
@@ -187,7 +189,15 @@ export async function refundCreditsForSession(sessionId: number): Promise<boolea
       .select({ organizationId: venuesTable.organizationId })
       .from(venuesTable)
       .where(eq(venuesTable.id, session.venueId));
-    const orgId = venueRow?.organizationId ?? null;
+    const [consent] = await tx.select({ lookbookId: consentRecordsTable.lookbookId })
+      .from(consentRecordsTable).where(eq(consentRecordsTable.sessionId, sessionId)).limit(1);
+    let orgId = venueRow?.organizationId ?? null;
+    if (consent?.lookbookId) {
+      const [book] = await tx.update(lookbooksTable)
+        .set({ creditsUsed: sql`GREATEST(${lookbooksTable.creditsUsed} - 1, 0)` })
+        .where(eq(lookbooksTable.id, consent.lookbookId)).returning({ organizationId: lookbooksTable.organizationId });
+      orgId = book?.organizationId ?? orgId;
+    }
 
     if (orgId != null) {
       await tx

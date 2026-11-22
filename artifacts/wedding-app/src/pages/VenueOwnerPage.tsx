@@ -1,3 +1,4 @@
+import { BoutiqueNav } from "@/components/layout/BoutiqueNav";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   useAddVenueMedia,
@@ -642,6 +643,7 @@ function DashboardInner() {
           </div>
         </div>
       </header>
+      <div className="px-5 pt-4"><BoutiqueNav /></div>
 
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:py-12 space-y-14">
         <section className="grid gap-10 lg:grid-cols-[1fr_360px]">

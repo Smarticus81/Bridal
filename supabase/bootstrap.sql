@@ -286,3 +286,6 @@ CREATE TABLE IF NOT EXISTS consent_records (
   retention_expires_at TIMESTAMP,
   revoked_at TIMESTAMP
 );
+
+-- Older installations predate the retention worker's completion marker.
+ALTER TABLE public.consent_records ADD COLUMN IF NOT EXISTS purged_at TIMESTAMP;

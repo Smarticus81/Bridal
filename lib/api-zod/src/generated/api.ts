@@ -1025,7 +1025,7 @@ export const CreateLookbookBody = zod.object({
 });
 
 /**
- * The bride selects a dress from the lookbook and supplies her uploaded photo and explicit consent. Costs one credit (bounded by the lookbook cap and the shop's balance). Runs the garment-fidelity gate; a below-target look is routed to the consultant, never returned as final.
+ * The bride selects a dress from the lookbook and supplies her uploaded photo and explicit consent. Costs one credit (bounded by the lookbook cap and the shop's balance). Runs the garment-fidelity gate; a below-target look is withheld and the credit refunded.
  * @summary Generate a try-on look for a chosen dress (public, no account)
  */
 export const GenerateTryonLookParams = zod.object({
@@ -1033,6 +1033,25 @@ export const GenerateTryonLookParams = zod.object({
 });
 
 export const GenerateTryonLookBody = zod.object({
+  dressId: zod.number(),
+  bridePhotoObjectKey: zod
+    .string()
+    .describe("Object key of the bride's uploaded, gated photo."),
+  brideEmail: zod.string().email(),
+  consent: zod
+    .boolean()
+    .describe("Must be true — the bride's own affirmative action."),
+});
+
+/**
+ * The bride selects a dress from the lookbook and supplies her uploaded photo and explicit consent. Costs one credit (bounded by the lookbook cap and the shop's balance). Runs the garment-fidelity gate; a below-target look is withheld and the credit refunded.
+ * @summary Start a try-on and return a token for polling the existing session endpoint
+ */
+export const StartTryonJobParams = zod.object({
+  lookbookToken: zod.coerce.string(),
+});
+
+export const StartTryonJobBody = zod.object({
   dressId: zod.number(),
   bridePhotoObjectKey: zod
     .string()

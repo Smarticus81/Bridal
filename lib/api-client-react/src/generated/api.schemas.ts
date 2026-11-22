@@ -851,6 +851,10 @@ export const ListDressesStatus = {
   discontinued: "discontinued",
 } as const;
 
+export type StartTryonJob202 = {
+  shareToken: string;
+};
+
 export type GetStorageObjectParams = {
   /**
    * Required to read generated gallery assets from a public share page.

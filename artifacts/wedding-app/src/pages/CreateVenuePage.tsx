@@ -40,13 +40,13 @@ export default function CreateVenuePage() {
           <SignedOut>
             <div className="relative z-10 mt-10 flex flex-col items-center gap-6">
               <div className="text-center max-w-md">
-                <p className="mono-label mb-3 text-rose">For venues</p>
+                <p className="mono-label mb-3 text-rose">For boutiques</p>
                 <h1 className="font-display text-3xl font-medium tracking-tight">
                   Create your profile
                 </h1>
                 <p className="mt-2 text-muted-foreground font-light">
                   Then name your organization — it owns billing, credits, and every
-                  venue you add.
+                  boutique you add.
                 </p>
               </div>
               <SignUp
@@ -87,7 +87,7 @@ function VenueForm() {
     const slug = toVenueSlug(formData.name);
 
     if (!slug) {
-      toast({ title: "Venue name required", variant: "destructive" });
+      toast({ title: "Boutique name required", variant: "destructive" });
       return;
     }
     if (!ownerEmail) {
@@ -106,16 +106,16 @@ function VenueForm() {
           ownerEmail,
           contactEmail: ownerEmail,
           bookingUrl: formData.bookingUrl.trim() || undefined,
-          tagline: "Photoreal preview galleries that help prospects visualize the day and inquire faster.",
+          tagline: "Explore your bridal shortlist before your fitting.",
         }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? "Could not create venue.");
       toast({
-        title: "Venue created",
-        description: "Your dashboard is ready.",
+        title: "Boutique created",
+        description: "Your gown catalog is ready.",
       });
-      setLocation("/dashboard");
+      setLocation("/catalog");
     } catch (err) {
       toast({
         title: "Creation failed",
@@ -138,19 +138,19 @@ function VenueForm() {
         <FrameTicks size={16} className="text-foreground/40" />
 
         <div className="mb-8">
-          <p className="mono-label mb-4 text-rose">For venues</p>
+          <p className="mono-label mb-4 text-rose">For boutiques</p>
           <h1 className="font-display text-3xl font-medium tracking-tight text-foreground">
             Add a venue
           </h1>
           <p className="mt-2 text-muted-foreground font-light">
             It joins your organization — billing and credits stay shared across
-            all of your venues.
+            your boutique locations.
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
-            <Label htmlFor="venue-name" className="mono-label text-muted-foreground">Venue name</Label>
+            <Label htmlFor="venue-name" className="mono-label text-muted-foreground">Boutique name</Label>
             <div className="relative">
               <Building2 className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -167,13 +167,13 @@ function VenueForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="booking-url" className="mono-label text-muted-foreground">Tour booking link <span className="text-muted-foreground font-normal normal-case">(optional)</span></Label>
+            <Label htmlFor="booking-url" className="mono-label text-muted-foreground">Fitting booking link <span className="text-muted-foreground font-normal normal-case">(optional)</span></Label>
             <Input
               id="booking-url"
               value={formData.bookingUrl}
               onChange={(e) => setFormData((prev) => ({ ...prev, bookingUrl: e.target.value }))}
               className="h-12 rounded-none border-input bg-background focus-visible:ring-ring"
-              placeholder="https://yourvenue.com/tours"
+              placeholder="https://yourboutique.com/fittings"
               data-testid="venue-booking-url-input"
               autoComplete="url"
             />
