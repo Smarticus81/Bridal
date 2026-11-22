@@ -23,6 +23,7 @@ export const ReadinessCheckResponse = zod.object({
   status: zod.enum(["ok", "degraded"]),
   checks: zod.object({
     env: zod.enum(["ok", "degraded"]),
+    auth: zod.enum(["ok", "degraded"]),
     database: zod.enum(["ok", "degraded"]),
     storage: zod.enum(["ok", "degraded"]),
     ai: zod.enum(["ok", "degraded"]),

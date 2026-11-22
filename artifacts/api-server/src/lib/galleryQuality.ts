@@ -1,3 +1,4 @@
+import { DEFAULT_REVIEW_MODEL, finalReviewText, type GeminiReviewResponse } from "./geminiReview.js";
 import sharp from "sharp";
 import { logger } from "./logger.js";
 import type { WeddingScene } from "./scenePlan.js";
@@ -11,7 +12,7 @@ type ImageRef = { buffer: Buffer; mimeType: string; coverage?: VenueMediaCoverag
 
 const GEMINI_API_BASE =
   process.env.GEMINI_API_BASE_URL ?? "https://generativelanguage.googleapis.com/v1beta";
-const QUALITY_MODEL = process.env.GEMINI_QUALITY_MODEL ?? "gemini-2.5-pro";
+const QUALITY_MODEL = process.env.GEMINI_QUALITY_MODEL ?? DEFAULT_REVIEW_MODEL;
 const QUALITY_ENABLED = process.env.GALLERY_QUALITY_GATE !== "off";
 const MIN_LIKENESS_SCORE = Number(process.env.GALLERY_MIN_LIKENESS_SCORE ?? "0.82");
 const MIN_PARTNER_LIKENESS_SCORE = Number(process.env.GALLERY_MIN_PARTNER_LIKENESS_SCORE ?? "0.78");
@@ -28,17 +29,6 @@ const FLOOR_VENUE_SCORE = Number(process.env.GALLERY_FLOOR_VENUE_SCORE ?? "0.68"
 const FLOOR_COMPOSITION_SCORE = Number(process.env.GALLERY_FLOOR_COMPOSITION_SCORE ?? "0.6");
 const MAX_TOTAL_JUDGE_IMAGES = 14;
 const MAX_COUPLE_JUDGE_REFERENCES = 3;
-
-interface GeminiQualityResponse {
-  candidates?: {
-    content?: {
-      parts?: {
-        text?: string;
-      }[];
-    };
-  }[];
-  error?: { message?: string; code?: number; status?: string };
-}
 
 export interface GalleryQualityReport {
   likenessScore: number;
@@ -205,11 +195,6 @@ function parseJsonObject(text: string): Record<string, unknown> {
   return JSON.parse(raw.slice(start, end + 1)) as Record<string, unknown>;
 }
 
-function extractText(json: GeminiQualityResponse): string {
-  const parts = json.candidates?.[0]?.content?.parts ?? [];
-  return parts.map((part) => part.text ?? "").join("\n").trim();
-}
-
 function normalizeReport(raw: Record<string, unknown>): GalleryQualityReport {
   const reasonsRaw = Array.isArray(raw.reasons) ? raw.reasons : [];
   return {
@@ -341,14 +326,14 @@ export async function assertGalleryFrameQuality(params: {
     contents: [{ role: "user", parts }],
     generationConfig: {
       responseMimeType: "application/json",
-      temperature: 0,
     },
   };
 
-  const url = `${GEMINI_API_BASE}/models/${QUALITY_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const url = `${GEMINI_API_BASE}/models/${QUALITY_MODEL}:generateContent`;
   const res = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+    signal: AbortSignal.timeout(60_000),
     body: JSON.stringify(body),
   });
   const text = await res.text();
@@ -356,12 +341,12 @@ export async function assertGalleryFrameQuality(params: {
     throw new Error(`Gallery quality judge failed (${res.status}): ${text.slice(0, 800)}`);
   }
 
-  const json = JSON.parse(text) as GeminiQualityResponse;
+  const json = JSON.parse(text) as GeminiReviewResponse;
   if (json.error) {
     throw new Error(`Gallery quality judge error: ${json.error.message ?? "unknown"}`);
   }
 
-  const report = normalizeReport(parseJsonObject(extractText(json)));
+  const report = normalizeReport(parseJsonObject(finalReviewText(json)));
   const failures = thresholdFailures(report);
   logger.info(
     {

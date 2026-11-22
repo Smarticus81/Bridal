@@ -1,3 +1,4 @@
+import { DEFAULT_REVIEW_MODEL } from "./geminiReview.js";
 type EnvLike = Record<string, string | undefined>;
 
 const PLACEHOLDER_VALUES = new Set([
@@ -192,7 +193,7 @@ function numericEnvAtLeast(
 }
 
 function isProductionQualityModel(model: string): boolean {
-  return /^gemini-(?:2\.5|3(?:\.\d+)?)-pro(?:$|-)/i.test(model.trim());
+  return model.trim() === DEFAULT_REVIEW_MODEL || /^gemini-(?:2\.5|3(?:\.\d+)?)-pro(?:$|-)/i.test(model.trim());
 }
 
 function isProductionImageModel(model: string): boolean {
@@ -320,9 +321,9 @@ export function validateProductionEnvironment(env: EnvLike = process.env): strin
     );
   }
 
-  const qualityModel = env.GEMINI_QUALITY_MODEL ?? "gemini-2.5-pro";
+  const qualityModel = env.GEMINI_QUALITY_MODEL ?? DEFAULT_REVIEW_MODEL;
   if (!isProductionQualityModel(qualityModel)) {
-    errors.push("GEMINI_QUALITY_MODEL must be a Gemini Pro model for production likeness and venue review");
+    errors.push("GEMINI_QUALITY_MODEL must use the supported Gemini review model or a Gemini Pro review model");
   }
 
   const apiBase = env.GEMINI_API_BASE_URL?.trim();

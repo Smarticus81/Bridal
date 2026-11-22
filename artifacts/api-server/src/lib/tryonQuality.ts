@@ -1,3 +1,4 @@
+import { DEFAULT_REVIEW_MODEL, finalReviewText, type GeminiReviewResponse } from "./geminiReview.js";
 import sharp from "sharp";
 import { logger } from "./logger.js";
 import {
@@ -32,7 +33,7 @@ type ImageRef = { buffer: Buffer; mimeType: string; coverage?: DressMediaCoverag
 
 const GEMINI_API_BASE =
   process.env.GEMINI_API_BASE_URL ?? "https://generativelanguage.googleapis.com/v1beta";
-const QUALITY_MODEL = process.env.GEMINI_QUALITY_MODEL ?? "gemini-2.5-pro";
+const QUALITY_MODEL = process.env.GEMINI_QUALITY_MODEL ?? DEFAULT_REVIEW_MODEL;
 const QUALITY_ENABLED = process.env.NODE_ENV === "production" || process.env.TRYON_QUALITY_GATE !== "off";
 
 // Strict targets. Garment fidelity is deliberately above venue's 0.80: a generic
@@ -51,11 +52,6 @@ export const FLOOR_COMPOSITION_SCORE = Number(process.env.TRYON_FLOOR_COMPOSITIO
 
 const MAX_TOTAL_JUDGE_IMAGES = 14;
 const MAX_BRIDE_JUDGE_REFERENCES = 3;
-
-interface GeminiQualityResponse {
-  candidates?: { content?: { parts?: { text?: string }[] } }[];
-  error?: { message?: string; code?: number; status?: string };
-}
 
 export interface TryonQualityReport {
   brideLikenessScore: number;
@@ -214,11 +210,6 @@ function parseJsonObject(text: string): Record<string, unknown> {
   return JSON.parse(raw.slice(start, end + 1)) as Record<string, unknown>;
 }
 
-function extractText(json: GeminiQualityResponse): string {
-  const parts = json.candidates?.[0]?.content?.parts ?? [];
-  return parts.map((part) => part.text ?? "").join("\n").trim();
-}
-
 export function normalizeTryonReport(raw: Record<string, unknown>): TryonQualityReport {
   const reasonsRaw = Array.isArray(raw.reasons) ? raw.reasons : [];
   return {
@@ -321,7 +312,7 @@ export async function assertTryonLookQuality(params: {
 
   const body = {
     contents: [{ role: "user", parts }],
-    generationConfig: { responseMimeType: "application/json", temperature: 0 },
+    generationConfig: { responseMimeType: "application/json" },
   };
 
   const url = `${GEMINI_API_BASE}/models/${QUALITY_MODEL}:generateContent`;
@@ -336,12 +327,12 @@ export async function assertTryonLookQuality(params: {
     throw new Error(`Garment-fidelity judge failed (${res.status}): ${text.slice(0, 800)}`);
   }
 
-  const json = JSON.parse(text) as GeminiQualityResponse;
+  const json = JSON.parse(text) as GeminiReviewResponse;
   if (json.error) {
     throw new Error(`Garment-fidelity judge error: ${json.error.message ?? "unknown"}`);
   }
 
-  const report = normalizeTryonReport(parseJsonObject(extractText(json)));
+  const report = normalizeTryonReport(parseJsonObject(finalReviewText(json)));
   const failures = tryonThresholdFailures(report);
   logger.info(
     {
