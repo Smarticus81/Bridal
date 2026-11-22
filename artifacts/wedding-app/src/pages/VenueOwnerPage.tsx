@@ -1161,7 +1161,7 @@ function DashboardInner() {
           <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="mono-label normal-case tracking-[0.08em] text-muted-foreground/70">
               {organization?.billingConfigured
-                ? "Each monthly renewal resets the shared balance to your plan allowance."
+                ? "Each monthly renewal resets the shared balance to your plan allowance. Plan changes affect your next renewal."
                 : "Billing is currently unavailable."}
             </p>
             <Button

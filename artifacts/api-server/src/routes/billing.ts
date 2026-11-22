@@ -181,6 +181,7 @@ router.post("/org/billing/portal", async (req, res): Promise<void> => {
     const stripe = requireStripe();
     const customerId = await ensureStripeCustomer(ctx.org, ctx.clerkUserId);
     const portal = await stripe.billingPortal.sessions.create({
+      configuration: process.env.STRIPE_BILLING_PORTAL_CONFIGURATION || undefined,
       customer: customerId,
       return_url: `${getAppBaseUrl()}/dashboard`,
     });
