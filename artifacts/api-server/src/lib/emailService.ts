@@ -3,7 +3,7 @@ import { logger } from "./logger.js";
 import { getAppBaseUrl, shareUrlForToken } from "./appUrl.js";
 
 const resendApiKey = process.env.RESEND_API_KEY;
-const fromEmail = process.env.EMAIL_FROM ?? "glimpse <onboarding@resend.dev>";
+const fromEmail = process.env.EMAIL_FROM ?? "Aislework <onboarding@resend.dev>";
 
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
@@ -24,15 +24,15 @@ function emailLayout(title: string, bodyHtml: string): string {
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>${escapeHtml(title)}</title>
 </head>
-<body style="margin:0;padding:0;background-color:#f7f4ef;font-family:Georgia,'Times New Roman',serif;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#f7f4ef;padding:32px 16px;">
+<body style="margin:0;padding:0;background-color:#f3f1f8;font-family:Arial,Helvetica,sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#f3f1f8;padding:32px 16px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:520px;background:#fffdf9;border:1px solid #e8e0d4;border-radius:12px;overflow:hidden;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:520px;background:#ffffff;border:1px solid #dcd8e4;border-radius:0;overflow:hidden;">
           <tr>
             <td style="padding:28px 32px 8px;text-align:center;">
-              <p style="margin:0;font-size:13px;letter-spacing:0.28em;text-transform:uppercase;color:#9a8b6e;">glimpse</p>
-              <h1 style="margin:12px 0 0;font-size:26px;font-weight:500;color:#1f1f1f;line-height:1.3;">${escapeHtml(title)}</h1>
+              <p style="margin:0;font-size:13px;letter-spacing:0.28em;text-transform:uppercase;color:#5634b3;">Aislework</p>
+              <h1 style="margin:12px 0 0;font-size:26px;font-weight:500;color:#241d35;line-height:1.3;">${escapeHtml(title)}</h1>
             </td>
           </tr>
           <tr>
@@ -41,8 +41,8 @@ function emailLayout(title: string, bodyHtml: string): string {
             </td>
           </tr>
           <tr>
-            <td style="padding:16px 32px 24px;border-top:1px solid #efe9df;text-align:center;font-family:system-ui,sans-serif;font-size:11px;color:#8a8278;">
-              <a href="${escapeHtml(site)}" style="color:#8a8278;text-decoration:none;">${escapeHtml(site)}</a>
+            <td style="padding:16px 32px 24px;border-top:1px solid #ded9e7;text-align:center;font-family:system-ui,sans-serif;font-size:11px;color:#62596d;">
+              <a href="${escapeHtml(site)}" style="color:#62596d;text-decoration:none;">${escapeHtml(site)}</a>
             </td>
           </tr>
         </table>
@@ -58,13 +58,13 @@ function ctaButton(href: string, label: string): string {
   const safeLabel = escapeHtml(label);
   return `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:24px auto 8px;">
     <tr>
-      <td style="border-radius:999px;background:#b8955a;">
-        <a href="${safeHref}" style="display:inline-block;padding:14px 28px;font-family:system-ui,sans-serif;font-size:15px;font-weight:600;color:#fffdf9;text-decoration:none;">${safeLabel}</a>
+      <td style="border-radius:0;background:#5634b3;">
+        <a href="${safeHref}" style="display:inline-block;padding:14px 28px;font-family:system-ui,sans-serif;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;">${safeLabel}</a>
       </td>
     </tr>
   </table>
-  <p style="margin:12px 0 0;font-size:12px;color:#8a8278;text-align:center;word-break:break-all;">
-    <a href="${safeHref}" style="color:#8a8278;">${safeHref}</a>
+  <p style="margin:12px 0 0;font-size:12px;color:#62596d;text-align:center;word-break:break-all;">
+    <a href="${safeHref}" style="color:#62596d;">${safeHref}</a>
   </p>`;
 }
 
@@ -115,7 +115,7 @@ export async function sendGalleryReadyNotification(
   await sendEmail(
     ownerEmail,
     `Gallery ready - ${venue.name}`,
-    emailLayout("A glimpse gallery is ready", body),
+    emailLayout("An Aislework gallery is ready", body),
   );
 }
 
@@ -129,13 +129,13 @@ export async function sendGalleryToCouple(
     ? escapeHtml(session.coupleName)
     : "there";
   const body = `<p>Hi ${greeting},</p>
-    <p>Your glimpse gallery at <strong>${escapeHtml(venue.name)}</strong> is ready to view.</p>
+    <p>Your Aislework gallery at <strong>${escapeHtml(venue.name)}</strong> is ready to view.</p>
     ${ctaButton(url, "Open your gallery")}
-    <p style="margin-top:20px;font-size:13px;color:#8a8278;">Bookmark this email - the button above is your private link to view again anytime.</p>`;
+    <p style="margin-top:20px;font-size:13px;color:#62596d;">Bookmark this email - the button above is your private link to view again anytime.</p>`;
   return sendEmail(
     coupleEmail,
-    `Your glimpse at ${venue.name} is ready`,
-    emailLayout("Your glimpse is ready", body),
+    `Your Aislework at ${venue.name} is ready`,
+    emailLayout("Your Aislework is ready", body),
   );
 }
 
@@ -158,17 +158,17 @@ export async function sendRecoveryEmail(
       const when = new Date(s.createdAt).toLocaleDateString();
       const label = escapeHtml(s.coupleName || `Gallery #${s.id}`);
       return `<tr>
-        <td style="padding:10px 8px;border-bottom:1px solid #efe9df;">${label}</td>
-        <td style="padding:10px 8px;border-bottom:1px solid #efe9df;color:#666;">${escapeHtml(s.venueName)}</td>
-        <td style="padding:10px 8px;border-bottom:1px solid #efe9df;color:#666;">${when}</td>
-        <td style="padding:10px 8px;border-bottom:1px solid #efe9df;">
-          <a href="${escapeHtml(url)}" style="color:#b8955a;font-weight:600;text-decoration:none;">Open gallery</a>
+        <td style="padding:10px 8px;border-bottom:1px solid #ded9e7;">${label}</td>
+        <td style="padding:10px 8px;border-bottom:1px solid #ded9e7;color:#666;">${escapeHtml(s.venueName)}</td>
+        <td style="padding:10px 8px;border-bottom:1px solid #ded9e7;color:#666;">${when}</td>
+        <td style="padding:10px 8px;border-bottom:1px solid #ded9e7;">
+          <a href="${escapeHtml(url)}" style="color:#5634b3;font-weight:600;text-decoration:none;">Open gallery</a>
         </td>
       </tr>`;
     })
     .join("");
 
-  const body = `<p>Here are the glimpse galleries we found for this email address:</p>
+  const body = `<p>Here are the Aislework galleries we found for this email address:</p>
      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:16px 0;font-family:system-ui,sans-serif;font-size:14px;">
        <thead>
          <tr style="text-align:left;color:#666;">
@@ -180,11 +180,11 @@ export async function sendRecoveryEmail(
        </thead>
        <tbody>${rows}</tbody>
      </table>
-     <p style="color:#8a8278;font-size:12px;">These links are private. If you did not request this email, you can ignore it.</p>`;
+     <p style="color:#62596d;font-size:12px;">These links are private. If you did not request this email, you can ignore it.</p>`;
 
   return sendEmail(
     email,
-    "Your glimpse gallery links",
+    "Your Aislework gallery links",
     emailLayout("Find your galleries", body),
   );
 }

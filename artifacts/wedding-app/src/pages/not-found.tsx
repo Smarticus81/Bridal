@@ -1,17 +1,17 @@
 import { StudioPage } from "@/components/layout/StudioPage";
 export default function NotFound() {
   return (
-    <StudioPage section="Page not found" image="column">
+    <StudioPage section="Page not found">
       <p className="studio-label">404</p>
       <h1>
-        A missing <em>page.</em>
+        Page not found
       </h1>
       <p>
-        This address may have changed. Return to the collection or find your
+        This address may have changed. Return to Aislework or find your
         private gallery.
       </p>
       <a className="studio-action" href="/" data-testid="notfound-home">
-        Back to the collection ↗
+        Back to Aislework ↗
       </a>
       <a
         className="studio-text-link"

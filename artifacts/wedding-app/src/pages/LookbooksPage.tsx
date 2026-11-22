@@ -1,4 +1,4 @@
-import { BoutiqueNav } from "@/components/layout/BoutiqueNav";
+import { ShopWorkspace } from "@/components/layout/ShopWorkspace";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -86,9 +86,7 @@ function LookbooksContent() {
   };
 
   return (
-    <main className="workroom min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-5xl px-6 py-12">
-        <BoutiqueNav />
+    <ShopWorkspace section="Lookbooks">
         <h1 className="text-3xl font-semibold">Lookbooks</h1>
         <p className="mt-1 text-sm text-muted-foreground">Choose the gowns, set the fitting allowance, and send a private invitation.</p>
 
@@ -129,7 +127,7 @@ function LookbooksContent() {
               {dresses.map((d) => (
                 <label key={d.id} className="flex items-center gap-2 rounded px-2 py-1 text-sm hover:bg-neutral-50">
                   <input type="checkbox" checked={selected.has(d.id)} onChange={() => toggle(d.id)} />
-                  <span className="font-serif">{d.styleName}</span>
+                  <span className="font-medium">{d.styleName}</span>
                   <span className="font-mono text-xs text-neutral-400">{d.sku}</span>
                 </label>
               ))}
@@ -145,7 +143,7 @@ function LookbooksContent() {
 
           {createdUrl && (
             <div className="mt-4 rounded-md bg-emerald-50 p-3 text-sm text-emerald-900">
-              Lookbook link: <span className="font-mono break-all">{createdUrl}</span>
+              Private lookbook link <a href={createdUrl} className="font-mono break-all underline">{createdUrl}</a>
             </div>
           )}
         </form>
@@ -153,7 +151,7 @@ function LookbooksContent() {
         <section className="mt-12">
           <h2 className="text-lg font-semibold">Sent lookbooks</h2>
           {lookbooks.length === 0 ? (
-            <p className="mt-2 text-sm text-muted-foreground">No lookbooks yet.</p>
+            <p className="console-empty">Your private links will appear here with their remaining credits and expiry dates.</p>
           ) : (
             <ul className="mt-3 divide-y divide-neutral-200">
               {lookbooks.map((lb) => (
@@ -164,7 +162,7 @@ function LookbooksContent() {
                       {lb.remainingCredits}/{lb.creditCap} tries left · expires {new Date(lb.expiresAt).toLocaleDateString()}
                     </p>
                   </div>
-                  <span className={`rounded-full px-3 py-1 text-xs font-medium ${
+                  <span className={`rounded-none px-3 py-1 text-xs font-medium ${
                     lb.usable ? "bg-emerald-100 text-emerald-800" : "bg-neutral-200 text-neutral-600"
                   }`}>
                     {lb.usable ? "Active" : lb.status}
@@ -174,8 +172,7 @@ function LookbooksContent() {
             </ul>
           )}
         </section>
-      </div>
-    </main>
+    </ShopWorkspace>
   );
 }
 

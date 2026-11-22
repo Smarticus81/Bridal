@@ -262,11 +262,11 @@ export default function CouplePage() {
           {venue.name} is still being prepared
         </h1>
         <p className="text-lg text-muted-foreground mb-3 max-w-md font-light">
-          This venue needs at least one photograph before glimpse can compose
+          This venue needs at least one photograph before Aislework can compose
           your wedding gallery.
         </p>
         <p className="text-sm text-muted-foreground mb-10 max-w-md">
-          Ask your venue team to finish setting up glimpse by adding the required
+          Ask your venue team to finish setting up Aislework by adding the required
           venue photographs before couples can begin.
         </p>
         <Button
@@ -393,7 +393,7 @@ function VenueShowcase({ venue, onNext }: VenueShowcaseProps) {
           </h1>
           
           {venue.tagline && (
-            <p className="text-xl md:text-2xl text-rose mb-8 font-light drop-shadow-lg italic font-display">
+            <p className="text-xl md:text-2xl text-rose mb-8 font-light drop-shadow-lg font-display">
               {venue.tagline}
             </p>
           )}
@@ -613,7 +613,7 @@ function StyleStep({ styles, isLoading, selectedStyleId, onSelect, coupleName, o
         <p className="mono-label text-rose mb-4">Step 02 / 03</p>
         <h2 className="font-display text-2xl md:text-3xl font-medium text-foreground mb-4">Set the scene</h2>
         <p className="text-muted-foreground font-light text-lg max-w-xl mx-auto">
-          Choose the editorial direction for your venue-branded glimpse gallery.
+          Choose the editorial direction for your venue-branded Aislework gallery.
         </p>
       </div>
 

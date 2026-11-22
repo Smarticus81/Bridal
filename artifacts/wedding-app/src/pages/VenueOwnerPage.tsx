@@ -78,7 +78,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { GlimpseLogo } from "@/components/brand/GlimpseLogo";
+import { AisleworkLogo } from "@/components/brand/AisleworkLogo";
 
 const MIN_VENUE_PHOTOS = 1;
 const MIN_COUPLE_PHOTOS = 1;
@@ -463,7 +463,7 @@ function DashboardInner() {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(coupleEmail.trim())) {
       toast({
         title: "Couple email required",
-        description: "This is where Glimpse sends the finished gallery.",
+        description: "This is where Aislework sends the finished gallery.",
         variant: "destructive",
       });
       return;
@@ -504,7 +504,7 @@ function DashboardInner() {
           onSuccess: () => {
             toast({
               title: "Gallery started",
-              description: "Glimpse will email the couple when it is ready.",
+              description: "Aislework will email the couple when it is ready.",
             });
             resetCoupleIntake();
             void dashboard.refetch();
@@ -601,7 +601,7 @@ function DashboardInner() {
       <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-sm">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-4">
-            <GlimpseLogo />
+            <AisleworkLogo />
             <div className="hidden h-4 w-px bg-border sm:block"></div>
             <p className="mono-label hidden normal-case tracking-normal text-muted-foreground sm:block">
               {organization?.name ?? ""}
@@ -665,7 +665,7 @@ function DashboardInner() {
                 </p>
               </div>
               <p className={venueReady ? "mono-label shrink-0 inline-flex items-center gap-2 text-emerald-400" : "mono-label shrink-0 inline-flex items-center gap-2 text-rose"}>
-                <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                <span className="h-1.5 w-1.5 rounded-none bg-current" />
                 {venueReady ? "Ready for tours" : "Needs photos"}
               </p>
             </div>
@@ -733,12 +733,12 @@ function DashboardInner() {
               <p className="mono-label mb-4 text-rose">002 — New couple</p>
               <h2 className="font-display text-2xl md:text-3xl font-medium tracking-tight text-foreground">Start a prospect gallery</h2>
               <p className="mt-3 text-base font-light leading-relaxed text-muted-foreground">
-                Add the couple's email and reference photos. Glimpse creates a photoreal,
+                Add the couple's email and reference photos. Aislework creates a photoreal,
                 venue-branded preview and emails their private link after generation.
               </p>
             </div>
             <p className={venueReady ? "mono-label shrink-0 inline-flex items-center gap-2 text-emerald-400" : "mono-label shrink-0 inline-flex items-center gap-2 text-rose"}>
-              <span className="h-1.5 w-1.5 rounded-full bg-current" />
+              <span className="h-1.5 w-1.5 rounded-none bg-current" />
               {venueReady ? "Owner approval enabled" : "Venue setup needed"}
             </p>
           </div>
@@ -905,7 +905,7 @@ function DashboardInner() {
                     {complete ? (
                       <Check className="h-4 w-4 shrink-0 text-rose" />
                     ) : (
-                      <span className="h-4 w-4 shrink-0 rounded-full border border-border" />
+                      <span className="h-4 w-4 shrink-0 rounded-none border border-border" />
                     )}
                   </div>
                 );
@@ -1204,7 +1204,7 @@ function StatusBadge({ status }: { status: string }) {
 
   return (
     <span className={`mono-label inline-flex items-center gap-1.5 ${color}`}>
-      <span className="h-1.5 w-1.5 rounded-full bg-current"></span>
+      <span className="h-1.5 w-1.5 rounded-none bg-current"></span>
       {status}
     </span>
   );

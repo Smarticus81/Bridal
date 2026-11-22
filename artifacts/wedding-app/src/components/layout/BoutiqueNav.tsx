@@ -1,27 +1,28 @@
-import { GlimpseLogo } from "@/components/brand/GlimpseLogo";
+import { BookOpen, CreditCard, Inbox, Layers3 } from "lucide-react";
+import { AisleworkLogo } from "@/components/brand/AisleworkLogo";
 const sections = [
-  ["/catalog", "Gown catalog"],
-  ["/lookbooks", "Lookbooks"],
-  ["/leads", "Fitting requests"],
-  ["/dashboard", "Account & billing"],
+  ["/catalog", "Gown catalog", Layers3],
+  ["/lookbooks", "Lookbooks", BookOpen],
+  ["/leads", "Fitting requests", Inbox],
+  ["/dashboard", "Account & billing", CreditCard],
 ] as const;
-
 export function BoutiqueNav({ showBrand = true }: { showBrand?: boolean }) {
   return (
     <div className="workroom-nav">
       {showBrand && (
         <div className="workroom-brand">
-          <GlimpseLogo />
-          <span>Boutique studio</span>
+          <AisleworkLogo />
+          <span>Shop workspace</span>
         </div>
       )}
-      <nav aria-label="Boutique studio">
-        {sections.map(([url, label]) => (
+      <nav aria-label="Shop workspace">
+        {sections.map(([url, label, Icon]) => (
           <a
             key={url}
             href={url}
             aria-current={location.pathname === url ? "page" : undefined}
           >
+            <Icon size={15} />
             {label}
           </a>
         ))}

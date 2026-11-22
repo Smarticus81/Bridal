@@ -32,24 +32,14 @@ export async function buildReelTitleCard(options: MotionReelBrandingOptions): Pr
   const safeVenueName = escapeSvgText(venueName.slice(0, 90));
   const svg = `
     <svg width="${REEL_WIDTH}" height="${REEL_HEIGHT}" viewBox="0 0 ${REEL_WIDTH} ${REEL_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#15110f"/>
-          <stop offset="54%" stop-color="#30261f"/>
-          <stop offset="100%" stop-color="#111827"/>
-        </linearGradient>
-        <radialGradient id="glow" cx="50%" cy="42%" r="65%">
-          <stop offset="0%" stop-color="#f7d7bf" stop-opacity="0.28"/>
-          <stop offset="100%" stop-color="#f7d7bf" stop-opacity="0"/>
-        </radialGradient>
-      </defs>
-      <rect width="100%" height="100%" fill="url(#bg)"/>
-      <rect width="100%" height="100%" fill="url(#glow)"/>
-      <rect x="96" y="92" width="1088" height="536" rx="0" fill="none" stroke="#f4d4b7" stroke-opacity="0.32" stroke-width="2"/>
-      <text x="640" y="240" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="78" fill="#fffaf4">glimpse</text>
-      <text x="640" y="314" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="21" letter-spacing="7" fill="#f4d4b7">VISION GALLERY</text>
-      <text x="640" y="422" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="30" fill="#f8efe6">Created for</text>
-      <text x="640" y="476" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="44" fill="#ffffff">${safeVenueName}</text>
+      <rect width="1280" height="720" fill="#241d35"/>
+      <path fill="#3e2b6c" d="M965 0h155L705 720H550zm250 0h155L955 720H800z"/>
+      <path transform="translate(80 70) scale(1.7)" fill="#d3fa52" d="M0 28 15 2h9L9 28zm14 0L29 2h9L23 28zm12 0 6-10 6 10z"/>
+      <g font-family="Arial, Helvetica, sans-serif" fill="#ffffff">
+        <text x="160" y="110" font-size="44" font-weight="bold" letter-spacing="-2">aislework</text>
+        <text x="80" y="380" font-size="23" letter-spacing="3" fill="#d3fa52">YOUR VENUE GALLERY</text>
+        <text x="80" y="472" font-size="${Math.min(65, 1800 / Math.max(1, venueName.length))}" font-weight="bold">${safeVenueName}</text>
+      </g>
     </svg>`;
 
   return sharp(Buffer.from(svg))

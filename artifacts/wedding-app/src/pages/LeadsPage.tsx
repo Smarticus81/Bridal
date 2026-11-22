@@ -1,4 +1,4 @@
-import { BoutiqueNav } from "@/components/layout/BoutiqueNav";
+import { ShopWorkspace } from "@/components/layout/ShopWorkspace";
 import { useListLeads, getListLeadsQueryKey } from "@workspace/api-client-react";
 import { OrgGate } from "@/components/auth/OrgGate";
 
@@ -13,9 +13,7 @@ function LeadsContent() {
   const leads = leadsQuery.data?.leads ?? [];
 
   return (
-    <main className="workroom min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-4xl px-6 py-12">
-        <BoutiqueNav />
+    <ShopWorkspace section="Fitting requests">
         <h1 className="text-3xl font-semibold">Fitting requests</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Brides who shared their details from a try-on link.
@@ -24,7 +22,7 @@ function LeadsContent() {
         {leadsQuery.isLoading && <p className="mt-6 text-muted-foreground">Loading…</p>}
         {leadsQuery.isError && <p role="alert">Fitting requests could not be loaded. <button onClick={() => leadsQuery.refetch()} className="underline">Retry</button></p>}
         {leads.length === 0 && !leadsQuery.isLoading && !leadsQuery.isError && (
-          <p className="mt-6 text-muted-foreground">Requests appear here when brides ask for a fitting.</p>
+          <div className="console-empty"><h2>Your inbox is clear</h2><p>Requests appear here when brides share their details after a virtual try-on.</p><a href="/lookbooks">Open lookbooks →</a></div>
         )}
 
         {leads.length > 0 && (
@@ -51,8 +49,7 @@ function LeadsContent() {
             </tbody>
           </table></div>
         )}
-      </div>
-    </main>
+    </ShopWorkspace>
   );
 }
 

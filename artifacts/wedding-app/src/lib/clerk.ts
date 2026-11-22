@@ -75,18 +75,18 @@ export const clerkConfigured = clerkStatus === "ready";
 
 export const studioAppearance: Appearance = {
   variables: {
-    colorBackground: "#faf8f2",
-    colorInputBackground: "#fffdf7",
-    colorText: "#262b24",
-    colorInputText: "#262b24",
-    colorTextSecondary: "#596052",
-    colorPrimary: "#344439",
+    colorBackground: "#ffffff",
+    colorInputBackground: "#faf9fd",
+    colorText: "#211b30",
+    colorInputText: "#211b30",
+    colorTextSecondary: "#655e70",
+    colorPrimary: "#5839ba",
     colorTextOnPrimaryBackground: "#ffffff",
     colorDanger: "#a23a32",
     colorSuccess: "#345b43",
-    colorNeutral: "#262b24",
-    borderRadius: "0.35rem",
-    fontFamily: "'DM Sans', system-ui, sans-serif",
+    colorNeutral: "#211b30",
+    borderRadius: "0.125rem",
+    fontFamily: "'Chivo', system-ui, sans-serif",
   },
   elements: { card: "shadow-none border border-border", headerTitle: "font-display" },
 };
