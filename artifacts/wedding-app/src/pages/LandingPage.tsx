@@ -9,10 +9,10 @@ export default function LandingPage() {
   const [venueCode, setVenueCode] = useState("");
   const slug = toVenueSlug(venueCode);
   return (
-    <StudioPage section="Venue galleries" image="evening">
+    <StudioPage section="Venue galleries">
       <p className="studio-label">For couples</p>
       <h1>
-        A place of <em>your own.</em>
+        Open your venue gallery
       </h1>
       <p>
         Enter the code from your venue’s invitation or QR card to begin your

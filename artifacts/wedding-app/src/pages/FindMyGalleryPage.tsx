@@ -31,7 +31,7 @@ export default function FindMyGalleryPage() {
   };
 
   return (
-    <StudioPage section="Gallery recovery" image="evening">
+    <StudioPage section="Gallery recovery">
       {submitted ? (
         <div className="space-y-6">
           <div>

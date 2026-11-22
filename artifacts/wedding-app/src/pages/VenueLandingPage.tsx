@@ -1,493 +1,365 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  ArrowDown,
-  ArrowLeft,
+  ArrowDownRight,
   ArrowRight,
   ArrowUpRight,
-  ChevronsLeftRight,
+  BookOpen,
+  Boxes,
+  Check,
+  ChevronRight,
+  Inbox,
   Menu,
   Play,
-  Plus,
+  ScanFace,
   X,
 } from "lucide-react";
-import { GlimpseLogo } from "@/components/brand/GlimpseLogo";
-import "./campaign.css";
+import { AisleworkLogo } from "@/components/brand/AisleworkLogo";
+import "./retail.css";
 
-const looks = [
-  {
-    name: "The sculpted ballgown",
-    fabric: "Silk mikado",
-    src: "mikado",
-    alt: "Off-the-shoulder ivory ballgown with a sculpted bodice, photographed in profile",
-    note: "Wide folds frame the shoulders. A fitted waist opens into a full skirt, giving the mikado room to hold its shape.",
-  },
-  {
-    name: "The lace sheath",
-    fabric: "Botanical lace",
-    src: "lace",
-    alt: "Long-sleeved floral lace gown on a seated model in a stone alcove",
-    note: "Botanical lace follows the line of the body. Look closely at the sleeves, where the motif opens against the skin.",
-  },
-  {
-    name: "The open-back column",
-    fabric: "Silk satin",
-    src: "column",
-    alt: "An open-back silk column gown with a draped bow and long train",
-    note: "A softly draped back leads into a sweeping train. The satin changes from ivory to gold as it moves through the light.",
-  },
-];
-const fitting = [
-  {
-    name: "Portrait",
-    src: "portrait",
-    alt: "The sample client standing in a black top and jeans",
-    note: "The starting portrait",
-  },
-  {
-    name: "Gown",
-    src: "dress",
-    alt: "The ruched square-neck gown on a tailor’s form",
-    note: "The boutique’s reference",
-  },
-  {
-    name: "Fitting",
-    src: "fitting",
-    alt: "Illustrative fitting of the same client in the square-neck gown",
-    note: "The illustrated look",
-  },
-];
-const image = (name: string) => "/campaign/" + name + ".webp";
-type Overlay = "film" | "look" | "sample" | "menu" | null;
-
-export default function VenueLandingPage() {
-  const [overlay, setOverlay] = useState<Overlay>(null);
-  const [look, setLook] = useState(0);
-  const [sample, setSample] = useState<number | null>(null);
-  const [reveal, setReveal] = useState(50);
-  const dialog = useRef<HTMLDialogElement>(null);
-  const rail = useRef<HTMLDivElement>(null);
-  const [railIndex, setRailIndex] = useState(0);
-  const active = looks[look]!;
-  const view = fitting[sample ?? 2]!;
-  useEffect(() => {
-    const section = window.location.hash.slice(1);
-    if (section) document.getElementById(section)?.scrollIntoView();
-  }, []);
-  useEffect(() => {
-    const element = dialog.current;
-    if (!element || !overlay) return;
-    const opener = document.activeElement;
-    element.showModal();
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      element.close();
-      document.body.style.overflow = previous;
-      if (opener instanceof HTMLElement && opener.isConnected)
-        opener.focus({ preventScroll: true });
-    };
-  }, [overlay]);
-  function moveRail(delta: number) {
-    const index = Math.max(0, Math.min(looks.length - 1, railIndex + delta));
-    const card = rail.current?.children[index] as HTMLElement | undefined;
-    rail.current?.scrollTo({
-      left: card ? card.offsetLeft - rail.current.offsetLeft : 0,
-      behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
-        ? "instant"
-        : "smooth",
-    });
-  }
-  const close = () => setOverlay(null);
+function SalesHeader() {
+  const [open, setOpen] = useState(false);
   return (
-    <div className="campaign">
-      <a className="campaign-skip" href="#collection">
-        Skip to the collection
-      </a>
-      <section className="cover" aria-labelledby="cover-title">
-        <picture className="cover-image">
-          <source media="(max-width: 660px)" srcSet={image("cover-mobile")} />
-          <img
-            src={image("cover")}
-            alt="An ivory mikado gown and windblown veil in a sunlit limestone courtyard"
-            fetchPriority="high"
-            width="1672"
-            height="941"
-          />
-        </picture>
-        <header className="cover-nav">
-          <GlimpseLogo />
-          <nav aria-label="Main navigation">
-            <a href="#collection">The collection</a>
-            <a href="#sample">Virtual fitting</a>
-            <a href="#boutiques">For boutiques</a>
-          </nav>
-          <a className="cover-access" href="/login">
-            Studio sign in <ArrowUpRight size={15} />
+    <header className="sales-header">
+      <div className="aw-wrap header-inner">
+        <AisleworkLogo />
+        <nav
+          className={open ? "sales-nav open" : "sales-nav"}
+          id="sales-nav"
+          aria-label="Product navigation"
+          onClick={() => setOpen(false)}
+        >
+          <a href="#workflow">How it works</a>
+          <a href="/demo">Product demo</a>
+          <a href="#pricing">Pricing</a>
+          <a className="mobile-signin" href="/login">
+            Shop sign-in
+          </a>
+        </nav>
+        <div className="header-actions">
+          <a className="signin" href="/login">
+            Sign in
+          </a>
+          <a className="top-action" href="/create-venue">
+            Get workspace <ArrowUpRight size={15} />
           </a>
           <button
-            className="cover-menu"
-            aria-label="Open navigation"
-            onClick={() => setOverlay("menu")}
+            className="menu-toggle"
+            aria-label={open ? "Close navigation" : "Open navigation"}
+            aria-expanded={open}
+            aria-controls="sales-nav"
+            onClick={() => setOpen(!open)}
           >
-            <Menu size={23} />
+            {open ? <X /> : <Menu />}
+          </button>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+function Walkthrough({ onClose }: { onClose: () => void }) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    dialog.current?.showModal();
+  }, []);
+  return (
+    <dialog
+      ref={dialog}
+      className="film-dialog"
+      aria-label="Product walkthrough"
+      onClose={onClose}
+      onClick={(event) => {
+        if (event.target === event.currentTarget) dialog.current?.close();
+      }}
+    >
+      <div className="film-inner">
+        <header>
+          <span>Product walkthrough</span>
+          <button
+            aria-label="Close walkthrough"
+            autoFocus
+            onClick={() => dialog.current?.close()}
+          >
+            <X size={21} />
           </button>
         </header>
-        <div className="cover-copy">
-          <p className="eyeline">
-            <span />
-            Virtual bridal atelier
-          </p>
-          <h1 id="cover-title">
-            Before
-            <br />
-            <em>the aisle.</em>
-          </h1>
-          <p className="cover-intro">
-            Discover the silhouette. See it on you.
-            <br />A private bridal fitting, wherever you are.
-          </p>
-          <a className="campaign-cta pale" href="#collection">
-            Explore the collection <ArrowDown size={16} />
-          </a>
-        </div>
-        <button
-          className="cover-film"
-          onClick={() => setOverlay("film")}
-          aria-label="Play Before the Aisle campaign film"
-        >
-          <span className="film-play">
-            <Play size={14} fill="currentColor" strokeWidth={1} />
-          </span>
-          <span>
-            <small>Campaign film</small>
-            <strong>Watch the film</strong>
-          </span>
-          <span className="film-duration">0:11</span>
-        </button>
-      </section>
+        <video
+          autoPlay
+          controls
+          playsInline
+          preload="metadata"
+          aria-label="An Aislework sample shop creates a lookbook and receives a fitting request"
+          src="/aislework/shop-walkthrough.mp4"
+        />
+        <a href="/demo">
+          Try this workflow yourself <ArrowRight size={16} />
+        </a>
+      </div>
+    </dialog>
+  );
+}
+
+const stages = [
+  {
+    icon: Boxes,
+    title: "Put your rack online",
+    text: "Add the gowns your shop actually carries, with the photos and style details your stylists use.",
+    art: "catalog",
+  },
+  {
+    icon: BookOpen,
+    title: "Give her a private edit",
+    text: "Select styles for one bride. Send a private lookbook with its own expiry and try-on limit.",
+    art: "edit",
+  },
+  {
+    icon: ScanFace,
+    title: "Let her try from home",
+    text: "She can preview a gown on her own photo and share the look for a second opinion.",
+    art: "preview",
+  },
+  {
+    icon: Inbox,
+    title: "Bring her into the shop",
+    text: "Capture her fitting request so a stylist can follow up and plan an in-store appointment.",
+    art: "lead",
+  },
+];
+
+export default function VenueLandingPage() {
+  const [brideView, setBrideView] = useState(false);
+  const [film, setFilm] = useState(false);
+  return (
+    <div className="sales-site">
+      <SalesHeader />
       <main>
-        <section
-          className="collection section-pad"
-          id="collection"
-          aria-labelledby="collection-title"
-        >
-          <div className="collection-heading">
-            <div>
-              <p className="eyeline">
-                <span />
-                The lookbook
+        <section className="sales-hero">
+          <div className="aw-wrap sales-hero-inner">
+            <div className="hero-copy">
+              <p className="aw-kicker">
+                <span className="signal" aria-hidden="true" />
+                Sales software for bridal shops
               </p>
-              <h2 id="collection-title">
-                The silhouette <em>edit.</em>
+              <h1>
+                Turn interest
+                <br />
+                into <span>fittings.</span>
+              </h1>
+              <p className="hero-description">
+                Put your gowns in front of brides before they visit. Share a
+                private lookbook, offer virtual try-ons, and give your stylists
+                a reason to follow up.
+              </p>
+              <div className="hero-actions">
+                <a className="aw-btn lime" href="/demo">
+                  Try the shop demo <ArrowUpRight size={18} />
+                </a>
+                <button className="film-btn" onClick={() => setFilm(true)}>
+                  <Play size={14} fill="currentColor" /> Watch walkthrough
+                </button>
+              </div>
+            </div>
+            <div className="hero-visual">
+              <div className="preview-frame">
+                <div className="preview-toolbar">
+                  <span>
+                    <i />
+                    Juniper Bridal
+                  </span>
+                  <span>Demo workspace</span>
+                </div>
+                <div className="preview-tabs" aria-label="Preview perspectives">
+                  <button
+                    aria-pressed={!brideView}
+                    onClick={() => setBrideView(false)}
+                  >
+                    <Boxes size={14} /> Shop view
+                  </button>
+                  <button
+                    aria-pressed={brideView}
+                    onClick={() => setBrideView(true)}
+                  >
+                    <ScanFace size={14} /> Bride view
+                  </button>
+                </div>
+                {brideView ? (
+                  <div className="hero-fit">
+                    <div>
+                      <img
+                        src="/aislework/maya.webp"
+                        alt="Maya’s sample reference"
+                      />
+                      <span>Reference photo</span>
+                    </div>
+                    <div>
+                      <img
+                        src="/aislework/maya-faye.webp"
+                        alt="Maya previewing the one-shoulder gown"
+                      />
+                      <span>Example try-on</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="hero-shot">
+                    <img
+                      src="/aislework/shop-floor.webp"
+                      alt="A bridal stylist and her client choosing gowns together on a tablet"
+                      fetchPriority="high"
+                    />
+                  </div>
+                )}
+              </div>
+              <a
+                className="sample-request"
+                href="/demo"
+                aria-label="Explore this workflow in the shop demo"
+              >
+                <div className="sample-icon">
+                  {brideView ? <BookOpen size={22} /> : <Inbox size={22} />}
+                </div>
+                <div>
+                  <small>
+                    {brideView ? "Private lookbook" : "Consultant inbox"}
+                  </small>
+                  <strong>
+                    {brideView
+                      ? "Maya’s fitting preview"
+                      : "New fitting request"}
+                  </strong>
+                  <p>
+                    {brideView
+                      ? "Faye · JB-028"
+                      : "Maya Patel · Private lookbook"}
+                  </p>
+                </div>
+                <ArrowUpRight className="request-arrow" size={17} />
+              </a>
+            </div>
+          </div>
+        </section>
+        <section className="workflow-section aw-wrap" id="workflow">
+          <span id="sample" />
+          <span id="collection" />
+          <div className="section-intro">
+            <div>
+              <p className="aw-kicker violet">The sales workflow</p>
+              <h2>
+                From the rack to <br />
+                the fitting room.
               </h2>
             </div>
-            <p>
-              Three ways to wear ivory. Open a look for a closer study of its
-              cut, cloth, and movement.
-            </p>
+            <a className="inline-link" href="/demo">
+              Explore the product <ArrowUpRight size={17} />
+            </a>
           </div>
-          <div
-            className="look-rail"
-            ref={rail}
-            onScroll={(e) => {
-              const target = e.currentTarget;
-              const width =
-                (target.children[1] as HTMLElement).offsetLeft -
-                (target.children[0] as HTMLElement).offsetLeft;
-              if (width)
-                setRailIndex(
-                  Math.min(
-                    looks.length - 1,
-                    Math.round(target.scrollLeft / width),
-                  ),
-                );
-            }}
-          >
-            {looks.map((item, i) => (
-              <button
-                className="look-card"
-                key={item.src}
-                onClick={() => {
-                  setLook(i);
-                  setOverlay("look");
-                }}
-              >
-                <span className="look-image">
-                  <img
-                    src={image(item.src)}
-                    alt={item.alt}
-                    width="590"
-                    height="887"
-                    loading="lazy"
-                  />
-                  <span className="look-open">
-                    <Plus size={19} />
-                  </span>
-                </span>
-                <span className="look-caption">
-                  <small>{item.fabric}</small>
-                  <strong>{item.name}</strong>
-                </span>
-              </button>
+          <div className="steps-grid">
+            {stages.map(({ icon: Icon, title, text, art }, i) => (
+              <article key={title} className="step-item">
+                <div className={`step-art ${art}`} aria-hidden="true">
+                  {i === 0 ? (
+                    <div className="tiny-rack">
+                      {["vale", "faye", "linden"].map((x) => (
+                        <img
+                          key={x}
+                          loading="lazy"
+                          src={`/aislework/${x}.webp`}
+                          alt=""
+                        />
+                      ))}
+                    </div>
+                  ) : i === 1 ? (
+                    <div className="mini-edit">
+                      <BookOpen size={19} />
+                      <b>Maya’s lookbook</b>
+                      <span>
+                        2 styles <i /> Private link
+                      </span>
+                    </div>
+                  ) : i === 2 ? (
+                    <div className="tiny-preview">
+                      <img loading="lazy" src="/aislework/maya.webp" alt="" />
+                      <ChevronRight size={14} />
+                      <img
+                        loading="lazy"
+                        src="/aislework/maya-faye.webp"
+                        alt=""
+                      />
+                    </div>
+                  ) : (
+                    <div className="mini-inbox">
+                      <span>
+                        <Inbox size={15} /> Fitting requests
+                      </span>
+                      <b>
+                        <i>MP</i> Maya Patel <Check size={13} />
+                      </b>
+                    </div>
+                  )}
+                </div>
+                <div className="step-title">
+                  <Icon size={17} />
+                  <h3>{title}</h3>
+                </div>
+                <p>{text}</p>
+              </article>
             ))}
           </div>
-          <div className="rail-tools">
-            <span>
-              {railIndex + 1} / {looks.length}
-            </span>
-            <button
-              aria-label="Previous silhouette"
-              disabled={railIndex === 0}
-              onClick={() => moveRail(-1)}
-            >
-              <ArrowLeft size={18} />
-            </button>
-            <button
-              aria-label="Next silhouette"
-              disabled={railIndex === looks.length - 1}
-              onClick={() => moveRail(1)}
-            >
-              <ArrowRight size={18} />
-            </button>
-          </div>
         </section>
-        <section
-          id="sample"
-          className="sample-section section-pad"
-          aria-labelledby="sample-title"
-        >
-          <div className="sample-copy">
-            <p className="eyeline">
-              <span />
-              Private fitting room
-            </p>
-            <h2 id="sample-title">
-              In your own
-              <br />
-              <em>reflection.</em>
-            </h2>
-            <p>
-              See how a boutique’s gown translates from the dress form to a
-              portrait. Slide across the portrait to reveal the fitted look, or
-              inspect the gown on its own.
-            </p>
-            <div className="sample-controls" aria-label="Sample fitting views">
-              <button
-                aria-pressed={sample === null}
-                onClick={() => setSample(null)}
-              >
-                Compare
-              </button>
-              {fitting.map((item, i) => (
-                <button
-                  key={item.src}
-                  aria-pressed={sample === i}
-                  onClick={() => setSample(i)}
-                >
-                  {item.name}
-                </button>
+        <section className="pricing" id="pricing">
+          <div className="aw-wrap">
+            <div className="section-intro">
+              <div>
+                <p className="aw-kicker violet">Shop pricing</p>
+                <h2>Plan for your floor.</h2>
+              </div>
+              <p>
+                One delivered fitting uses one credit.
+                <br />
+                Your locations share a balance.
+              </p>
+            </div>
+            <div className="price-table">
+              {[
+                ["Starter", "25 credits per month", "149", "/ month"],
+                ["Growth", "100 credits per month", "399", "/ month"],
+                ["Credit pack", "10 additional credits", "49", "one time"],
+              ].map(([name, detail, price, period]) => (
+                <div className="price-row" key={name}>
+                  <h3>{name}</h3>
+                  <p>{detail}</p>
+                  <div>
+                    <strong>${price}</strong>
+                    <span>{period}</span>
+                  </div>
+                </div>
               ))}
             </div>
-            <small className="sample-note">
-              Illustrative fitting using synthetic images. Your stylist confirms
-              fit, fabric, and alterations in person.
-            </small>
+            <small>All prices in USD.</small>
           </div>
-          <figure className="sample-figure">
-            {sample === null ? (
-              <div className="comparison">
-                <img
-                  src={image("fitting")}
-                  loading="lazy"
-                  alt={fitting[2]!.alt}
-                />
-                <div
-                  className="comparison-before"
-                  style={{ clipPath: "inset(0 " + (100 - reveal) + "% 0 0)" }}
-                >
-                  <img
-                    src={image("portrait")}
-                    loading="lazy"
-                    alt={fitting[0]!.alt}
-                  />
-                </div>
-                <div className="comparison-labels" aria-hidden="true">
-                  <span>Portrait</span>
-                  <span>Fitting</span>
-                </div>
-                <div
-                  className="comparison-line"
-                  style={{ left: reveal + "%" }}
-                  aria-hidden="true"
-                >
-                  <span>
-                    <ChevronsLeftRight size={20} />
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={reveal}
-                  aria-label="Compare portrait and fitting"
-                  aria-valuetext={reveal + " percent portrait"}
-                  onChange={(e) => setReveal(Number(e.target.value))}
-                />
-              </div>
-            ) : (
-              <button
-                onClick={() => setOverlay("sample")}
-                aria-label={
-                  "Enlarge " + view.name.toLowerCase() + " photograph"
-                }
-              >
-                <img
-                  key={view.src}
-                  loading="lazy"
-                  src={image(view.src)}
-                  alt={view.alt}
-                  width="510"
-                  height="1024"
-                />
-                <span className="look-open">
-                  <Plus size={20} />
-                </span>
-              </button>
-            )}
-            <figcaption aria-live="polite">
-              {sample === null ? "Portrait and illustrated fitting" : view.note}
-            </figcaption>
-          </figure>
         </section>
-        <section id="boutiques" className="boutique-section section-pad">
-          <p className="eyeline">
-            <span />
-            For boutiques
-          </p>
-          <div>
-            <h2>
-              Your rail.
-              <br />
-              <em>Her shortlist.</em>
-            </h2>
-            <p>
-              Curate a private edit of your gowns, invite a bride to try her
-              favorites, and bring her shortlist into the fitting room.
-            </p>
-            <a href="/create-venue" className="campaign-cta ink">
-              Open your studio <ArrowUpRight size={17} />
+        <section className="demo-banner">
+          <div className="aw-wrap">
+            <ArrowDownRight className="banner-arrow" aria-hidden="true" />
+            <div>
+              <p className="aw-kicker">Inside the product</p>
+              <h2>Run the shop demo.</h2>
+            </div>
+            <a className="aw-btn ink" href="/demo">
+              Open demo workspace <ArrowRight size={18} />
             </a>
           </div>
         </section>
       </main>
-      <footer className="campaign-footer">
-        <GlimpseLogo />
-        <nav aria-label="Footer">
-          <a href="#collection">Collection</a>
-          <a href="/couple">Venue galleries</a>
-          <a href="/login">
-            Studio sign in <ArrowUpRight size={13} />
-          </a>
-        </nav>
+      <footer className="sales-footer">
+        <div className="aw-wrap">
+          <AisleworkLogo />
+          <nav aria-label="Footer">
+            <a href="/login">Shop sign-in</a>
+            <a href="/couple">Venue galleries</a>
+          </nav>
+        </div>
       </footer>
-      {overlay && (
-        <dialog
-          ref={dialog}
-          className={"campaign-modal mode-" + overlay}
-          aria-label={
-            overlay === "film"
-              ? "Before the aisle campaign film"
-              : overlay === "menu"
-                ? "Site navigation"
-                : overlay === "look"
-                  ? active.name
-                  : view.alt
-          }
-          onCancel={close}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) close();
-          }}
-        >
-          <div className="modal-inner">
-            <button
-              className="modal-close"
-              onClick={close}
-              autoFocus
-              aria-label="Close dialog"
-            >
-              <X size={21} />
-            </button>
-            {overlay === "menu" && (
-              <nav aria-label="Mobile navigation">
-                {[
-                  ["#collection", "The collection"],
-                  ["#sample", "Virtual fitting"],
-                  ["#boutiques", "For boutiques"],
-                  ["/login", "Studio sign in"],
-                ].map(([url, label]) => (
-                  <a key={url} href={url} onClick={close}>
-                    {label}
-                    <ArrowUpRight size={22} />
-                  </a>
-                ))}
-              </nav>
-            )}
-            {overlay === "film" && (
-              <>
-                <video
-                  controls
-                  autoPlay
-                  muted
-                  playsInline
-                  preload="metadata"
-                  poster={image("film")}
-                  aria-label="Silent fashion film moving from an ivory gown to a mountain wedding altar"
-                  src="/campaign/before-the-aisle.mp4"
-                />
-                <p className="film-credit">
-                  Before the aisle{" "}
-                  <span>Campaign film · 11 seconds · Silent</span>
-                </p>
-              </>
-            )}
-            {overlay === "look" && (
-              <>
-                <img src={image(active.src)} alt={active.alt} />
-                <div className="modal-look-copy">
-                  <p className="eyeline">
-                    <span />
-                    {active.fabric}
-                  </p>
-                  <h2>{active.name}</h2>
-                  <p>{active.note}</p>
-                  <div className="look-paging">
-                    <button
-                      aria-label="Previous look"
-                      onClick={() =>
-                        setLook((look + looks.length - 1) % looks.length)
-                      }
-                    >
-                      <ArrowLeft />
-                    </button>
-                    <span aria-live="polite">
-                      {look + 1} / {looks.length}
-                    </span>
-                    <button
-                      aria-label="Next look"
-                      onClick={() => setLook((look + 1) % looks.length)}
-                    >
-                      <ArrowRight />
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
-            {overlay === "sample" && (
-              <img src={image(view.src)} alt={view.alt} />
-            )}
-          </div>
-        </dialog>
-      )}
+      {film && <Walkthrough onClose={() => setFilm(false)} />}
     </div>
   );
 }

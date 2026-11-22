@@ -1,4 +1,4 @@
-import { BoutiqueNav } from "@/components/layout/BoutiqueNav";
+import { ShopWorkspace } from "@/components/layout/ShopWorkspace";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -107,16 +107,14 @@ function CatalogContent() {
   };
 
   return (
-    <main className="workroom min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-5xl px-6 py-12">
-        <BoutiqueNav />
+    <ShopWorkspace section="Gown catalog">
         <header className="mb-8 flex items-baseline justify-between">
           <div>
-            <h1 className="text-3xl font-semibold">Catalog</h1>
+            <h1 className="text-3xl font-semibold">Gown catalog</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               {dresses.length} dress{dresses.length === 1 ? "" : "es"}
               {notReady > 0 && (
-                <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-amber-800">
+                <span className="ml-2 rounded-none bg-amber-100 px-2 py-0.5 text-amber-800">
                   {notReady} need a front photo to be try-on ready
                 </span>
               )}
@@ -168,7 +166,7 @@ function CatalogContent() {
           )}
         </div>
 
-        <form onSubmit={submit} className="mb-10 grid grid-cols-1 gap-4 rounded-sm border border-border bg-card p-5 sm:grid-cols-4">
+        <details className="catalog-add"><summary>Add a gown</summary><form onSubmit={submit} className="mb-10 grid grid-cols-1 gap-4 rounded-sm border border-border bg-card p-5 sm:grid-cols-4">
           <div className="sm:col-span-1">
             <Label htmlFor="sku">SKU</Label>
             <Input id="sku" value={sku} onChange={(e) => setSku(e.target.value)} placeholder="AUR-2027" />
@@ -197,18 +195,19 @@ function CatalogContent() {
               {createDress.isPending ? "Adding…" : "Add dress"}
             </Button>
           </div>
-        </form>
+        </form></details>
 
         {dressesQuery.isLoading && <p className="text-muted-foreground">Loading your catalog…</p>}
-        {dresses.length === 0 && !dressesQuery.isLoading && (
-          <p className="text-muted-foreground">Add your first dress.</p>
+        {dressesQuery.isError && <p role="alert" className="console-empty">Your catalog could not be loaded. <button className="underline" onClick={()=>dressesQuery.refetch()}>Retry</button></p>}
+        {dresses.length === 0 && !dressesQuery.isLoading && !dressesQuery.isError && (
+          <p className="console-empty">{hasFilters ? "No gowns match these filters." : "Your rack is empty. Add a gown above, then upload a front photo to make it available for try-on."}</p>
         )}
 
-        <ul className="divide-y divide-neutral-200">
+        <ul className="stock-list">
           {dresses.map((dress) => (
             <li key={dress.id} className="flex flex-wrap items-center justify-between gap-3 py-4">
               <div>
-                <p className="font-serif text-lg">{dress.styleName}</p>
+                <p className="stock-name">{dress.styleName}</p>
                 <p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
                   {dress.sku}
                   {dress.sizeRange ? ` · ${dress.sizeRange}` : ""}
@@ -230,8 +229,7 @@ function CatalogContent() {
             </li>
           ))}
         </ul>
-      </div>
-    </main>
+    </ShopWorkspace>
   );
 }
 

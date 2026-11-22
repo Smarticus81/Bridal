@@ -21,7 +21,7 @@ export default function CreateVenuePage() {
   if (!clerkConfigured) return <ClerkSetupNotice />;
 
   return (
-    <StudioPage section="Boutique registration" image="column">
+    <StudioPage section="Boutique registration">
         <ClerkWidgetFrame>
           <SignedOut>
             <div className="relative z-10 mt-10 flex flex-col items-center gap-6">

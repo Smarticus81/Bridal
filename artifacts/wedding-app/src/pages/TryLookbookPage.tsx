@@ -84,7 +84,7 @@ export default function TryLookbookPage() {
               <p className="text-sm uppercase tracking-widest text-muted-foreground">
                 {query.data.shopName}
               </p>
-              <h1 className="mt-3 font-display text-5xl leading-tight">Your private <em>fitting.</em></h1>
+              <h1 className="mt-3 font-display text-5xl leading-tight">Your private fitting.</h1>
               {query.data.usable ? (
                 <p className="mt-2 text-muted-foreground">
                   {query.data.remainingCredits} tries left. Choose a dress to see it on you.
@@ -99,7 +99,7 @@ export default function TryLookbookPage() {
               <div className="invitation-count"><strong>{query.data.dresses.length}</strong><span>{query.data.dresses.length === 1 ? "selected gown" : "selected gowns"}</span></div>
             </header>
 
-            {lastJob && <a className="mb-8 inline-block rounded-full border border-neutral-600 px-5 py-3 text-sm" href={`/look/${lastJob}`}>Open your latest fitting →</a>}
+            {lastJob && <a className="mb-8 inline-block rounded-none border border-neutral-600 px-5 py-3 text-sm" href={`/look/${lastJob}`}>Open your latest fitting →</a>}
             <section className="invitation-rail grid grid-cols-1 gap-8 sm:grid-cols-2">
               {query.data.dresses.map((dress) => (
                 <article key={dress.id} className="group">
@@ -289,7 +289,7 @@ function TryOnPanel({
       onClick={() => { if (step !== "generating" || jobToken) onClose(); }}
     >
       <motion.div
-        className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-card p-6 ring-1 ring-border sm:rounded-2xl"
+        className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-card p-6 ring-1 ring-border sm:rounded-sm"
         initial={{ y: 40, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 40, opacity: 0 }}
@@ -307,7 +307,7 @@ function TryOnPanel({
             type="button"
             onClick={onClose}
             disabled={step === "generating" && !jobToken}
-            className="rounded-full p-1 text-muted-foreground hover:text-foreground"
+            className="rounded-none p-1 text-muted-foreground hover:text-foreground"
             aria-label="Close"
           >
             ✕
@@ -323,7 +323,7 @@ function TryOnPanel({
                 accept="image/jpeg,image/png,image/webp"
                 disabled={step === "generating"}
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                className="block w-full text-sm text-muted-foreground file:mr-4 file:rounded-full file:border-0 file:bg-primary file:px-4 file:py-2 file:text-sm file:font-medium file:text-primary-foreground hover:file:bg-primary"
+                className="block w-full text-sm text-muted-foreground file:mr-4 file:rounded-none file:border-0 file:bg-primary file:px-4 file:py-2 file:text-sm file:font-medium file:text-primary-foreground hover:file:bg-primary"
               />
               <p className="mt-2 text-xs text-muted-foreground">
                 Stand alone in even light, facing the camera with your arms clear of your waist. Include your head and feet.
@@ -363,7 +363,7 @@ function TryOnPanel({
             <button
               type="submit"
               disabled={!formReady || step === "generating"}
-              className="w-full rounded-full bg-primary py-3 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded-none bg-primary py-3 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {step === "generating"
                 ? isUploading
@@ -386,7 +386,7 @@ function TryOnPanel({
             <button
               type="button"
               onClick={onClose}
-              className="w-full rounded-full border border-input py-3 text-sm text-foreground hover:border-neutral-500"
+              className="w-full rounded-none border border-input py-3 text-sm text-foreground hover:border-neutral-500"
             >
               Try another dress
             </button>
@@ -423,14 +423,14 @@ function TryOnPanel({
             <button
               type="button"
               onClick={shareWithPeople}
-              className="w-full rounded-full bg-primary py-3 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
+              className="w-full rounded-none bg-primary py-3 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
             >
               {shareCopied ? "Link copied — share it with your people" : "Share with your people"}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="w-full rounded-full border border-input py-3 text-sm text-foreground hover:border-neutral-500"
+              className="w-full rounded-none border border-input py-3 text-sm text-foreground hover:border-neutral-500"
             >
               Try another dress
             </button>
@@ -456,7 +456,7 @@ function TryOnPanel({
             <button
               type="button"
               onClick={() => setStep("form")}
-              className="w-full rounded-full bg-primary py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              className="w-full rounded-none bg-primary py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
             >
               Try again
             </button>

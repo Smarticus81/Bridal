@@ -209,7 +209,7 @@ app.get("/v/:shareToken", async (req, res): Promise<void> => {
     const coupleName = session.coupleName || "A Beautiful Couple";
     const venueName = venue ? venue.name : "Their Dream Venue";
 
-    const title = `${coupleName}'s glimpse gallery`;
+    const title = `${coupleName}'s Aislework gallery`;
     const description = `Explore a cinematic AI wedding gallery of ${coupleName} at ${venueName}.`;
 
     const metaTags = `

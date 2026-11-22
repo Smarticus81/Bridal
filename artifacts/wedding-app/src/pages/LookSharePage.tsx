@@ -105,7 +105,7 @@ export default function LookSharePage() {
             <figure><img src={storageImageUrl(look.objectKey, token)} alt="Her bridal fitting" /></figure>
             <div className="shared-opinion">
               <p className="studio-label">Help her choose</p>
-              <h1>What do <em>you think?</em></h1>
+              <h1>What do you think?</h1>
             <div className="mt-6 grid grid-cols-3 gap-3">
               {VOTES.map((option) => {
                 const active = myVote === option.kind;

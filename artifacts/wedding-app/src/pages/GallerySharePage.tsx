@@ -28,7 +28,7 @@ import {
   VolumeX,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { GlimpseLogo } from "@/components/brand/GlimpseLogo";
+import { AisleworkLogo } from "@/components/brand/AisleworkLogo";
 
 function storageAssetUrl(objectKey: string, shareToken?: string | null): string {
   const token = shareToken ? `?shareToken=${encodeURIComponent(shareToken)}` : "";
@@ -63,7 +63,7 @@ function venueContactAction(venue: SessionDetailResponse["venue"]): {
   }
   if (venue.contactEmail) {
     return {
-      href: `mailto:${venue.contactEmail}?subject=${encodeURIComponent(`glimpse gallery at ${venue.name}`)}`,
+      href: `mailto:${venue.contactEmail}?subject=${encodeURIComponent(`Aislework gallery at ${venue.name}`)}`,
       label: "Contact venue",
       icon: "mail",
     };
@@ -188,8 +188,7 @@ function GalleryUnavailable({ session }: { session: SessionDetailResponse }) {
       <p className="mono-label text-rose mb-4">Start again</p>
       <h1 className="font-display text-2xl md:text-3xl font-medium mb-3 text-foreground">This gallery needs a fresh start</h1>
       <p className="text-muted-foreground max-w-md mb-8 font-light">
-        glimpse now creates venue-branded galleries only. Start again from the venue
-        page so we can use the current likeness and venue-preservation flow.
+        Start a new gallery from your venue’s page so we can use its current photos and settings.
       </p>
       <div className="flex flex-col gap-3 w-full max-w-xs">
         {venueSlug && (
@@ -228,7 +227,7 @@ function FailureView({
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 text-center">
       <AlertCircle className="h-12 w-12 text-destructive mb-6" />
       <p className="mono-label text-rose mb-4">Interrupted</p>
-      <h2 className="font-display text-2xl md:text-3xl font-medium mb-4 text-foreground">glimpse paused</h2>
+      <h2 className="font-display text-2xl md:text-3xl font-medium mb-4 text-foreground">Aislework paused</h2>
       <p className="text-muted-foreground mb-8 max-w-md font-light">{message}</p>
       <div className="flex flex-col sm:flex-row gap-3 w-full max-w-sm">
         <Button
@@ -308,13 +307,13 @@ function ProcessingView({ session }: { session: SessionDetailResponse }) {
           transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
           className="absolute inset-4 rounded-full border-b-2 border-muted-foreground/20 border-l-2 border-transparent"
         />
-        <div className="z-10 bg-card/80 backdrop-blur-xl p-6 md:p-8 rounded-full border border-card-border">
+        <div className="z-10 bg-card/80 backdrop-blur-xl p-6 md:p-8 rounded-none border border-card-border">
           <Images className="h-10 w-10 md:h-12 md:w-12 text-rose animate-pulse" />
         </div>
       </div>
 
       <p className="mono-label text-rose mb-4">Developing…</p>
-      <h2 className="font-display text-2xl md:text-3xl font-medium mb-3 italic text-foreground" data-testid="text-phase">
+      <h2 className="font-display text-2xl md:text-3xl font-medium mb-3 text-foreground" data-testid="text-phase">
         {phase}
       </h2>
       <p className="text-muted-foreground font-light max-w-md mb-8" data-testid="text-phase-detail">
@@ -324,7 +323,7 @@ function ProcessingView({ session }: { session: SessionDetailResponse }) {
 
       <div className="w-full max-w-md mb-3">
         <div className="flex justify-between items-baseline mb-2">
-          <span className="mono-label normal-case text-rose">glimpse</span>
+          <span className="mono-label normal-case text-rose">Aislework</span>
           <span data-testid="text-progress-percent" className="mono-label text-foreground">{percent}%</span>
         </div>
         <div className="h-1 w-full bg-muted overflow-hidden">
@@ -578,7 +577,7 @@ function GalleryVisionView({ session, reel, stills, onRestart }: GalleryVisionVi
       <header className="absolute top-0 left-0 right-0 z-20 pointer-events-none">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 h-20 flex justify-between items-center">
            <div className="pointer-events-auto">
-             <GlimpseLogo variant="mark" href="/" className="h-8 w-auto opacity-90 drop-shadow-md" />
+             <AisleworkLogo variant="mark" href="/" className="h-8 w-auto opacity-90 drop-shadow-md" />
            </div>
            
            <div className="flex gap-2 pointer-events-auto">
@@ -676,7 +675,7 @@ function GalleryVisionView({ session, reel, stills, onRestart }: GalleryVisionVi
 
           {!reelError && !reelReady && (
             <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
-              <div className="flex items-center gap-3 rounded-full bg-black/65 px-5 py-3 text-sm text-white backdrop-blur">
+              <div className="flex items-center gap-3 rounded-none bg-black/65 px-5 py-3 text-sm text-white backdrop-blur">
                 <Loader2 className="h-5 w-5 animate-spin" /> Loading motion reel
               </div>
             </div>
@@ -688,7 +687,7 @@ function GalleryVisionView({ session, reel, stills, onRestart }: GalleryVisionVi
                 type="button"
                 variant="ghost"
                 onClick={() => void playReel()}
-                className="min-h-14 rounded-full border border-white/40 bg-black/70 px-6 text-base text-white backdrop-blur hover:bg-black/85"
+                className="min-h-14 rounded-none border border-white/40 bg-black/70 px-6 text-base text-white backdrop-blur hover:bg-black/85"
                 data-testid="gallery-play-reel"
               >
                 <Play className="h-5 w-5 fill-current" /> Play motion reel
@@ -776,7 +775,7 @@ function GalleryVisionView({ session, reel, stills, onRestart }: GalleryVisionVi
                 <div
                   key={still.id}
                   className={`group relative overflow-hidden border transition-colors ${
-                    selected ? "border-rose glimpse-rose-ring" : "border-border hover:border-rose/50"
+                    selected ? "border-rose ring-2 ring-rose" : "border-border hover:border-rose/50"
                   }`}
                 >
                   <button
@@ -837,8 +836,8 @@ function GalleryVisionView({ session, reel, stills, onRestart }: GalleryVisionVi
 
       <footer className="border-t border-border bg-wine px-5 pt-10 pb-36 md:px-10">
         <div className="max-w-5xl mx-auto flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-          <p className="mono-label text-muted-foreground">A glimpse of your day</p>
-          <p className="mono-label text-muted-foreground/70">© {new Date().getFullYear()} glimpse</p>
+          <p className="mono-label text-muted-foreground">Your venue gallery</p>
+          <p className="mono-label text-muted-foreground/70">© {new Date().getFullYear()} Aislework</p>
         </div>
       </footer>
 

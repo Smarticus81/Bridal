@@ -7,12 +7,12 @@ import { clerkConfigured, studioAppearance } from "@/lib/clerk";
 export default function OwnerLoginPage() {
   if (!clerkConfigured) return <ClerkSetupNotice />;
   return (
-    <StudioPage section="Boutique access" image="lace">
+    <StudioPage section="Boutique access">
       <ClerkWidgetFrame>
         <SignedOut>
           <p className="studio-label">Boutique teams</p>
           <h1>
-            Your <em>studio.</em>
+            Shop sign-in
           </h1>
           <SignIn
             appearance={studioAppearance}

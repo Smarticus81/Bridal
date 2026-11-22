@@ -34,6 +34,7 @@ function lazyRoute<T extends ComponentType>(loader: () => Promise<{ default: T }
 
 const LandingPage = lazyRoute(() => import("@/pages/LandingPage"));
 const VenueLandingPage = lazyRoute(() => import("@/pages/VenueLandingPage"));
+const ShopDemoPage = lazyRoute(() => import("@/pages/ShopDemoPage"));
 const CoupleEntryPage = lazyRoute(() => import("@/pages/CoupleEntryPage"));
 const CreateVenuePage = lazyRoute(() => import("@/pages/CreateVenuePage"));
 const VenueOwnerPage = lazyRoute(() => import("@/pages/VenueOwnerPage"));
@@ -59,6 +60,7 @@ function Router() {
       <Switch>
         {/* Venue-facing main site */}
         <Route path="/">{() => <VenueLandingPage />}</Route>
+        <Route path="/demo">{() => <ShopDemoPage />}</Route>
         <Route path="/couple">{() => <LandingPage />}</Route>
         <Route path="/couple-entry">{() => <CoupleEntryPage />}</Route>
 

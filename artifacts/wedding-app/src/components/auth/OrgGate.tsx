@@ -19,14 +19,16 @@ import {
 } from "@/lib/clerk";
 
 export function ClerkSetupNotice() {
-  const destination = clerkStatus === "domain-mismatch" && clerkExpectedDomain
-    ? `https://${clerkExpectedDomain}${window.location.pathname}` : "/#sample";
-  const mismatch = clerkStatus === "domain-mismatch";
-  return <StudioPage section="Boutique access" image="lace">
-    <p className="studio-label">Boutique studio</p>
-    <h1>{mismatch ? <>Your studio <em>sign-in.</em></> : <>Studio access <em>is paused.</em></>}</h1>
-    <p>{mismatch ? "Sign in at your boutique’s registered address." : "Boutique sign-in is currently unavailable. The collection and sample fitting are open to explore."}</p>
-    <a className="studio-action" href={destination}>{mismatch ? "Open sign in" : "Explore the sample fitting"} ↗</a>
+  const registeredAddress = clerkStatus === "domain-mismatch" && clerkExpectedDomain
+    ? `https://${clerkExpectedDomain}${window.location.pathname}` : null;
+  return <StudioPage section="Shop workspace">
+    <p className="studio-label">Boutique access</p><h1>Your shop workspace</h1>
+    <p>{registeredAddress ? "Sign in at your shop’s registered address to manage your catalog, lookbooks and fitting requests." : "Shop sign-in is currently unavailable. You can explore the sales workflow in the sample workspace."}</p>
+    {registeredAddress && <a className="studio-action" href={registeredAddress}>Open shop sign-in ↗</a>}
+    <a className="workspace-demo-link" href="/demo">
+      <img src="/aislework/workspace.webp" alt="Aislework catalog with two sample gowns and a private lookbook draft"/>
+      <span>Enter the demo workspace <b aria-hidden="true">↗</b></span>
+    </a>
   </StudioPage>;
 }
 
@@ -105,6 +107,11 @@ function CenteredSpinner() {
  * users to name their organization once (Clerk Billing attaches to it).
  */
 export function OrgGate({ children }: { children: ReactNode }) {
+  if (!clerkConfigured) return <ClerkSetupNotice />;
+  return <SignedInOrgGate>{children}</SignedInOrgGate>;
+}
+
+function SignedInOrgGate({ children }: { children: ReactNode }) {
   const [, setLocation] = useLocation();
   const { isLoaded: userLoaded, isSignedIn } = useUser();
   const { organization, isLoaded: orgLoaded } = useOrganization();
@@ -127,7 +134,6 @@ export function OrgGate({ children }: { children: ReactNode }) {
     }
   }, [listLoaded, organization, setActive, userMemberships?.data]);
 
-  if (!clerkConfigured) return <ClerkSetupNotice />;
   if (!userLoaded || !orgLoaded || !listLoaded) {
     // While clerk-js is loading, spin; if it failed to load, say so instead
     // of spinning forever.
