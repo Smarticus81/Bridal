@@ -2,6 +2,8 @@ import {
   db,
   venuesTable,
   organizationsTable,
+  consentRecordsTable,
+  lookbooksTable,
   creditTransactionsTable,
   coupleSessionsTable,
 } from "@workspace/db";
@@ -81,84 +83,7 @@ async function getVenueCreditsBalance(venueId: number): Promise<number> {
   return row?.creditsBalance ?? 0;
 }
 
-export async function grantCreditsToOrg(
-  orgId: number,
-  amount: number,
-  reason: string,
-  billingEventId?: string | null,
-): Promise<number> {
-  if (amount <= 0) return getOrgCreditsBalance(orgId);
-
-  try {
-    return await db.transaction(async (tx) => {
-      await tx.insert(creditTransactionsTable).values({
-        organizationId: orgId,
-        delta: amount,
-        reason,
-        stripeEventId: billingEventId ?? null,
-      });
-
-      const [updated] = await tx
-        .update(organizationsTable)
-        .set({ creditsBalance: sql`${organizationsTable.creditsBalance} + ${amount}` })
-        .where(eq(organizationsTable.id, orgId))
-        .returning({ creditsBalance: organizationsTable.creditsBalance });
-
-      return updated?.creditsBalance ?? 0;
-    });
-  } catch (error) {
-    if (isBillingEventReplay(error)) {
-      logger.info({ orgId, billingEventId }, "Ignored duplicate billing credit grant");
-      return getOrgCreditsBalance(orgId);
-    }
-    throw error;
-  }
-}
-
-export async function setOrgCreditsBalance(
-  orgId: number,
-  newBalance: number,
-  reason: string,
-  billingEventId?: string | null,
-): Promise<number> {
-  try {
-    return await db.transaction(async (tx) => {
-      const [current] = await tx
-        .select({ creditsBalance: organizationsTable.creditsBalance })
-        .from(organizationsTable)
-        .where(eq(organizationsTable.id, orgId));
-
-      const prev = current?.creditsBalance ?? 0;
-      const delta = newBalance - prev;
-
-      if (billingEventId || delta !== 0) {
-        await tx.insert(creditTransactionsTable).values({
-          organizationId: orgId,
-          delta,
-          reason,
-          stripeEventId: billingEventId ?? null,
-        });
-      }
-
-      const [updated] = await tx
-        .update(organizationsTable)
-        .set({ creditsBalance: newBalance })
-        .where(eq(organizationsTable.id, orgId))
-        .returning({ creditsBalance: organizationsTable.creditsBalance });
-
-      return updated?.creditsBalance ?? 0;
-    });
-  } catch (error) {
-    if (isBillingEventReplay(error)) {
-      logger.info({ orgId, billingEventId }, "Ignored duplicate billing balance grant");
-      return getOrgCreditsBalance(orgId);
-    }
-    throw error;
-  }
-}
-
-
-export async function refundCreditsForSession(sessionId: number): Promise<boolean> {
+export async function refundCreditsForSession(sessionId: number, failureMessage?: string): Promise<boolean> {
   const refunded = await db.transaction(async (tx) => {
     const [session] = await tx
       .select({
@@ -172,7 +97,7 @@ export async function refundCreditsForSession(sessionId: number): Promise<boolea
 
     const [cleared] = await tx
       .update(coupleSessionsTable)
-      .set({ creditsCharged: 0 })
+      .set({ creditsCharged: 0, ...(failureMessage ? { status: "failed", errorMessage: failureMessage, completedAt: new Date() } : {}) })
       .where(
         and(
           eq(coupleSessionsTable.id, sessionId),
@@ -187,7 +112,15 @@ export async function refundCreditsForSession(sessionId: number): Promise<boolea
       .select({ organizationId: venuesTable.organizationId })
       .from(venuesTable)
       .where(eq(venuesTable.id, session.venueId));
-    const orgId = venueRow?.organizationId ?? null;
+    const [consent] = await tx.select({ lookbookId: consentRecordsTable.lookbookId })
+      .from(consentRecordsTable).where(eq(consentRecordsTable.sessionId, sessionId)).limit(1);
+    let orgId = venueRow?.organizationId ?? null;
+    if (consent?.lookbookId) {
+      const [book] = await tx.update(lookbooksTable)
+        .set({ creditsUsed: sql`GREATEST(${lookbooksTable.creditsUsed} - 1, 0)` })
+        .where(eq(lookbooksTable.id, consent.lookbookId)).returning({ organizationId: lookbooksTable.organizationId });
+      orgId = book?.organizationId ?? orgId;
+    }
 
     if (orgId != null) {
       await tx
@@ -218,23 +151,6 @@ export async function refundCreditsForSession(sessionId: number): Promise<boolea
 
   logger.info({ sessionId, amount: refunded.amount }, "Refunded session credits");
   return true;
-}
-
-function isBillingEventReplay(error: unknown): boolean {
-  const candidate = error as {
-    code?: string;
-    constraint?: string;
-    message?: string;
-    cause?: { code?: string; constraint?: string; message?: string };
-  };
-  return (
-    candidate.code === "23505" ||
-    candidate.constraint === "credit_transactions_stripe_event_id_unique" ||
-    candidate.cause?.code === "23505" ||
-    candidate.cause?.constraint === "credit_transactions_stripe_event_id_unique" ||
-    /credit_transactions_stripe_event_id_unique|duplicate key/i.test(candidate.message ?? "") ||
-    /credit_transactions_stripe_event_id_unique|duplicate key/i.test(candidate.cause?.message ?? "")
-  );
 }
 
 export async function countVenueSessionsToday(venueId: number): Promise<number> {

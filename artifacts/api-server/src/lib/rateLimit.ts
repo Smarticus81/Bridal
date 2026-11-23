@@ -14,6 +14,7 @@ export function clientKey(req: Request): string {
 interface RateBucket {
   count: number;
   resetAt: number;
+  pendingPhotos?: Set<string>;
 }
 
 const rateBuckets = new Map<string, RateBucket>();
@@ -27,15 +28,35 @@ function pruneExpiredBuckets(now: number): void {
   }
 }
 
-export function rateLimit(key: string, limit: number, windowMs: number): boolean {
+function takeSlot(key: string, limit: number, windowMs: number): RateBucket | undefined {
   const now = Date.now();
   pruneExpiredBuckets(now);
   const existing = rateBuckets.get(key);
   if (!existing || existing.resetAt < now) {
-    rateBuckets.set(key, { count: 1, resetAt: now + windowMs });
-    return true;
+    const bucket = { count: 1, resetAt: now + windowMs };
+    rateBuckets.set(key, bucket);
+    return bucket;
   }
-  if (existing.count >= limit) return false;
+  if (existing.count >= limit) return undefined;
   existing.count += 1;
-  return true;
+  return existing;
+}
+
+export function rateLimit(key: string, limit: number, windowMs: number): boolean {
+  return Boolean(takeSlot(key, limit, windowMs));
+}
+
+// Unused upload URLs still consume their spam-protection slots. A bride who
+// submits a photo for a funded look can immediately upload for her next gown.
+export function reserveUploadSlot(address: string) {
+  const bucket = takeSlot(`upload:${address}`, 120, 60 * 60 * 1000);
+  if (!bucket) return undefined;
+  return (objectKey: string) => {
+    (bucket.pendingPhotos ??= new Set()).add(objectKey);
+  };
+}
+
+export function releaseSubmittedPhoto(address: string, objectKey: string) {
+  const bucket = rateBuckets.get(`upload:${address}`);
+  if (bucket?.pendingPhotos?.delete(objectKey)) bucket.count--;
 }

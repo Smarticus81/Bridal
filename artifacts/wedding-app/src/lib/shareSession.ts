@@ -26,8 +26,8 @@ export async function shareSession(
     ? `${session.coupleName}'s Wedding Gallery`
     : "Our Wedding Gallery";
   const text = session.venue?.name
-    ? `See our glimpse gallery at ${session.venue.name}`
-    : "See our glimpse gallery";
+    ? `See our Aislework gallery at ${session.venue.name}`
+    : "See our Aislework gallery";
 
   if (navigator.share) {
     try {

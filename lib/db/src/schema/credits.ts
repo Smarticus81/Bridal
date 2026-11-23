@@ -6,6 +6,7 @@ import { coupleSessionsTable } from "./sessions";
 export const CREDIT_REASONS = [
   "trial_grant",
   "subscription_grant",
+  "subscription_canceled",
   "pack_purchase",
   "session_debit",
   "session_refund",
@@ -29,8 +30,7 @@ export const creditTransactionsTable = pgTable(
     sessionId: integer("session_id").references(() => coupleSessionsTable.id, {
       onDelete: "set null",
     }),
-    // Unique id of the upstream billing event (Clerk webhook message id, or a
-    // legacy Stripe event id) — the idempotency key for grants.
+    // Unique fulfillment reference for a payment, invoice, or cancellation.
     stripeEventId: text("stripe_event_id"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },

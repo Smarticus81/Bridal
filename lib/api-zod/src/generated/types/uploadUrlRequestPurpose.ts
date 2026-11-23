@@ -12,4 +12,5 @@ export type UploadUrlRequestPurpose =
 export const UploadUrlRequestPurpose = {
   couple: "couple",
   venue: "venue",
+  dress: "dress",
 } as const;

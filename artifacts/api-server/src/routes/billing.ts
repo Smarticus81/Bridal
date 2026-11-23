@@ -1,6 +1,8 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { Webhook } from "svix";
-import { desc, eq } from "drizzle-orm";
+import Stripe from "stripe";
+import { bridalMetadata, bridalBillingAction } from "../lib/bridalBilling.js";
+import { and, desc, eq } from "drizzle-orm";
 import {
   db,
   organizationsTable,
@@ -11,10 +13,6 @@ import {
   CREDIT_PACK_AMOUNT,
   type Organization,
 } from "@workspace/db";
-import {
-  grantCreditsToOrg,
-  setOrgCreditsBalance,
-} from "../lib/credits.js";
 import {
   requireStripe,
   isStripeConfigured,
@@ -99,8 +97,8 @@ async function ensureStripeCustomer(org: Organization, clerkUserId: string): Pro
   const customer = await stripe.customers.create({
     email: billingEmail ?? undefined,
     name: org.name,
-    metadata: { organizationId: String(org.id), clerkOrgId: org.clerkOrgId },
-  });
+    metadata: { application: "glimpse-bridal", bridalOrg: String(org.id) },
+  }, { idempotencyKey: `glimpse-bridal-customer-${org.clerkOrgId}` });
 
   await db
     .update(organizationsTable)
@@ -122,11 +120,15 @@ router.post("/org/billing/checkout", async (req, res): Promise<void> => {
   if (!ctx) return;
 
   const product = req.body?.product as BillingProduct;
-  if (!product || !(product in STRIPE_PRICES)) {
+  if (!product || !Object.hasOwn(STRIPE_PRICES, product)) {
     res.status(400).json({ error: "product must be starter, growth, or credit_pack" });
     return;
   }
 
+  if (product !== "credit_pack" && ctx.org.stripeSubscriptionId) {
+    res.status(409).json({ error: "Your boutique already has a subscription. Use Manage billing to change it." });
+    return;
+  }
   const priceId = STRIPE_PRICES[product];
   if (!priceId) {
     res.status(503).json({ error: "Price not configured for this product" });
@@ -145,12 +147,9 @@ router.post("/org/billing/checkout", async (req, res): Promise<void> => {
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${base}/dashboard?billing=success`,
       cancel_url: `${base}/dashboard?billing=cancel`,
-      metadata: {
-        organizationId: String(ctx.org.id),
-        product,
-      },
+      metadata: bridalMetadata(ctx.org.id, product),
       subscription_data: isSubscription
-        ? { metadata: { organizationId: String(ctx.org.id), product } }
+        ? { metadata: bridalMetadata(ctx.org.id, product) }
         : undefined,
     });
 
@@ -177,10 +176,12 @@ router.post("/org/billing/portal", async (req, res): Promise<void> => {
   const ctx = await requireOrg(req, res);
   if (!ctx) return;
 
+
   try {
     const stripe = requireStripe();
     const customerId = await ensureStripeCustomer(ctx.org, ctx.clerkUserId);
     const portal = await stripe.billingPortal.sessions.create({
+      configuration: process.env.STRIPE_BILLING_PORTAL_CONFIGURATION || undefined,
       customer: customerId,
       return_url: `${getAppBaseUrl()}/dashboard`,
     });
@@ -192,7 +193,6 @@ router.post("/org/billing/portal", async (req, res): Promise<void> => {
 });
 
 export async function handleStripeWebhook(req: Request, res: Response): Promise<void> {
-  const stripe = requireStripe();
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!webhookSecret) {
     res.status(503).send("Webhook secret not configured");
@@ -205,92 +205,71 @@ export async function handleStripeWebhook(req: Request, res: Response): Promise<
     return;
   }
 
-  let event;
+  let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(req.body as Buffer, sig, webhookSecret);
-  } catch (err) {
-    logger.warn({ err }, "Stripe webhook signature verification failed");
+    event = Stripe.webhooks.constructEvent(req.body as Buffer, sig, webhookSecret);
+  } catch {
+    logger.warn("Stripe webhook signature verification failed");
     res.status(400).send("Invalid signature");
     return;
   }
 
   try {
-    const [existingEvent] = await db
-      .select({ id: creditTransactionsTable.id })
-      .from(creditTransactionsTable)
-      .where(eq(creditTransactionsTable.stripeEventId, event.id))
-      .limit(1);
-    if (existingEvent) {
+    const action = bridalBillingAction(event, STRIPE_PRICES);
+    if (!action) {
       res.json({ received: true });
       return;
     }
+    if (!process.env.DATABASE_URL) {
+      res.status(503).send("Billing ledger temporarily unavailable");
+      return;
+    }
 
-    switch (event.type) {
-      case "checkout.session.completed": {
-        const session = event.data.object;
-        const organizationId = Number(session.metadata?.organizationId);
-        const product = session.metadata?.product as BillingProduct | undefined;
-        if (!organizationId || !product) break;
+    // Concurrent notifications for a boutique settle in one ledger transaction.
+    await db.transaction(async tx => {
+      const [org] = await tx.select().from(organizationsTable).where(and(
+        eq(organizationsTable.id, action.organizationId),
+        eq(organizationsTable.stripeCustomerId, action.customer),
+      )).for("update");
+      if (!org) throw new Error("Bridal billing customer mapping is unavailable");
 
-        if (product === "credit_pack") {
-          await grantCreditsToOrg(organizationId, CREDIT_PACK_AMOUNT, "pack_purchase", event.id);
-        } else if (product === "starter" || product === "growth") {
-          const subId =
-            typeof session.subscription === "string"
-              ? session.subscription
-              : session.subscription?.id;
-          await db
-            .update(organizationsTable)
-            .set({
-              plan: product,
-              stripeSubscriptionId: subId ?? null,
-            })
-            .where(eq(organizationsTable.id, organizationId));
-        }
-        break;
-      }
-      case "invoice.paid": {
-        const invoice = event.data.object;
-        const subId =
-          typeof invoice.subscription === "string"
-            ? invoice.subscription
-            : invoice.subscription?.id;
-        if (!subId) break;
-
-        const [org] = await db
-          .select()
-          .from(organizationsTable)
-          .where(eq(organizationsTable.stripeSubscriptionId, subId));
-        if (!org) break;
-
-        const credits =
-          org.plan === "growth" ? GROWTH_MONTHLY_CREDITS : STARTER_MONTHLY_CREDITS;
-        await setOrgCreditsBalance(org.id, credits, "subscription_grant", event.id);
-
-        const periodEnd = invoice.lines?.data?.[0]?.period?.end;
-        if (periodEnd) {
-          await db
-            .update(organizationsTable)
-            .set({ billingPeriodEnd: new Date(periodEnd * 1000) })
+      if (action.kind === "cancel") {
+        await tx.insert(creditTransactionsTable).values({
+          organizationId: org.id, delta: 0, reason: "subscription_canceled",
+          stripeEventId: `bridal:cancel:${action.subscription}`,
+        }).onConflictDoNothing();
+        if (org.stripeSubscriptionId === action.subscription) {
+          await tx.update(organizationsTable)
+            .set({ plan: "none", stripeSubscriptionId: null, billingPeriodEnd: null })
             .where(eq(organizationsTable.id, org.id));
         }
-        break;
+        return;
       }
-      case "customer.subscription.deleted": {
-        const sub = event.data.object;
-        await db
-          .update(organizationsTable)
-          .set({
-            plan: "none",
-            stripeSubscriptionId: null,
-            billingPeriodEnd: null,
-          })
-          .where(eq(organizationsTable.stripeSubscriptionId, sub.id));
-        break;
+
+      if (action.kind === "renewal") {
+        const [canceled] = await tx.select({ id: creditTransactionsTable.id })
+          .from(creditTransactionsTable)
+          .where(eq(creditTransactionsTable.stripeEventId, `bridal:cancel:${action.subscription}`));
+        if (canceled || (org.billingPeriodEnd && org.billingPeriodEnd >= action.periodEnd)) return;
       }
-      default:
-        break;
-    }
+
+      const nextBalance = action.kind === "pack"
+        ? org.creditsBalance + CREDIT_PACK_AMOUNT
+        : action.plan === "growth" ? GROWTH_MONTHLY_CREDITS : STARTER_MONTHLY_CREDITS;
+      const entry = await tx.insert(creditTransactionsTable).values({
+        organizationId: org.id,
+        delta: nextBalance - org.creditsBalance,
+        reason: action.kind === "pack" ? "pack_purchase" : "subscription_grant",
+        stripeEventId: action.reference,
+      }).onConflictDoNothing().returning({ id: creditTransactionsTable.id });
+      if (!entry.length) return;
+
+      const subscription = action.kind === "renewal"
+        ? { plan: action.plan, stripeSubscriptionId: action.subscription, billingPeriodEnd: action.periodEnd }
+        : {};
+      await tx.update(organizationsTable).set({ ...subscription, creditsBalance: nextBalance })
+        .where(eq(organizationsTable.id, org.id));
+    });
   } catch (err) {
     logger.error({ err, type: event.type }, "Stripe webhook handler error");
     res.status(500).send("Webhook handler failed");

@@ -1,3 +1,4 @@
+import { BoutiqueNav } from "@/components/layout/BoutiqueNav";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   useAddVenueMedia,
@@ -32,23 +33,23 @@ const BILLING_PRODUCTS: Array<{
 }> = [
   {
     id: "starter",
-    kicker: "Plan 01",
+    kicker: "USD $149 / month",
     title: "Starter",
-    description: "For a single active venue building post-tour follow-up into the sales flow.",
+    description: "For boutiques sending brides a curated shortlist before their fittings.",
     credits: "25 credits / month",
     cta: "Subscribe to Starter",
   },
   {
     id: "growth",
-    kicker: "Plan 02",
+    kicker: "USD $399 / month",
     title: "Growth",
-    description: "For organizations running several venues or a full tour calendar.",
+    description: "For a full fitting calendar or a team serving several boutiques.",
     credits: "100 credits / month",
     cta: "Subscribe to Growth",
   },
   {
     id: "credit_pack",
-    kicker: "Top-up",
+    kicker: "USD $49 once",
     title: "Credit pack",
     description: "One-off boost when a busy weekend outruns the monthly allowance.",
     credits: "+10 credits, one time",
@@ -76,9 +77,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FrameTicks } from "@/components/motion";
 import { useToast } from "@/hooks/use-toast";
-import { GlimpseLogo } from "@/components/brand/GlimpseLogo";
+import { AisleworkLogo } from "@/components/brand/AisleworkLogo";
 
 const MIN_VENUE_PHOTOS = 1;
 const MIN_COUPLE_PHOTOS = 1;
@@ -166,6 +166,7 @@ function DashboardInner() {
     query: { queryKey: getGetOrganizationQueryKey() },
   });
   const organization = orgQuery.data?.organization;
+  const hasSubscription = organization?.plan === "starter" || organization?.plan === "growth";
   const orgVenues = orgQuery.data?.venues ?? [];
 
   useEffect(() => {
@@ -462,7 +463,7 @@ function DashboardInner() {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(coupleEmail.trim())) {
       toast({
         title: "Couple email required",
-        description: "This is where Glimpse sends the finished gallery.",
+        description: "This is where Aislework sends the finished gallery.",
         variant: "destructive",
       });
       return;
@@ -503,7 +504,7 @@ function DashboardInner() {
           onSuccess: () => {
             toast({
               title: "Gallery started",
-              description: "Glimpse will email the couple when it is ready.",
+              description: "Aislework will email the couple when it is ready.",
             });
             resetCoupleIntake();
             void dashboard.refetch();
@@ -581,7 +582,7 @@ function DashboardInner() {
     void queryClient.invalidateQueries({ queryKey: getGetOrganizationQueryKey() });
     if (billing === "success") {
       toast({
-        title: "Billing updated",
+        title: "Checkout complete",
         description: "Credits apply as soon as Stripe confirms the payment.",
       });
     }
@@ -600,7 +601,7 @@ function DashboardInner() {
       <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-sm">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-4">
-            <GlimpseLogo className="h-12" />
+            <AisleworkLogo />
             <div className="hidden h-4 w-px bg-border sm:block"></div>
             <p className="mono-label hidden normal-case tracking-normal text-muted-foreground sm:block">
               {organization?.name ?? ""}
@@ -642,6 +643,7 @@ function DashboardInner() {
           </div>
         </div>
       </header>
+      <div className="px-5 pt-4"><BoutiqueNav showBrand={false} /></div>
 
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:py-12 space-y-14">
         <section className="grid gap-10 lg:grid-cols-[1fr_360px]">
@@ -663,7 +665,7 @@ function DashboardInner() {
                 </p>
               </div>
               <p className={venueReady ? "mono-label shrink-0 inline-flex items-center gap-2 text-emerald-400" : "mono-label shrink-0 inline-flex items-center gap-2 text-rose"}>
-                <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                <span className="h-1.5 w-1.5 rounded-none bg-current" />
                 {venueReady ? "Ready for tours" : "Needs photos"}
               </p>
             </div>
@@ -731,12 +733,12 @@ function DashboardInner() {
               <p className="mono-label mb-4 text-rose">002 — New couple</p>
               <h2 className="font-display text-2xl md:text-3xl font-medium tracking-tight text-foreground">Start a prospect gallery</h2>
               <p className="mt-3 text-base font-light leading-relaxed text-muted-foreground">
-                Add the couple's email and reference photos. Glimpse creates a photoreal,
+                Add the couple's email and reference photos. Aislework creates a photoreal,
                 venue-branded preview and emails their private link after generation.
               </p>
             </div>
             <p className={venueReady ? "mono-label shrink-0 inline-flex items-center gap-2 text-emerald-400" : "mono-label shrink-0 inline-flex items-center gap-2 text-rose"}>
-              <span className="h-1.5 w-1.5 rounded-full bg-current" />
+              <span className="h-1.5 w-1.5 rounded-none bg-current" />
               {venueReady ? "Owner approval enabled" : "Venue setup needed"}
             </p>
           </div>
@@ -796,7 +798,7 @@ function DashboardInner() {
                       {preview ? (
                         <>
                           <img src={preview} alt={`Couple reference ${slot + 1}`} className="h-full w-full object-cover" />
-                          <FrameTicks size={14} className="text-foreground/40" />
+
                           <span
                             role="button"
                             tabIndex={0}
@@ -903,7 +905,7 @@ function DashboardInner() {
                     {complete ? (
                       <Check className="h-4 w-4 shrink-0 text-rose" />
                     ) : (
-                      <span className="h-4 w-4 shrink-0 rounded-full border border-border" />
+                      <span className="h-4 w-4 shrink-0 rounded-none border border-border" />
                     )}
                   </div>
                 );
@@ -966,7 +968,7 @@ function DashboardInner() {
                       }}
                       className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                     />
-                    <FrameTicks size={14} className="text-foreground/40" />
+
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
                     <button
                       type="button"
@@ -1027,7 +1029,7 @@ function DashboardInner() {
                           <ImageIcon className="h-6 w-6" />
                         </div>
                       )}
-                      <FrameTicks size={14} className="text-foreground/40" />
+
                     </div>
                     <div>
                       <div className="flex flex-wrap items-center gap-3 mb-1">
@@ -1089,9 +1091,6 @@ function DashboardInner() {
           </div>
         </section>
 
-        {/* Billing lives on the organization: one plan and one credit pool
-            shared by every venue. Checkout + payment methods are Clerk
-            Billing; credits are granted server-side by the Clerk webhook. */}
         <section className="border-t border-border pt-6">
           <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
             <div>
@@ -1100,8 +1099,7 @@ function DashboardInner() {
                 {organization?.name ?? "Your organization"}
               </h2>
               <p className="mt-3 max-w-xl text-base font-light leading-relaxed text-muted-foreground">
-                One subscription covers every venue in your organization. Each
-                couple gallery uses one credit from the shared balance.
+                Your boutiques share a balance. A delivered bridal fitting or couple gallery uses one credit.
               </p>
             </div>
             <div className="flex items-end gap-10">
@@ -1144,16 +1142,16 @@ function DashboardInner() {
                 <Button
                   variant={organization?.plan === product.id ? "outline" : "rose"}
                   disabled={
-                    startCheckout.isPending || organization?.plan === product.id
+                    !organization?.billingConfigured || startCheckout.isPending || openPortal.isPending || organization.plan === product.id
                   }
-                  onClick={() => handleCheckout(product.id)}
+                  onClick={() => hasSubscription && product.id !== "credit_pack" ? handleOpenPortal() : handleCheckout(product.id)}
                   className="mt-4 w-full rounded-none"
                   data-testid={`billing-${product.id}`}
                 >
                   {startCheckout.isPending && checkoutProduct === product.id ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : null}
-                  {organization?.plan === product.id ? "Current plan" : product.cta}
+                  {organization?.plan === product.id ? "Current plan" : hasSubscription && product.id !== "credit_pack" ? "Manage subscription" : product.cta}
                 </Button>
               </div>
             ))}
@@ -1161,13 +1159,14 @@ function DashboardInner() {
 
           <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="mono-label normal-case tracking-[0.08em] text-muted-foreground/70">
-              Stripe billing, owned by the organization · renewals refresh the
-              shared credit pool · 1 credit = 1 couple's complete gallery
+              {organization?.billingConfigured
+                ? "Each monthly renewal resets the shared balance to your plan allowance. Plan changes affect your next renewal."
+                : "Billing is currently unavailable."}
             </p>
             <Button
               variant="ghost"
               size="sm"
-              disabled={openPortal.isPending}
+              disabled={!organization?.billingConfigured || openPortal.isPending}
               onClick={handleOpenPortal}
               className="text-muted-foreground hover:text-foreground"
               data-testid="billing-portal"
@@ -1205,7 +1204,7 @@ function StatusBadge({ status }: { status: string }) {
 
   return (
     <span className={`mono-label inline-flex items-center gap-1.5 ${color}`}>
-      <span className="h-1.5 w-1.5 rounded-full bg-current"></span>
+      <span className="h-1.5 w-1.5 rounded-none bg-current"></span>
       {status}
     </span>
   );

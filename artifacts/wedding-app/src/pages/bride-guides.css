@@ -1,0 +1,91 @@
+.bride-guides {
+  min-height: 100svh;
+  background: #f4f2f9;
+  color: var(--ink);
+}
+.bride-guides main {
+  width: min(92%, 1260px);
+  margin: auto;
+  padding: clamp(28px, 4vw, 65px) 0;
+}
+.bride-guide-intro {
+  max-width: 50rem;
+  margin-bottom: clamp(22px, 3vw, 40px);
+}
+.bride-guide-intro h1 {
+  font: 700 clamp(46px, 5.9vw, 80px) / 0.95 var(--font-display);
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  margin: 10px 0 16px;
+}
+.bride-guide-intro > p:last-child,
+.bride-lessons section > p {
+  color: #62596e;
+  line-height: 1.5;
+}
+.bride-lessons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(14px, 2vw, 28px);
+  align-items: start;
+}
+.bride-lessons section {
+  min-width: 0;
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-top: 4px solid var(--violet);
+  padding: clamp(16px, 2vw, 30px);
+  scroll-margin-top: 15px;
+}
+.bride-lessons h2 {
+  font: 700 clamp(28px, 3vw, 43px) / 1 var(--font-display);
+  letter-spacing: -0.02em;
+}
+.bride-lessons section > p {
+  font-size: 0.9rem;
+  margin: 8px 0 16px;
+}
+.bride-lessons video {
+  width: 100%;
+  aspect-ratio: 16/10;
+  background: #241d35;
+}
+.bride-lessons summary {
+  font-weight: 650;
+  padding: 14px 0;
+}
+.bride-lessons ol {
+  padding: 0 0 12px 1.35rem;
+  list-style: decimal;
+}
+.bride-lessons li {
+  padding-left: 4px;
+  margin-bottom: 0.6rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+.bride-lessons a {
+  font-size: 0.76rem;
+  color: var(--violet);
+  font-weight: 620;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+@media (max-width: 760px) {
+  .bride-lessons {
+    grid-template-columns: 1fr;
+  }
+}
+
+.bride-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--violet);
+  color: white;
+  margin-top: 15px;
+  padding: 10px 14px;
+  font-size: 0.84rem;
+  font-weight: 620;
+}

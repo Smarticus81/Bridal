@@ -1,3 +1,4 @@
+import { StudioPage } from "@/components/layout/StudioPage";
 import { useEffect, useState, type ReactNode } from "react";
 import {
   ClerkFailed,
@@ -10,73 +11,31 @@ import {
 } from "@clerk/clerk-react";
 import { useLocation } from "wouter";
 import { Loader2 } from "lucide-react";
-import { FrameTicks } from "@/components/motion";
 import {
   clerkConfigured,
   clerkExpectedDomain,
   clerkStatus,
-  darkroomAppearance,
+  studioAppearance,
 } from "@/lib/clerk";
 
 export function ClerkSetupNotice() {
-  const hostname = typeof window !== "undefined" ? window.location.hostname : "";
-  return (
-    <div className="grain relative min-h-screen bg-background text-foreground flex items-center justify-center px-6">
-      <div className="relative w-full max-w-md bg-card p-8">
-        <FrameTicks size={16} className="text-foreground/40" />
-        <p className="mono-label mb-4 text-rose">Setup required</p>
-        {clerkStatus === "domain-mismatch" ? (
-          <>
-            <h1 className="font-display text-2xl font-medium mb-3">
-              Sign-in lives on {clerkExpectedDomain}
-            </h1>
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              This page is open at <span className="font-mono">{hostname}</span>, but the
-              configured Clerk production key only works on{" "}
-              <span className="font-mono">{clerkExpectedDomain}</span> and its subdomains.
-            </p>
-            <a
-              href={`https://${clerkExpectedDomain}${typeof window !== "undefined" ? window.location.pathname : ""}`}
-              className="mt-6 inline-flex h-11 items-center justify-center bg-rose px-6 text-sm font-medium text-rose-foreground transition-colors hover:bg-rose-hover"
-            >
-              Continue on {clerkExpectedDomain}
-            </a>
-            <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-              To sign in from this address instead, use a development{" "}
-              <span className="font-mono">pk_test_…</span> key for this environment.
-            </p>
-          </>
-        ) : clerkStatus === "invalid-key" ? (
-          <>
-            <h1 className="font-display text-2xl font-medium mb-3">Sign-in key is malformed</h1>
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              The configured Clerk publishable key doesn't look like a valid{" "}
-              <span className="font-mono">pk_test_…</span> or{" "}
-              <span className="font-mono">pk_live_…</span> key. Check{" "}
-              <span className="font-mono">CLERK_PUBLISHABLE_KEY</span> /{" "}
-              <span className="font-mono">VITE_CLERK_PUBLISHABLE_KEY</span> in the server
-              environment, then redeploy.
-            </p>
-          </>
-        ) : (
-          <>
-            <h1 className="font-display text-2xl font-medium mb-3">Sign-in isn't configured yet</h1>
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              Set <span className="font-mono">VITE_CLERK_PUBLISHABLE_KEY</span> and{" "}
-              <span className="font-mono">CLERK_SECRET_KEY</span> in the server environment,
-              then redeploy. See <span className="font-mono">.env.example</span>.
-            </p>
-          </>
-        )}
-      </div>
-    </div>
-  );
+  const registeredAddress = clerkStatus === "domain-mismatch" && clerkExpectedDomain
+    ? `https://${clerkExpectedDomain}${window.location.pathname}` : null;
+  return <StudioPage section="Shop workspace">
+    <p className="studio-label">Boutique access</p><h1>Your shop workspace</h1>
+    <p>{registeredAddress ? "Sign in at your shop’s registered address to manage your catalog, lookbooks and fitting requests." : "Shop sign-in is currently unavailable. You can explore the sales workflow in the sample workspace."}</p>
+    {registeredAddress && <a className="studio-action" href={registeredAddress}>Open shop sign-in ↗</a>}
+    <a className="workspace-demo-link" href="/demo">
+      <img src="/aislework/workspace.webp" alt="Aislework catalog with two sample gowns and a private lookbook draft"/>
+      <span>Enter the demo workspace <b aria-hidden="true">↗</b></span>
+    </a>
+  </StudioPage>;
 }
 
 function ClerkConnectionFailed() {
   return (
     <div className="relative w-full max-w-md bg-card p-8 text-center">
-      <FrameTicks size={16} className="text-foreground/40" />
+
       <p className="mono-label mb-4 text-rose">Connection issue</p>
       <h2 className="font-display text-xl font-medium mb-3">Sign-in couldn't load</h2>
       <p className="text-sm leading-relaxed text-muted-foreground">
@@ -148,6 +107,11 @@ function CenteredSpinner() {
  * users to name their organization once (Clerk Billing attaches to it).
  */
 export function OrgGate({ children }: { children: ReactNode }) {
+  if (!clerkConfigured) return <ClerkSetupNotice />;
+  return <SignedInOrgGate>{children}</SignedInOrgGate>;
+}
+
+function SignedInOrgGate({ children }: { children: ReactNode }) {
   const [, setLocation] = useLocation();
   const { isLoaded: userLoaded, isSignedIn } = useUser();
   const { organization, isLoaded: orgLoaded } = useOrganization();
@@ -170,7 +134,6 @@ export function OrgGate({ children }: { children: ReactNode }) {
     }
   }, [listLoaded, organization, setActive, userMemberships?.data]);
 
-  if (!clerkConfigured) return <ClerkSetupNotice />;
   if (!userLoaded || !orgLoaded || !listLoaded) {
     // While clerk-js is loading, spin; if it failed to load, say so instead
     // of spinning forever.
@@ -206,7 +169,7 @@ export function OrgGate({ children }: { children: ReactNode }) {
           </p>
         </div>
         <CreateOrganization
-          appearance={darkroomAppearance}
+          appearance={studioAppearance}
           skipInvitationScreen
           hideSlug
         />

@@ -21,6 +21,6 @@ export interface UploadUrlRequest {
   purpose: UploadUrlRequestPurpose;
   /** @minLength 1 */
   venueSlug: string;
-  /** Required for couple uploads. Venue media uploads use the owner session cookie instead. */
+  /** Required for couple uploads. Venue and dress media uploads use the owner session cookie instead. */
   uploadToken?: string;
 }

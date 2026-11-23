@@ -329,7 +329,7 @@ function laplacianVariance(pixels: Buffer, width: number, height: number): numbe
   return sumSquares / count - mean * mean;
 }
 
-async function validateGeneratedStill(buffer: Buffer, aspectRatio: StillAspectRatio): Promise<void> {
+export async function validateGeneratedStill(buffer: Buffer, aspectRatio: StillAspectRatio): Promise<void> {
   if (buffer.length < 40_000) {
     throw new Error(`Generated still is unusably small (${buffer.length} bytes).`);
   }

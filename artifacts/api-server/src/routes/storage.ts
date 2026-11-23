@@ -19,12 +19,17 @@ import {
   coupleMediaTable,
   generatedAssetsTable,
   uploadIntentsTable,
+  dressMediaTable,
+  lookbookDressesTable,
 } from "@workspace/db";
-import { rateLimit, clientKey } from "../lib/rateLimit";
+import { reserveUploadSlot, clientKey } from "../lib/rateLimit";
 import { getCallerOrgDbId, requireOrgVenue } from "../lib/orgAuth.js";
 import { verifyCoupleUploadToken } from "../lib/uploadToken";
 import { canReadVenueMediaReference } from "../lib/objectAccess";
-import { canReadGeneratedAssetWithShareToken } from "../lib/sessionVisibility";
+import {
+  canReadGeneratedAssetWithShareToken,
+  canReadTryonLookWithShareToken,
+} from "../lib/sessionVisibility";
 
 const router: IRouter = Router();
 const objectStorageService = new ObjectStorageService();
@@ -63,7 +68,8 @@ router.post("/storage/uploads/request-url", async (req: Request, res: Response) 
       res.status(400).json({ error: "Upload must be a JPG, PNG, or WebP image up to 50MB." });
       return;
     }
-    if (!rateLimit(`upload:${clientKey(req)}`, 120, 60 * 60 * 1000)) {
+    const trackBridePhoto = reserveUploadSlot(clientKey(req));
+    if (!trackBridePhoto) {
       res.status(429).json({ error: "Too many uploads. Try again later." });
       return;
     }
@@ -72,7 +78,9 @@ router.post("/storage/uploads/request-url", async (req: Request, res: Response) 
       return;
     }
     let venueId: number;
-    if (purpose === "venue") {
+    if (purpose === "venue" || purpose === "dress") {
+      // Dress catalog photos are org-authed by the shop that owns the dress,
+      // exactly like venue media. The upload intent records the shop as venueId.
       const venue = await requireOrgVenue(req, res, venueSlug);
       if (!venue) return;
       venueId = venue.id;
@@ -112,6 +120,8 @@ router.post("/storage/uploads/request-url", async (req: Request, res: Response) 
       sizeBytes: size,
       expiresAt: new Date(Date.now() + UPLOAD_INTENT_TTL_MS),
     });
+
+    if (purpose === "couple") trackBridePhoto(objectPath);
 
     res.json(
       RequestUploadUrlResponse.parse({
@@ -273,6 +283,17 @@ async function canReadStoredObject(req: Request, objectPath: string): Promise<bo
     });
   }
 
+  // Dress catalog media is public once the dress has been curated into a
+  // lookbook — that is the shop's own act of sharing it with a bride. Media of
+  // dresses never placed in a lookbook stays private to the owning org.
+  const curatedDressMedia = await db
+    .select({ id: dressMediaTable.id })
+    .from(dressMediaTable)
+    .innerJoin(lookbookDressesTable, eq(dressMediaTable.dressId, lookbookDressesTable.dressId))
+    .where(eq(dressMediaTable.objectKey, objectPath))
+    .limit(1);
+  if (curatedDressMedia.length > 0) return true;
+
   const shareToken = typeof req.query.shareToken === "string" ? req.query.shareToken : "";
   if (shareToken) {
     const generatedCandidates = await db
@@ -294,7 +315,12 @@ async function canReadStoredObject(req: Request, objectPath: string): Promise<bo
         })
         .from(generatedAssetsTable)
         .where(eq(generatedAssetsTable.sessionId, generated.sessionId));
-      if (canReadGeneratedAssetWithShareToken(generated.status, sessionAssets)) return true;
+      if (
+        canReadGeneratedAssetWithShareToken(generated.status, sessionAssets) ||
+        canReadTryonLookWithShareToken(generated.status, sessionAssets)
+      ) {
+        return true;
+      }
     }
   }
 

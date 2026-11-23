@@ -1,0 +1,157 @@
+import { StudioMasthead } from "@/components/layout/StudioPage";
+import { useMemo, useState } from "react";
+import { useParams } from "wouter";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  useGetSessionByToken,
+  useGetSessionReactions,
+  useCreateReaction,
+  getGetSessionByTokenQueryKey,
+  getGetSessionReactionsQueryKey,
+  ReactionKind,
+  type ReactionKind as ReactionKindType,
+  type LookTallyItem,
+} from "@workspace/api-client-react";
+
+/**
+ * Share-to-party votes (spec §6.4). The bride sends this link to her people;
+ * they see her look and vote — no account, ever. Enough "love" votes surfaces a
+ * gentle "book a fitting" nudge. A dark surface (§8), the visualization
+ * disclaimer on every look surface (invariant 5).
+ */
+
+const VISUALIZATION_DISCLAIMER =
+  "Visualization only — not a representation of fit, size, or exact fabric.";
+
+const VOTES: Array<{ kind: ReactionKindType; label: string; emoji: string }> = [
+  { kind: ReactionKind.love, label: "Love it", emoji: "♥" },
+  { kind: ReactionKind.maybe, label: "Maybe", emoji: "◐" },
+  { kind: ReactionKind.pass, label: "Pass", emoji: "○" },
+];
+
+function storageImageUrl(objectKey: string, shareToken: string): string {
+  return `/api/storage${objectKey}?shareToken=${encodeURIComponent(shareToken)}`;
+}
+
+// A stable anonymous per-viewer token, minted once and kept in localStorage, so
+// a viewer's repeat vote updates their existing one instead of stacking.
+function useVoterToken(): string {
+  return useMemo(() => {
+    const key = "veil.voterToken";
+    try {
+      const existing = localStorage.getItem(key);
+      if (existing && existing.length >= 8) return existing;
+      const minted = `v_${crypto.randomUUID().replace(/-/g, "")}`;
+      localStorage.setItem(key, minted);
+      return minted;
+    } catch {
+      // Storage unavailable (private mode) — a per-session token still works.
+      return `v_${crypto.randomUUID().replace(/-/g, "")}`;
+    }
+  }, []);
+}
+
+export default function LookSharePage() {
+  const { shareToken } = useParams<{ shareToken: string }>();
+  const token = shareToken || "";
+  const voterToken = useVoterToken();
+  const queryClient = useQueryClient();
+
+  const sessionQuery = useGetSessionByToken(token, {
+    query: { queryKey: getGetSessionByTokenQueryKey(token), enabled: !!token, refetchInterval: q => q.state.data?.status === "processing" ? 3000 : false },
+  });
+  const reactionsQuery = useGetSessionReactions(token, {
+    query: { queryKey: getGetSessionReactionsQueryKey(token), enabled: !!token },
+  });
+  const createReaction = useCreateReaction();
+
+  const [myVote, setMyVote] = useState<ReactionKindType | null>(null);
+
+  const look = sessionQuery.data?.generatedAssets?.find((asset) => asset.assetType === "image");
+  const tally: LookTallyItem | undefined = reactionsQuery.data?.looks?.find(
+    (item) => item.generatedAssetId === look?.id,
+  );
+
+  const vote = (kind: ReactionKindType) => {
+    if (!look) return;
+
+    createReaction.mutate(
+      { data: { generatedAssetId: look.id, voterToken, kind } },
+      {
+        onSuccess: () => {
+          setMyVote(kind);
+          queryClient.invalidateQueries({ queryKey: getGetSessionReactionsQueryKey(token) });
+        },
+      },
+    );
+  };
+
+  return (
+    <main className="fitting-house min-h-screen bg-background text-foreground">
+      <StudioMasthead section="Shared look"/>
+      <div className="mx-auto max-w-2xl px-6 py-14">
+        {sessionQuery.isLoading && <p className="text-muted-foreground">Loading…</p>}
+
+        {sessionQuery.data?.status === "processing" && <section aria-live="polite"><h1 className="font-display text-4xl">Preparing your fitting</h1><p className="mt-4 text-muted-foreground">Your look will appear here after its quality check. You can return to this link later.</p></section>}
+        {(sessionQuery.isError || (sessionQuery.data && sessionQuery.data.status !== "processing" && !look)) && (
+          <div className="space-y-2">
+            <h1 className="text-2xl font-semibold">This look isn't available.</h1>
+            <p className="text-muted-foreground">{sessionQuery.data?.errorMessage || "The link may have expired, or the look was deleted."}</p>
+          </div>
+        )}
+
+        {look && (
+          <section className="shared-folio">
+            <figure><img src={storageImageUrl(look.objectKey, token)} alt="Her bridal fitting" /></figure>
+            <div className="shared-opinion">
+              <p className="studio-label">Help her choose</p>
+              <h1>What do you think?</h1>
+            <div className="mt-6 grid grid-cols-3 gap-3">
+              {VOTES.map((option) => {
+                const active = myVote === option.kind;
+                return (
+                  <button
+                    key={option.kind}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => vote(option.kind)}
+                    disabled={createReaction.isPending}
+                    className={`flex flex-col items-center gap-1 rounded-sm py-4 text-sm ring-1 transition disabled:opacity-60 ${
+                      active
+                        ? "bg-primary text-primary-foreground ring-neutral-100"
+                        : "bg-card text-foreground ring-border hover:ring-neutral-500"
+                    }`}
+                  >
+                    <span className="text-xl" aria-hidden>
+                      {option.emoji}
+                    </span>
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {createReaction.isError && <p role="alert">Your vote could not be saved. Please try again.</p>}
+            {tally && tally.total > 0 && (
+              <p className="mt-5 text-center text-sm text-muted-foreground">
+                {tally.total} {tally.total === 1 ? "vote" : "votes"} so far
+                {typeof tally.byKind.love === "number" && tally.byKind.love > 0
+                  ? ` · ${tally.byKind.love} love ${tally.byKind.love === 1 ? "it" : "it"}`
+                  : ""}
+              </p>
+            )}
+
+            {tally?.bookFitting && (
+              <div className="mt-6 rounded-sm bg-emerald-100 px-4 py-3 text-center text-sm text-emerald-900">
+                Her people love this one. Time to book a fitting.
+              </div>
+            )}
+
+            <p className="mt-10 text-center text-xs text-muted-foreground">{VISUALIZATION_DISCLAIMER}</p>
+            </div>
+          </section>
+        )}
+      </div>
+    </main>
+  );
+}

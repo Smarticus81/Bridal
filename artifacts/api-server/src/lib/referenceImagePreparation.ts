@@ -69,12 +69,13 @@ export function referenceTargetDimensions(
 export async function prepareReferenceImage(image: {
   buffer: Buffer;
   mimeType: string;
+  preserveColor?: boolean;
 }): Promise<PreparedReferenceImage> {
   const metadata = await sharp(image.buffer, { limitInputPixels: REFERENCE_INPUT_PIXEL_LIMIT }).metadata();
   const source = orientedDimensions(metadata);
   const target = referenceTargetDimensions(source.width, source.height);
 
-  const { data, info } = await sharp(image.buffer, { limitInputPixels: REFERENCE_INPUT_PIXEL_LIMIT })
+  const resized = sharp(image.buffer, { limitInputPixels: REFERENCE_INPUT_PIXEL_LIMIT })
     .rotate()
     .resize({
       width: target.width,
@@ -82,9 +83,9 @@ export async function prepareReferenceImage(image: {
       fit: "fill",
       kernel: sharp.kernel.lanczos3,
     })
-    .flatten({ background: "#ffffff" })
-    .normalize({ lower: 1, upper: 99 })
-    .sharpen({ sigma: 0.8 })
+    .flatten({ background: "#ffffff" });
+  const corrected = image.preserveColor ? resized.toColourspace("srgb") : resized.normalize({ lower: 1, upper: 99 }).sharpen({ sigma: 0.8 });
+  const { data, info } = await corrected
     .jpeg({ quality: 92, mozjpeg: true })
     .toBuffer({ resolveWithObject: true });
 

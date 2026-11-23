@@ -34,11 +34,18 @@ function lazyRoute<T extends ComponentType>(loader: () => Promise<{ default: T }
 
 const LandingPage = lazyRoute(() => import("@/pages/LandingPage"));
 const VenueLandingPage = lazyRoute(() => import("@/pages/VenueLandingPage"));
+const BrideGuidePage = lazyRoute(() => import("@/pages/BrideGuidePage"));
+const ShopDemoPage = lazyRoute(() => import("@/pages/ShopDemoPage"));
 const CoupleEntryPage = lazyRoute(() => import("@/pages/CoupleEntryPage"));
 const CreateVenuePage = lazyRoute(() => import("@/pages/CreateVenuePage"));
 const VenueOwnerPage = lazyRoute(() => import("@/pages/VenueOwnerPage"));
 const CouplePage = lazyRoute(() => import("@/pages/CouplePage"));
 const GallerySharePage = lazyRoute(() => import("@/pages/GallerySharePage"));
+const TryLookbookPage = lazyRoute(() => import("@/pages/TryLookbookPage"));
+const LookSharePage = lazyRoute(() => import("@/pages/LookSharePage"));
+const CatalogPage = lazyRoute(() => import("@/pages/CatalogPage"));
+const LookbooksPage = lazyRoute(() => import("@/pages/LookbooksPage"));
+const LeadsPage = lazyRoute(() => import("@/pages/LeadsPage"));
 const FindMyGalleryPage = lazyRoute(() => import("@/pages/FindMyGalleryPage"));
 const OwnerLoginPage = lazyRoute(() => import("@/pages/OwnerLoginPage"));
 const NotFound = lazyRoute(() => import("@/pages/not-found"));
@@ -54,6 +61,8 @@ function Router() {
       <Switch>
         {/* Venue-facing main site */}
         <Route path="/">{() => <VenueLandingPage />}</Route>
+        <Route path="/bride-guide">{() => <BrideGuidePage />}</Route>
+        <Route path="/demo">{() => <ShopDemoPage />}</Route>
         <Route path="/couple">{() => <LandingPage />}</Route>
         <Route path="/couple-entry">{() => <CoupleEntryPage />}</Route>
 
@@ -75,6 +84,9 @@ function Router() {
 
         {/* Owner profile/dashboard */}
         <Route path="/dashboard">{() => <VenueOwnerPage />}</Route>
+        <Route path="/catalog">{() => <CatalogPage />}</Route>
+        <Route path="/lookbooks">{() => <LookbooksPage />}</Route>
+        <Route path="/leads">{() => <LeadsPage />}</Route>
         <Route path="/dashboard/:slug">{() => <Redirect to="/dashboard" />}</Route>
         <Route path="/profile/:slug">{() => <Redirect to="/dashboard" />}</Route>
         <Route path="/venue/:slug/owner">{() => <Redirect to="/dashboard" />}</Route>
@@ -85,6 +97,10 @@ function Router() {
 
         {/* Session share links (couple-facing) */}
         <Route path="/v/:shareToken">{() => <GallerySharePage />}</Route>
+
+        {/* Bride remote try-on entry (no account) */}
+        <Route path="/try/:lookbookToken">{() => <TryLookbookPage />}</Route>
+        <Route path="/look/:shareToken">{() => <LookSharePage />}</Route>
 
         {/* Legacy integer-id routes */}
         <Route path="/session/:id/processing">

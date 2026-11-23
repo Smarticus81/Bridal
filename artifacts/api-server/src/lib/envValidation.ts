@@ -1,3 +1,4 @@
+import { DEFAULT_REVIEW_MODEL } from "./geminiReview.js";
 type EnvLike = Record<string, string | undefined>;
 
 const PLACEHOLDER_VALUES = new Set([
@@ -38,6 +39,16 @@ const MIN_PRODUCTION_FRAME_ATTEMPTS = 4;
 const MIN_PRODUCTION_GENERATED_IMAGE_EDGE_PX = 1024;
 const MIN_PRODUCTION_GENERATED_IMAGE_CONTRAST = 8;
 const MIN_PRODUCTION_GENERATED_IMAGE_SHARPNESS = 6;
+
+// Garment-fidelity gate floors (bridal, §5.1 / invariant 2). Garment fidelity
+// sits above the venue 0.80, and body-proportion preservation is non-negotiable.
+// Defaults equal the minimum, so an unset var passes; only a lowered value errors.
+const MIN_PRODUCTION_TRYON_THRESHOLDS = {
+  TRYON_MIN_LIKENESS_SCORE: 0.82,
+  TRYON_MIN_GARMENT_SCORE: 0.88,
+  TRYON_MIN_BODY_PROPORTION_SCORE: 0.85,
+  TRYON_MIN_COMPOSITION_SCORE: 0.74,
+} as const;
 
 function hasRealValue(env: EnvLike, key: string): boolean {
   const value = env[key]?.trim() ?? "";
@@ -130,8 +141,8 @@ function clerkPublishableKeyError(env: EnvLike): string | null {
 function stripeSecretError(env: EnvLike): string | null {
   const secret = env.STRIPE_SECRET_KEY?.trim() ?? "";
   if (!secret) return null;
-  if (!/^sk_live_[A-Za-z0-9]+/.test(secret)) {
-    return "STRIPE_SECRET_KEY must be a live Stripe secret key in production";
+  if (!/^(?:sk|rk)_live_[A-Za-z0-9]+$/.test(secret)) {
+    return "STRIPE_SECRET_KEY must be a live Stripe secret key or restricted key in production";
   }
   return null;
 }
@@ -182,7 +193,7 @@ function numericEnvAtLeast(
 }
 
 function isProductionQualityModel(model: string): boolean {
-  return /^gemini-(?:2\.5|3(?:\.\d+)?)-pro(?:$|-)/i.test(model.trim());
+  return model.trim() === DEFAULT_REVIEW_MODEL || /^gemini-(?:2\.5|3(?:\.\d+)?)-pro(?:$|-)/i.test(model.trim());
 }
 
 function isProductionImageModel(model: string): boolean {
@@ -258,6 +269,15 @@ export function validateProductionEnvironment(env: EnvLike = process.env): strin
     if (error) errors.push(error);
   }
 
+  if ((env.TRYON_QUALITY_GATE ?? "on").toLowerCase() === "off") {
+    errors.push("TRYON_QUALITY_GATE must stay enabled in production");
+  }
+
+  for (const [key, minimum] of Object.entries(MIN_PRODUCTION_TRYON_THRESHOLDS)) {
+    const error = numericEnvAtLeast(env, key, minimum, minimum);
+    if (error) errors.push(error);
+  }
+
   const attemptsError = numericEnvAtLeast(
     env,
     "GALLERY_FRAME_ATTEMPTS",
@@ -301,9 +321,9 @@ export function validateProductionEnvironment(env: EnvLike = process.env): strin
     );
   }
 
-  const qualityModel = env.GEMINI_QUALITY_MODEL ?? "gemini-2.5-pro";
+  const qualityModel = env.GEMINI_QUALITY_MODEL ?? DEFAULT_REVIEW_MODEL;
   if (!isProductionQualityModel(qualityModel)) {
-    errors.push("GEMINI_QUALITY_MODEL must be a Gemini Pro model for production likeness and venue review");
+    errors.push("GEMINI_QUALITY_MODEL must use the supported Gemini review model or a Gemini Pro review model");
   }
 
   const apiBase = env.GEMINI_API_BASE_URL?.trim();

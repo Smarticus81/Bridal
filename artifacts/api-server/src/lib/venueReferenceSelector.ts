@@ -1,3 +1,4 @@
+import { DEFAULT_REVIEW_MODEL, finalReviewText, type GeminiReviewResponse } from "./geminiReview.js";
 import sharp from "sharp";
 import type { WeddingScene } from "./scenePlan.js";
 import { logger } from "./logger.js";
@@ -15,18 +16,7 @@ const GEMINI_API_BASE =
 const VENUE_SELECTOR_MODEL =
   process.env.GEMINI_VENUE_SELECTOR_MODEL ??
   process.env.GEMINI_QUALITY_MODEL ??
-  "gemini-2.5-flash";
-
-interface GeminiSelectorResponse {
-  candidates?: {
-    content?: {
-      parts?: {
-        text?: string;
-      }[];
-    };
-  }[];
-  error?: { message?: string; code?: number; status?: string };
-}
+  DEFAULT_REVIEW_MODEL;
 
 async function normalizeVenueReference(ref: ImageRef): Promise<Buffer> {
   return sharp(ref.buffer)
@@ -34,13 +24,6 @@ async function normalizeVenueReference(ref: ImageRef): Promise<Buffer> {
     .resize({ width: 1024, height: 1024, fit: "inside", withoutEnlargement: true })
     .jpeg({ quality: 86, mozjpeg: true })
     .toBuffer();
-}
-
-function extractText(json: GeminiSelectorResponse): string {
-  return (json.candidates?.[0]?.content?.parts ?? [])
-    .map((part) => part.text ?? "")
-    .join("\n")
-    .trim();
 }
 
 function parseRankedIndexes(text: string, maxIndex: number): number[] {
@@ -131,15 +114,15 @@ export async function rankVenueReferencesForScene(
       );
     });
 
-    const url = `${GEMINI_API_BASE}/models/${VENUE_SELECTOR_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`;
+    const url = `${GEMINI_API_BASE}/models/${VENUE_SELECTOR_MODEL}:generateContent`;
     const res = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+      signal: AbortSignal.timeout(60_000),
       body: JSON.stringify({
         contents: [{ role: "user", parts }],
         generationConfig: {
           responseMimeType: "application/json",
-          temperature: 0,
         },
       }),
     });
@@ -148,12 +131,12 @@ export async function rankVenueReferencesForScene(
       throw new Error(`venue selector failed (${res.status}): ${text.slice(0, 500)}`);
     }
 
-    const json = JSON.parse(text) as GeminiSelectorResponse;
+    const json = JSON.parse(text) as GeminiReviewResponse;
     if (json.error) {
       throw new Error(`venue selector error: ${json.error.message ?? "unknown"}`);
     }
 
-    const ranked = parseRankedIndexes(extractText(json), venueRefs.length - 1);
+    const ranked = parseRankedIndexes(finalReviewText(json), venueRefs.length - 1);
     if (ranked.length > 0) {
       logger.info(
         { sceneId: scene.id, model: VENUE_SELECTOR_MODEL, ranked },

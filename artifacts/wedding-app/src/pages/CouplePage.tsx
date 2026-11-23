@@ -28,8 +28,6 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { GlimpseShell } from "@/components/layout/GlimpseShell";
-import { FrameTicks } from "@/components/motion";
 
 function venueMediaUrl(objectKey: string | undefined, venueSlug: string): string {
   if (!objectKey) return "";
@@ -264,11 +262,11 @@ export default function CouplePage() {
           {venue.name} is still being prepared
         </h1>
         <p className="text-lg text-muted-foreground mb-3 max-w-md font-light">
-          This venue needs at least one photograph before glimpse can compose
+          This venue needs at least one photograph before Aislework can compose
           your wedding gallery.
         </p>
         <p className="text-sm text-muted-foreground mb-10 max-w-md">
-          Ask your venue team to finish setting up glimpse by adding the required
+          Ask your venue team to finish setting up Aislework by adding the required
           venue photographs before couples can begin.
         </p>
         <Button
@@ -347,7 +345,7 @@ function VenueShowcase({ venue, onNext }: VenueShowcaseProps) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-0 overflow-hidden bg-background"
+      className="venue-photo-cover fixed inset-0 z-0 overflow-hidden bg-background"
     >
       <div className="absolute inset-0 z-0">
         {hasMedia ? (
@@ -395,7 +393,7 @@ function VenueShowcase({ venue, onNext }: VenueShowcaseProps) {
           </h1>
           
           {venue.tagline && (
-            <p className="text-xl md:text-2xl text-rose mb-8 font-light drop-shadow-lg italic font-display">
+            <p className="text-xl md:text-2xl text-rose mb-8 font-light drop-shadow-lg font-display">
               {venue.tagline}
             </p>
           )}
@@ -511,7 +509,7 @@ function UploadStep({ previews, isUploading, onFileChange, onRemovePhoto, onCont
           data-testid="couple-photo-input"
         />
         <div className="relative w-16 h-16 bg-card flex items-center justify-center mb-6 border border-border text-rose">
-          <FrameTicks size={8} className="text-foreground/40" />
+
           <Camera className="h-7 w-7" />
         </div>
         <p className="font-display text-xl font-medium text-foreground mb-3">Tap to add photographs</p>
@@ -534,7 +532,7 @@ function UploadStep({ previews, isUploading, onFileChange, onRemovePhoto, onCont
             >
               <img src={src} className="w-full h-full object-cover" alt={`${COUPLE_REFERENCE_ROLES[i] ?? "Reference"} preview`} />
               <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-              <FrameTicks size={14} className="text-foreground/40" />
+
               <p className="absolute left-4 bottom-4 mono-label text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
                 {COUPLE_REFERENCE_ROLES[i] ?? `Reference ${i + 1}`}
               </p>
@@ -615,7 +613,7 @@ function StyleStep({ styles, isLoading, selectedStyleId, onSelect, coupleName, o
         <p className="mono-label text-rose mb-4">Step 02 / 03</p>
         <h2 className="font-display text-2xl md:text-3xl font-medium text-foreground mb-4">Set the scene</h2>
         <p className="text-muted-foreground font-light text-lg max-w-xl mx-auto">
-          Choose the editorial direction for your venue-branded glimpse gallery.
+          Choose the editorial direction for your venue-branded Aislework gallery.
         </p>
       </div>
 
@@ -776,7 +774,7 @@ function SubmittingStep() {
       className="flex-1 flex flex-col items-center justify-center p-6 text-center max-w-2xl mx-auto"
     >
       <div className="relative w-20 h-20 bg-card border border-border flex items-center justify-center mb-8">
-        <FrameTicks size={10} className="text-foreground/40" />
+
         <Loader2 className="h-8 w-8 animate-spin text-rose" />
       </div>
       <p className="mono-label text-rose mb-4">Developing…</p>

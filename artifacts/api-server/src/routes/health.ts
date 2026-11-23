@@ -3,6 +3,9 @@ import { HealthCheckResponse, ReadinessCheckResponse } from "@workspace/api-zod"
 import { sql } from "drizzle-orm";
 import { db } from "@workspace/db";
 import { validateProductionEnvironment } from "../lib/envValidation.js";
+import { clerkDomainMismatch, clerkFrontendApiOrigin } from "../lib/clerkEnv.js";
+import { clerkEnabled } from "../lib/orgAuth.js";
+import { getAppBaseUrl } from "../lib/appUrl.js";
 import { isStripeConfigured } from "../lib/stripe.js";
 import { configuredImageModels } from "../lib/stillImageClient.js";
 import { checkFfmpegAvailable } from "../lib/motionReel.js";
@@ -36,6 +39,7 @@ function productionImageModelChainReady(): boolean {
 router.get("/readyz", async (_req, res) => {
   const checks: Record<string, "ok" | "degraded"> = {
     env: validateProductionEnvironment().length === 0 ? "ok" : "degraded",
+    auth: clerkEnabled() && clerkFrontendApiOrigin() && !clerkDomainMismatch({ APP_BASE_URL: getAppBaseUrl() }) ? "ok" : "degraded",
     database: "degraded",
     storage: storageConfigured() ? "ok" : "degraded",
     ai: hasValue("GOOGLE_AI_API_KEY") || hasValue("GEMINI_API_KEY") ? "ok" : "degraded",
@@ -47,6 +51,7 @@ router.get("/readyz", async (_req, res) => {
   };
 
   try {
+    if (!process.env.DATABASE_URL) throw new Error("Database is not configured");
     await db.execute(sql`select 1`);
     const missingSchema = await missingRequiredDatabaseSchema();
     checks.database = missingSchema.length === 0 ? "ok" : "degraded";
