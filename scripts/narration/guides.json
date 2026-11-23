@@ -1,0 +1,188 @@
+{
+  "shop-walkthrough": [
+    {
+      "id": "intro",
+      "frame": 0,
+      "text": "Let’s make a private lookbook for Maya, a bride at our sample shop, Juniper Bridal."
+    },
+    {
+      "id": "catalog",
+      "frame": 129,
+      "text": "Start in the gown catalog. Vale is already selected."
+    },
+    {
+      "id": "add",
+      "frame": 217,
+      "text": "Click Faye to add a second gown. Both styles now appear in Maya’s shortlist."
+    },
+    {
+      "id": "build",
+      "frame": 339,
+      "text": "Choose Build lookbook to set the rules for her private link."
+    },
+    {
+      "id": "expiry",
+      "frame": 426,
+      "text": "Set the expiry to seven days. That gives Maya a week to open her lookbook."
+    },
+    {
+      "id": "repeat",
+      "frame": 544,
+      "text": "Maya can try every gown as often as she likes while her link is open. Your shop pays for delivered looks."
+    },
+    {
+      "id": "share",
+      "frame": 700,
+      "text": "In your shop workspace, choose Send lookbook to create the private link."
+    },
+    {
+      "id": "copy",
+      "frame": 803,
+      "text": "Copy that link into a message to Maya so she can open the gowns you picked for her."
+    },
+    {
+      "id": "guides",
+      "frame": 918,
+      "text": "Choose Copy invitation and bride videos to include the private lookbook and both how-to videos in one message."
+    },
+    {
+      "id": "open",
+      "frame": 1090,
+      "text": "Back in the demo, choose Open bride’s view to see Maya’s side."
+    },
+    {
+      "id": "style",
+      "frame": 1179,
+      "text": "Select Faye to see the one-shoulder gown on Maya."
+    },
+    {
+      "id": "photo",
+      "frame": 1250,
+      "text": "On a live link, Maya uploads a full-length photo, enters her email, and gives permission to generate her preview."
+    },
+    {
+      "id": "generate",
+      "frame": 1421,
+      "text": "She chooses See it on you to generate her preview."
+    },
+    {
+      "id": "compare",
+      "frame": 1499,
+      "text": "The demo supplies a sample photo. Choose See reference photo to see what she started with."
+    },
+    {
+      "id": "return",
+      "frame": 1637,
+      "text": "Choose Show example try-on to compare how the gown looks."
+    },
+    {
+      "id": "request",
+      "frame": 1728,
+      "text": "If she wants to try it in person, she chooses Request a fitting."
+    },
+    {
+      "id": "inbox",
+      "frame": 1823,
+      "text": "Back in Fitting requests, your stylist can see Maya’s inquiry and email address."
+    },
+    {
+      "id": "follow",
+      "frame": 1949,
+      "text": "Use that address to agree on an appointment time and have her gown ready."
+    },
+    {
+      "id": "close",
+      "frame": 2054,
+      "text": "Try the same steps in the demo. You can reset it and start again with a different gown."
+    }
+  ],
+  "first-try-on": [
+    {
+      "id": "intro",
+      "frame": 0,
+      "text": "Your stylist has sent you a private gown lookbook. Here’s how to make your first virtual try-on."
+    },
+    {
+      "id": "choose",
+      "frame": 139,
+      "text": "Open the link in your stylist’s message. Tap a gown you want to see on yourself."
+    },
+    {
+      "id": "pose",
+      "frame": 258,
+      "text": "For a clear preview, ask someone to take a full-length photo. Stand alone in even light, face the camera, and keep your arms a little away from your waist."
+    },
+    {
+      "id": "frame",
+      "frame": 488,
+      "text": "Include your head and both feet. Check that nothing covers your outline."
+    },
+    {
+      "id": "upload",
+      "frame": 592,
+      "text": "Tap Choose photo and pick that picture from your phone. Check the filename. You can change it before you continue."
+    },
+    {
+      "id": "email",
+      "frame": 760,
+      "text": "Enter the email address where you want your stylist to reach you."
+    },
+    {
+      "id": "consent",
+      "frame": 853,
+      "text": "Read the permission statement. If you agree to use your photo for this try-on, select the checkbox."
+    },
+    {
+      "id": "generate",
+      "frame": 999,
+      "text": "Tap See it on you. Leave the page open while your preview is being prepared."
+    },
+    {
+      "id": "result",
+      "frame": 1107,
+      "text": "Here’s the finished look. Use it to decide which styles you want to try in the boutique. Your stylist can check the fit and fabric with you in person."
+    }
+  ],
+  "next-dress": [
+    {
+      "id": "intro",
+      "frame": 0,
+      "text": "Found a gown you like? Here’s how to explore another style, ask someone for a second opinion, and arrange a fitting."
+    },
+    {
+      "id": "again",
+      "frame": 164,
+      "text": "On your finished preview, tap Try another dress. This takes you back to all the gowns your stylist picked."
+    },
+    {
+      "id": "choose",
+      "frame": 316,
+      "text": "Tap a different gown. While this lookbook stays open, your photo and email are already filled in."
+    },
+    {
+      "id": "confirm",
+      "frame": 461,
+      "text": "You can change the photo or keep it. Read the consent statement for this gown, check the box if you agree, then tap See it on you."
+    },
+    {
+      "id": "compare",
+      "frame": 657,
+      "text": "Here’s your second look. You can repeat these steps for any gown while your invitation is open."
+    },
+    {
+      "id": "share",
+      "frame": 794,
+      "text": "For a second opinion, tap Share with your people. Paste the copied link into a message to someone you choose. It opens this look."
+    },
+    {
+      "id": "fitting",
+      "frame": 983,
+      "text": "To try the gown in person, tap Request a fitting below your preview. Wait for Fitting request sent."
+    },
+    {
+      "id": "follow",
+      "frame": 1129,
+      "text": "Your stylist can now email you to agree on a time. You can keep exploring the lookbook while you wait."
+    }
+  ]
+}
