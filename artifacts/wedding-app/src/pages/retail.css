@@ -369,7 +369,7 @@
   margin-top: 0.19em;
 }
 .step-title h3,
-.price-row h3 {
+.price-row h2 {
   font: 680 clamp(17px, 1.45vw, 24px) / 1.25 var(--font-sans);
   letter-spacing: -0.04em;
 }
@@ -381,9 +381,6 @@
 }
 .pricing {
   background: #f2effa;
-}
-.pricing .section-intro h2 {
-  max-width: 14ch;
 }
 .price-table {
   border-top: 2px solid var(--ink);
