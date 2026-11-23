@@ -224,7 +224,7 @@ def main():
             ],
             check=True,
         )
-        (edition / (args.guide + ".en.vtt")).write_text("\n".join(vtt) + "\n")
+        (edition / (args.guide + ".en.vtt")).write_text("\n".join(vtt).rstrip() + "\n")
         timings = {s["id"]: n / FPS for s, n in zip(scenes, starts)}
         (edition / "timing.json").write_text(
             json.dumps({"seconds": duration, "scenes": timings}, indent=2) + "\n"

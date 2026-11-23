@@ -59,25 +59,25 @@ function SalesHeader() {
 
 const walkthroughSteps = [
   {
-    at: 5.375,
+    at: 5.458,
     title: "Choose gowns",
     detail:
       "Click a gown to add it to Maya’s shortlist. Choose Build lookbook when the selection is ready.",
   },
   {
-    at: 17.75,
+    at: 20.208,
     title: "Set the expiry and share",
     detail:
       "Choose how many days the link stays open. Brides can keep trying gowns throughout the invitation. In the shop workspace, choose Send lookbook, then choose Copy invitation and bride videos. Paste the message into your email or text to the bride.",
   },
   {
-    at: 45.417,
+    at: 50.083,
     title: "Preview a gown",
     detail:
       "Choose Open bride’s view in the demo. On a live link, the bride selects a style, adds a full-length photo and email, gives permission, and chooses See it on you. The demo provides an example photo and try-on.",
   },
   {
-    at: 72,
+    at: 79.333,
     title: "Follow up on a fitting",
     detail:
       "The bride chooses Request a fitting. Open Fitting requests in your shop and use her email address to arrange an appointment.",
@@ -109,7 +109,7 @@ function Walkthrough({ onClose }: { onClose: () => void }) {
     >
       <div className="film-inner">
         <header>
-          <span>Narrated walkthrough · 1:31</span>
+          <span>Narrated walkthrough · 1:38</span>
           <button
             aria-label="Close walkthrough"
             autoFocus
@@ -125,11 +125,11 @@ function Walkthrough({ onClose }: { onClose: () => void }) {
           playsInline
           preload="metadata"
           aria-label="An Aislework sample shop creates a lookbook and receives a fitting request"
-          src="/aislework/shop-walkthrough.mp4?edition=open-fittings"
+          src="/aislework/shop-walkthrough.mp4?edition=gemini-voice-1"
         >
           <track
             kind="captions"
-            src="/aislework/shop-walkthrough.en.vtt?edition=open-fittings"
+            src="/aislework/shop-walkthrough.en.vtt?edition=gemini-voice-1"
             srcLang="en"
             label="English"
           />

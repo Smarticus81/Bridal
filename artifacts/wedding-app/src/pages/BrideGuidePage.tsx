@@ -72,7 +72,7 @@ export default function BrideGuidePage() {
                 preload="none"
                 poster={`/aislework/${id}.webp`}
                 aria-label={title}
-                src={`/aislework/${id}.mp4`}
+                src={`/aislework/${id}.mp4?edition=gemini-voice-1`}
                 onPlay={(event) => {
                   for (const other of document.querySelectorAll<HTMLVideoElement>(
                     ".bride-lessons video",
@@ -84,7 +84,7 @@ export default function BrideGuidePage() {
                   kind="captions"
                   srcLang="en"
                   label="English"
-                  src={`/aislework/${id}.en.vtt`}
+                  src={`/aislework/${id}.en.vtt?edition=gemini-voice-1`}
                 />
               </video>
               <details>
@@ -95,7 +95,7 @@ export default function BrideGuidePage() {
                   ))}
                 </ol>
               </details>
-              <a href={`/aislework/${id}.mp4`}>
+              <a href={`/aislework/${id}.mp4?edition=gemini-voice-1`}>
                 <Play size={13} /> Open video on its own
               </a>
             </section>
