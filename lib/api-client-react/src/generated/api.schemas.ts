@@ -626,11 +626,6 @@ export interface CreateLookbookBody {
   brideName?: string;
   brideEmail?: string;
   /**
-   * Hard cap on looks generated through this link. Never uncapped.
-   * @minimum 1
-   */
-  creditCap: number;
-  /**
    * Days until the link expires. Never unexpiring.
    * @minimum 1
    * @maximum 365
@@ -648,9 +643,7 @@ export interface LookbookResponse {
   purpose: LookbookPurpose;
   brideName?: string | null;
   brideEmail?: string | null;
-  creditCap: number;
   creditsUsed: number;
-  remainingCredits: number;
   expiresAt: string;
   status: string;
   dressCount: number;
@@ -660,9 +653,7 @@ export interface LookbookSummary {
   id: number;
   token: string;
   purpose: LookbookPurpose;
-  creditCap: number;
   creditsUsed: number;
-  remainingCredits: number;
   expiresAt: string;
   status: string;
   /** Whether the link can still generate a look right now. */
@@ -693,7 +684,6 @@ export type TryLookbookResponseReason =
 export const TryLookbookResponseReason = {
   expired: "expired",
   revoked: "revoked",
-  exhausted: "exhausted",
 } as const;
 
 export interface TryLookbookResponse {
@@ -701,7 +691,6 @@ export interface TryLookbookResponse {
   /** Why the link is not usable, when usable is false. */
   reason?: TryLookbookResponseReason;
   purpose: LookbookPurpose;
-  remainingCredits: number;
   shopName: string;
   /** The shop's slug, used to authorize the bride's photo upload. */
   shopSlug: string;

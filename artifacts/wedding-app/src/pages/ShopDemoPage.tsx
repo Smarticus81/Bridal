@@ -49,7 +49,7 @@ const stations = [
     icon: BookOpen,
     heading: "Maya’s lookbook",
     description:
-      "Set the limits on her private edit, then open the link as Maya.",
+      "Choose how long Maya’s private link stays open, then preview it as her.",
   },
   {
     title: "Bride’s view",
@@ -74,7 +74,6 @@ export default function ShopDemoPage() {
   const [selected, setSelected] = useState<GownId[]>(["vale"]);
   const [fitting, setFitting] = useState<GownId>("vale");
   const [days, setDays] = useState("14");
-  const [cap, setCap] = useState("4");
   const [showOriginal, setShowOriginal] = useState(false);
   const heading = useRef<HTMLHeadingElement>(null);
   const previousStep = useRef(step);
@@ -98,7 +97,6 @@ export default function ShopDemoPage() {
     setSelected(["vale"]);
     setFitting("vale");
     setDays("14");
-    setCap("4");
     setShowOriginal(false);
   }
   function changeSelection(id: GownId) {
@@ -255,8 +253,7 @@ export default function ShopDemoPage() {
                 <p className="demo-eyebrow">Link settings</p>
                 <h2>Share her edit</h2>
                 <p>
-                  Your shop decides how long the link stays open and how many
-                  looks it covers.
+                  Maya can try every gown in her edit as often as she likes while the link is open.
                 </p>
                 <label>
                   Link expires after
@@ -267,14 +264,6 @@ export default function ShopDemoPage() {
                     <option value="7">7 days</option>
                     <option value="14">14 days</option>
                     <option value="30">30 days</option>
-                  </select>
-                </label>
-                <label>
-                  Try-on credit limit
-                  <select value={cap} onChange={(e) => setCap(e.target.value)}>
-                    <option value="2">2 credits</option>
-                    <option value="4">4 credits</option>
-                    <option value="8">8 credits</option>
                   </select>
                 </label>
                 <button
@@ -337,7 +326,7 @@ export default function ShopDemoPage() {
                   {showOriginal ? "Show example try-on" : "See reference photo"}
                 </button>
                 <div className="fit-window">
-                  {days}-day link <i /> {cap}-credit limit
+                  Private link · {days} days
                 </div>
                 <button className="sim-primary" onClick={() => go(3)}>
                   Request a fitting <ArrowRight size={16} />

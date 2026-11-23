@@ -14,11 +14,6 @@ export interface CreateLookbookBody {
   brideName?: string;
   brideEmail?: string;
   /**
-   * Hard cap on looks generated through this link. Never uncapped.
-   * @minimum 1
-   */
-  creditCap: number;
-  /**
    * Days until the link expires. Never unexpiring.
    * @minimum 1
    * @maximum 365

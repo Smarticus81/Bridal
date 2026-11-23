@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { and, eq, gte, isNull, sql } from "drizzle-orm";
+import { and, eq, gte, isNull } from "drizzle-orm";
 import { createHash, randomUUID } from "crypto";
 import {
   db,
@@ -16,7 +16,7 @@ import {
 } from "@workspace/db";
 import { consentRecordsTable } from "@workspace/db/schema";
 import { GenerateTryonLookBody } from "@workspace/api-zod";
-import { rateLimit, clientKey } from "../lib/rateLimit.js";
+import { rateLimit, clientKey, releaseSubmittedPhoto } from "../lib/rateLimit.js";
 import { logger } from "../lib/logger.js";
 import { isWellFormedLookbookToken } from "../lib/lookbookToken.js";
 import { lookbookUsability, retentionExpiryFor } from "../lib/lookbookPolicy.js";
@@ -76,11 +76,6 @@ const MAX_CONCURRENT_LOOKS = 2;
 
 // Both entry points share validation, debit, render and settlement.
 router.post(["/try/:lookbookToken/looks", "/try/:lookbookToken/jobs"], async (req, res): Promise<void> => {
-  if (!rateLimit(`tryonlook:${clientKey(req)}`, 30, 60 * 60 * 1000)) {
-    res.status(429).json({ error: "Too many tries from this address. Please wait a bit." });
-    return;
-  }
-
   if (activeLooks >= MAX_CONCURRENT_LOOKS) {
     res.set("Retry-After", "15").status(429).json({ error: "The fitting studio is busy. Please try again in a moment." });
     return;
@@ -203,8 +198,7 @@ async function createLook(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  // Debit one credit atomically (lookbook cap + org balance), create the session,
-  // record consent. Guarded compare-and-set keeps the debit safe under contention.
+  // Reserve a shop credit, record usage, and consume this upload in one transaction.
   const shareToken = randomUUID().replace(/-/g, "") + randomUUID().replace(/-/g, "").slice(0, 8);
   const charge = await db.transaction(async (tx) => {
     const [lb] = await tx
@@ -218,32 +212,25 @@ async function createLook(req: Request, res: Response): Promise<void> {
       .select({ id: organizationsTable.id, creditsBalance: organizationsTable.creditsBalance })
       .from(organizationsTable)
       .where(eq(organizationsTable.id, lb.organizationId))
-      .limit(1);
+      .limit(1).for("update");
     if (!org) return { failed: "insufficient_org_credits" as const };
 
-    const decision = decideLookDebit({ creditCap: lb.creditCap, creditsUsed: lb.creditsUsed, orgCreditsBalance: org.creditsBalance });
+    const decision = decideLookDebit({ creditsUsed: lb.creditsUsed, orgCreditsBalance: org.creditsBalance });
     if (!decision.ok) return { failed: decision.reason };
 
-    const lbUpdated = await tx
-      .update(lookbooksTable)
+    await tx.update(lookbooksTable)
       .set({ creditsUsed: decision.nextCreditsUsed })
-      .where(and(eq(lookbooksTable.id, lookbook.id), eq(lookbooksTable.creditsUsed, lb.creditsUsed)))
-      .returning({ id: lookbooksTable.id });
-    if (lbUpdated.length === 0) return { failed: "lookbook_exhausted" as const };
-
-    const orgUpdated = await tx
-      .update(organizationsTable)
-      .set({ creditsBalance: sql`${organizationsTable.creditsBalance} - 1` })
-      .where(and(eq(organizationsTable.id, org.id), gte(organizationsTable.creditsBalance, 1)))
-      .returning({ id: organizationsTable.id });
-    if (orgUpdated.length === 0) throw new LookConflict("The shop is temporarily out of credits.");
+      .where(eq(lookbooksTable.id, lb.id));
+    await tx.update(organizationsTable)
+      .set({ creditsBalance: decision.nextOrgBalance })
+      .where(eq(organizationsTable.id, org.id));
     const consumed = await tx.update(uploadIntentsTable).set({ consumedAt: new Date() })
       .where(availableUpload()).returning({ id: uploadIntentsTable.id });
     if (!consumed.length) throw new LookConflict("Please upload a fresh photo for this lookbook.");
 
     const [session] = await tx
       .insert(coupleSessionsTable)
-      .values({ venueId: lb.shopId, status: "processing", coupleEmail: body.brideEmail.trim().toLowerCase(), shareToken, creditsCharged: 1 })
+      .values({ venueId: lb.shopId, status: "processing", coupleEmail: body.brideEmail.trim().toLowerCase(), shareToken, creditsCharged: decision.cost })
       .returning({ id: coupleSessionsTable.id });
 
     await tx.insert(coupleMediaTable).values({ sessionId: session!.id, objectKey: body.bridePhotoObjectKey });
@@ -260,7 +247,7 @@ async function createLook(req: Request, res: Response): Promise<void> {
     await tx.insert(creditTransactionsTable).values({
       organizationId: org.id,
       venueId: lb.shopId,
-      delta: -1,
+      delta: -decision.cost,
       reason: "session_debit",
       sessionId: session!.id,
     });
@@ -280,10 +267,11 @@ async function createLook(req: Request, res: Response): Promise<void> {
     return;
   }
   if ("failed" in charge) {
-    const message = charge.failed === "lookbook_exhausted" ? "This lookbook has no tries left." : "The shop is temporarily out of credits.";
-    res.status(402).json({ error: message });
+    res.status(402).json({ error: "Your boutique needs to add credits before it can create another preview. Please contact your stylist." });
     return;
   }
+
+  releaseSubmittedPhoto(clientKey(req), body.bridePhotoObjectKey);
 
   // Generate the look (garment-fidelity gate + adaptive retry). On any failure,
   // refund the credit so a failed look never costs the shop.

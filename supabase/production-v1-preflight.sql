@@ -143,12 +143,6 @@ WHERE d.status = 'in_stock'
   );
 
 SELECT
-  'lookbooks_missing_credit_cap' AS check_name,
-  COUNT(*) AS row_count
-FROM lookbooks
-WHERE credit_cap IS NULL;
-
-SELECT
   'lookbooks_missing_expiry' AS check_name,
   COUNT(*) AS row_count
 FROM lookbooks

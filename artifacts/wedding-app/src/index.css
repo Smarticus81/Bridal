@@ -582,3 +582,9 @@
     margin-bottom: 18px;
   }
 }
+
+.bride-help {display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin:0 0 22px;padding:14px 16px;background:white;border-left:3px solid var(--violet);font-size:.85rem}
+.bride-help a,.guide-share a,.guide-share button {color:var(--violet);font-weight:650;text-decoration:underline;text-underline-offset:3px}
+.bride-help span,.guide-share p{color:#62596e}
+.guide-share{background:white;border:1px solid var(--rule);border-left:3px solid var(--violet);padding:18px 20px;margin-top:24px}
+.guide-share h2{font-weight:700}.guide-share p{font-size:.86rem;margin:5px 0 12px}.guide-share>div{display:flex;gap:16px;flex-wrap:wrap;font-size:.84rem}

@@ -936,7 +936,7 @@ paths:
     post:
       operationId: createLookbook
       tags: [lookbooks]
-      summary: Create a curated, capped, expiring lookbook link
+      summary: Create a curated, expiring lookbook link
       requestBody:
         required: true
         content:
@@ -964,8 +964,7 @@ paths:
       summary: Generate a try-on look for a chosen dress (public, no account)
       description: >-
         The bride selects a dress from the lookbook and supplies her uploaded
-        photo and explicit consent. Costs one credit (bounded by the lookbook cap
-        and the shop's balance). Runs the garment-fidelity gate; a below-target
+        photo and explicit consent. Uses one credit from the shop’s balance. Runs the garment-fidelity gate; a below-target
         look is withheld and the credit refunded.
       parameters:
         - name: lookbookToken
@@ -993,7 +992,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
         "402":
-          description: Lookbook exhausted or shop out of credits
+          description: Shop out of credits
           content:
             application/json:
               schema:
@@ -1018,8 +1017,7 @@ paths:
       summary: Start a try-on and return a token for polling the existing session endpoint
       description: >-
         The bride selects a dress from the lookbook and supplies her uploaded
-        photo and explicit consent. Costs one credit (bounded by the lookbook cap
-        and the shop's balance). Runs the garment-fidelity gate; a below-target
+        photo and explicit consent. Uses one credit from the shop’s balance. Runs the garment-fidelity gate; a below-target
         look is withheld and the credit refunded.
       parameters:
         - name: lookbookToken
@@ -1050,7 +1048,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorEnvelope"
         "402":
-          description: Lookbook exhausted or shop out of credits
+          description: Shop out of credits
           content:
             application/json:
               schema:
@@ -1075,7 +1073,7 @@ paths:
       summary: Resolve a lookbook for the remote bride flow (public, no account)
       description: >-
         Public entry for /try/:lookbookToken. Returns the shop's curated dresses
-        to try. When the link is expired, revoked, or exhausted it returns a calm
+        to try. When the link is expired or revoked it returns a calm
         unusable state rather than an error.
       parameters:
         - name: lookbookToken
@@ -2255,7 +2253,7 @@ components:
 
     CreateLookbookBody:
       type: object
-      required: [shopId, purpose, creditCap, expiresInDays, dressIds]
+      required: [shopId, purpose, expiresInDays, dressIds]
       properties:
         shopId:
           type: integer
@@ -2267,10 +2265,6 @@ components:
         brideEmail:
           type: string
           format: email
-        creditCap:
-          type: integer
-          minimum: 1
-          description: Hard cap on looks generated through this link. Never uncapped.
         expiresInDays:
           type: integer
           minimum: 1
@@ -2284,7 +2278,7 @@ components:
 
     LookbookResponse:
       type: object
-      required: [id, token, url, purpose, creditCap, creditsUsed, remainingCredits, expiresAt, status, dressCount]
+      required: [id, token, url, purpose, creditsUsed, expiresAt, status, dressCount]
       properties:
         id:
           type: integer
@@ -2301,11 +2295,7 @@ components:
         brideEmail:
           type: string
           nullable: true
-        creditCap:
-          type: integer
         creditsUsed:
-          type: integer
-        remainingCredits:
           type: integer
         expiresAt:
           type: string
@@ -2317,7 +2307,7 @@ components:
 
     LookbookSummary:
       type: object
-      required: [id, token, purpose, creditCap, creditsUsed, remainingCredits, expiresAt, status, usable]
+      required: [id, token, purpose, creditsUsed, expiresAt, status, usable]
       properties:
         id:
           type: integer
@@ -2325,11 +2315,7 @@ components:
           type: string
         purpose:
           $ref: "#/components/schemas/LookbookPurpose"
-        creditCap:
-          type: integer
         creditsUsed:
-          type: integer
-        remainingCredits:
           type: integer
         expiresAt:
           type: string
@@ -2373,19 +2359,17 @@ components:
 
     TryLookbookResponse:
       type: object
-      required: [usable, purpose, remainingCredits, shopName, shopSlug, uploadToken, disclaimer, dresses]
+      required: [usable, purpose, shopName, shopSlug, uploadToken, disclaimer, dresses]
       properties:
         usable:
           type: boolean
         reason:
           type: string
           nullable: true
-          enum: [expired, revoked, exhausted]
+          enum: [expired, revoked]
           description: Why the link is not usable, when usable is false.
         purpose:
           $ref: "#/components/schemas/LookbookPurpose"
-        remainingCredits:
-          type: integer
         shopName:
           type: string
         shopSlug:

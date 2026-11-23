@@ -13,13 +13,8 @@ import { OrgGate } from "@/components/auth/OrgGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useCopyMessage } from "@/hooks/use-copy-message";
 import { useToast } from "@/hooks/use-toast";
-
-/**
- * Consultant console — lookbooks (spec §6.1, §6.5). A light surface to send a
- * bride a curated /try link and watch the shop-visible burn meter. A lookbook is
- * always capped and always expiring; the form enforces both.
- */
 
 const PURPOSES = [
   { value: "pre_appointment", label: "Pre-appointment (lead gen)" },
@@ -41,7 +36,6 @@ function LookbooksContent() {
 
   const [shopId, setShopId] = useState<number | "">("");
   const [purpose, setPurpose] = useState<(typeof PURPOSES)[number]["value"]>("pre_appointment");
-  const [creditCap, setCreditCap] = useState(8);
   const [expiresInDays, setExpiresInDays] = useState(14);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [createdUrl, setCreatedUrl] = useState<string | null>(null);
@@ -68,7 +62,6 @@ function LookbooksContent() {
         data: {
           shopId: effectiveShopId,
           purpose,
-          creditCap,
           expiresInDays,
           dressIds: [...selected],
         },
@@ -77,7 +70,7 @@ function LookbooksContent() {
         onSuccess: (res) => {
           setCreatedUrl(res.url);
           setSelected(new Set());
-          toast({ title: "Lookbook sent", description: `${res.dressCount} dresses, ${res.creditCap} tries.` });
+          toast({ title: "Private link ready", description: `${res.dressCount} gowns in this lookbook.` });
           queryClient.invalidateQueries({ queryKey: getListLookbooksQueryKey() });
         },
         onError: () => toast({ title: "Couldn't create the lookbook", variant: "destructive" }),
@@ -85,10 +78,17 @@ function LookbooksContent() {
     );
   };
 
+  const guideUrl = new URL("/bride-guide", window.location.origin).href;
+  const copyMessage = useCopyMessage();
+  function copyInvitation(link: string) {
+    const message = `Here’s your private gown lookbook: ${link}\nChoose any gown to see it on you. These two short videos show how to take your photo, try more dresses, and request a fitting: ${guideUrl}`;
+    return copyMessage(message);
+  }
+
   return (
     <ShopWorkspace section="Lookbooks">
         <h1 className="text-3xl font-semibold">Lookbooks</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Choose the gowns, set the fitting allowance, and send a private invitation.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Choose gowns and an expiry date. Your bride can preview as many styles as she likes while her invitation is open.</p>
 
         <form onSubmit={submit} className="mt-8 rounded-sm border border-border bg-card p-5">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
@@ -107,17 +107,10 @@ function LookbooksContent() {
                 {PURPOSES.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
               </select>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="cap">Tries</Label>
-                <Input id="cap" type="number" min={1} value={creditCap}
-                  onChange={(e) => setCreditCap(Math.max(1, Number(e.target.value)))} />
-              </div>
-              <div>
-                <Label htmlFor="days">Days</Label>
-                <Input id="days" type="number" min={1} max={365} value={expiresInDays}
-                  onChange={(e) => setExpiresInDays(Math.max(1, Number(e.target.value)))} />
-              </div>
+            <div>
+              <Label htmlFor="days">Days</Label>
+              <Input id="days" type="number" min={1} max={365} value={expiresInDays}
+                onChange={(e) => setExpiresInDays(Math.max(1, Number(e.target.value)))} />
             </div>
           </div>
 
@@ -144,14 +137,21 @@ function LookbooksContent() {
           {createdUrl && (
             <div className="mt-4 rounded-md bg-emerald-50 p-3 text-sm text-emerald-900">
               Private lookbook link <a href={createdUrl} className="font-mono break-all underline">{createdUrl}</a>
+              <button type="button" className="block mt-2 underline" onClick={() => copyInvitation(createdUrl)}>Copy invitation and bride videos</button>
             </div>
           )}
         </form>
 
+        <section className="guide-share">
+          <h2>Videos for your brides</h2>
+          <p>Send these two guides with a lookbook or play them during a consultation. The guide link can be shared with any bride.</p>
+          <div><a href="/bride-guide" target="_blank" rel="noreferrer">Watch the bride guides ↗</a>
+          <button type="button" onClick={() => copyMessage(guideUrl)}>Copy guide link</button></div>
+        </section>
         <section className="mt-12">
           <h2 className="text-lg font-semibold">Sent lookbooks</h2>
           {lookbooks.length === 0 ? (
-            <p className="console-empty">Your private links will appear here with their remaining credits and expiry dates.</p>
+            <p className="console-empty">Your private links will appear here with their usage and expiry dates.</p>
           ) : (
             <ul className="mt-3 divide-y divide-neutral-200">
               {lookbooks.map((lb) => (
@@ -159,8 +159,9 @@ function LookbooksContent() {
                   <div>
                     <p className="font-mono text-xs text-muted-foreground">/try/{lb.token.slice(0, 10)}…</p>
                     <p className="text-sm text-neutral-700">
-                      {lb.remainingCredits}/{lb.creditCap} tries left · expires {new Date(lb.expiresAt).toLocaleDateString()}
+                      {lb.creditsUsed} shop credits used · expires {new Date(lb.expiresAt).toLocaleDateString()}
                     </p>
+                    {lb.usable && <button type="button" className="mt-2 text-sm underline" onClick={() => copyInvitation(new URL("/try/" + lb.token, window.location.origin).href)}>Copy invitation and bride videos</button>}
                   </div>
                   <span className={`rounded-none px-3 py-1 text-xs font-medium ${
                     lb.usable ? "bg-emerald-100 text-emerald-800" : "bg-neutral-200 text-neutral-600"

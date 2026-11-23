@@ -66,18 +66,18 @@ const walkthroughSteps = [
   },
   {
     at: 17.75,
-    title: "Set limits and share",
+    title: "Set the expiry and share",
     detail:
-      "Choose how many days the link stays open and the maximum credits it can use. In the shop workspace, choose Send lookbook, then copy the private link into your message to the bride.",
+      "Choose how many days the link stays open. Brides can keep trying gowns throughout the invitation. In the shop workspace, choose Send lookbook, then choose Copy invitation and bride videos. Paste the message into your email or text to the bride.",
   },
   {
-    at: 37,
+    at: 45.417,
     title: "Preview a gown",
     detail:
       "Choose Open bride’s view in the demo. On a live link, the bride selects a style, adds a full-length photo and email, gives permission, and chooses See it on you. The demo provides an example photo and try-on.",
   },
   {
-    at: 63.58,
+    at: 72,
     title: "Follow up on a fitting",
     detail:
       "The bride chooses Request a fitting. Open Fitting requests in your shop and use her email address to arrange an appointment.",
@@ -109,7 +109,7 @@ function Walkthrough({ onClose }: { onClose: () => void }) {
     >
       <div className="film-inner">
         <header>
-          <span>Narrated walkthrough · 1:22</span>
+          <span>Narrated walkthrough · 1:31</span>
           <button
             aria-label="Close walkthrough"
             autoFocus
@@ -125,11 +125,11 @@ function Walkthrough({ onClose }: { onClose: () => void }) {
           playsInline
           preload="metadata"
           aria-label="An Aislework sample shop creates a lookbook and receives a fitting request"
-          src="/aislework/shop-walkthrough.mp4?narrated=1"
+          src="/aislework/shop-walkthrough.mp4?edition=open-fittings"
         >
           <track
             kind="captions"
-            src="/aislework/shop-walkthrough.en.vtt"
+            src="/aislework/shop-walkthrough.en.vtt?edition=open-fittings"
             srcLang="en"
             label="English"
           />
@@ -173,7 +173,7 @@ const stages = [
   {
     icon: BookOpen,
     title: "Give her a private edit",
-    text: "Select styles for one bride. Send a private lookbook with its own expiry and try-on limit.",
+    text: "Select styles for one bride. Send a private lookbook that lets her keep exploring until the link expires.",
     art: "edit",
   },
   {
@@ -419,7 +419,8 @@ export default function VenueLandingPage() {
           <AisleworkLogo />
           <nav aria-label="Footer">
             <a href="/login">Shop sign-in</a>
-            <a href="/couple">Venue galleries</a>
+            <a href="/bride-guide">Bride videos</a>
+              <a href="/couple">Venue galleries</a>
           </nav>
         </div>
       </footer>

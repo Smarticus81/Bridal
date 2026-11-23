@@ -14,7 +14,6 @@ export interface TryLookbookResponse {
   /** Why the link is not usable, when usable is false. */
   reason?: TryLookbookResponseReason;
   purpose: LookbookPurpose;
-  remainingCredits: number;
   shopName: string;
   /** The shop's slug, used to authorize the bride's photo upload. */
   shopSlug: string;

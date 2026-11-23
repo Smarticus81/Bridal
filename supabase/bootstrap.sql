@@ -217,7 +217,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS dress_media_dress_object_key_unique
   ON dress_media (dress_id, object_key);
 
 -- Lookbooks: curated dress sets for the remote /try/:lookbookToken flow.
--- credit_cap and expires_at are NOT NULL so a link is never uncapped/unexpiring.
+-- New links store 0 in the legacy credit_cap column. Expiry and revocation govern access.
 CREATE TABLE IF NOT EXISTS lookbooks (
   id SERIAL PRIMARY KEY,
   organization_id INTEGER NOT NULL,

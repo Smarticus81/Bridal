@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { reserveUploadSlot, releaseSubmittedPhoto } from "./rateLimit.js";
 import { LOOK_CREDIT_COST, decideLookDebit } from "./lookDebit.js";
 
 test("one look costs exactly one credit", () => {
@@ -7,22 +8,36 @@ test("one look costs exactly one credit", () => {
 });
 
 test("happy path decrements the org balance and increments lookbook usage", () => {
-  const d = decideLookDebit({ creditCap: 8, creditsUsed: 2, orgCreditsBalance: 50 });
+  const d = decideLookDebit({ creditsUsed: 2, orgCreditsBalance: 50 });
   assert.deepEqual(d, { ok: true, cost: 1, nextCreditsUsed: 3, nextOrgBalance: 49 });
 });
 
-test("the last credit on the cap is still chargeable (boundary)", () => {
-  const d = decideLookDebit({ creditCap: 8, creditsUsed: 7, orgCreditsBalance: 5 });
-  assert.equal(d.ok, true);
-  assert.equal(d.ok && d.nextCreditsUsed, 8);
+test("past usage never prevents another funded look", () => {
+  assert.deepEqual(decideLookDebit({ creditsUsed: 150, orgCreditsBalance: 1 }), {
+    ok: true, cost: 1, nextCreditsUsed: 151, nextOrgBalance: 0,
+  });
 });
 
-test("an exhausted lookbook is refused before touching org credits", () => {
-  const d = decideLookDebit({ creditCap: 8, creditsUsed: 8, orgCreditsBalance: 100 });
-  assert.deepEqual(d, { ok: false, reason: "lookbook_exhausted" });
-});
-
-test("insufficient org credits is refused even when the lookbook has room", () => {
-  const d = decideLookDebit({ creditCap: 8, creditsUsed: 0, orgCreditsBalance: 0 });
+test("insufficient org credits is refused", () => {
+  const d = decideLookDebit({ creditsUsed: 0, orgCreditsBalance: 0 });
   assert.deepEqual(d, { ok: false, reason: "insufficient_org_credits" });
+});
+
+test("completed bridal uploads do not exhaust the address while unused URLs remain bounded", () => {
+  const ip = "try-on-test";
+  for (let i = 0; i < 240; i++) {
+    const register = reserveUploadSlot(ip);
+    assert.ok(register);
+    register(String(i));
+    releaseSubmittedPhoto(ip, String(i));
+  }
+  for (let i = 0; i < 120; i++) reserveUploadSlot(ip)!(String(i));
+  assert.equal(reserveUploadSlot(ip), undefined);
+  releaseSubmittedPhoto("different-address", "0");
+  releaseSubmittedPhoto(ip, "not-issued");
+  assert.equal(reserveUploadSlot(ip), undefined);
+  releaseSubmittedPhoto(ip, "0");
+  releaseSubmittedPhoto(ip, "0");
+  assert.ok(reserveUploadSlot(ip));
+  assert.equal(reserveUploadSlot(ip), undefined);
 });

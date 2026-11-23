@@ -16,5 +16,4 @@ export type TryLookbookResponseReason =
 export const TryLookbookResponseReason = {
   expired: "expired",
   revoked: "revoked",
-  exhausted: "exhausted",
 } as const;
