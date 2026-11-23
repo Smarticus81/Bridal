@@ -12,7 +12,7 @@ import { CreateLookbookBody } from "@workspace/api-zod";
 import { requireOrg, requireOwnerMutationOrigin } from "../lib/orgAuth.js";
 import { getAppBaseUrl } from "../lib/appUrl.js";
 import { isWellFormedLookbookToken, mintLookbookToken } from "../lib/lookbookToken.js";
-import { lookbookRemainingCredits, lookbookUsability } from "../lib/lookbookPolicy.js";
+import { nextLookbookStatus, lookbookUsability } from "../lib/lookbookPolicy.js";
 import { VISUALIZATION_DISCLAIMER } from "../lib/tryonQuality.js";
 import { createCoupleUploadToken } from "../lib/uploadToken.js";
 
@@ -36,17 +36,15 @@ router.get("/lookbooks", async (req, res): Promise<void> => {
     id: row.id,
     token: row.token,
     purpose: row.purpose,
-    creditCap: row.creditCap,
     creditsUsed: row.creditsUsed,
-    remainingCredits: lookbookRemainingCredits(row),
     expiresAt: row.expiresAt,
-    status: row.status,
+    status: nextLookbookStatus(row, now),
     usable: lookbookUsability(row, now).usable,
   }));
   res.json({ lookbooks });
 });
 
-// POST /lookbooks — create a curated, capped, expiring lookbook link.
+// POST /lookbooks — create a curated, expiring lookbook link.
 router.post("/lookbooks", async (req, res): Promise<void> => {
   if (!requireOwnerMutationOrigin(req, res)) return;
   const ctx = await requireOrg(req, res);
@@ -84,42 +82,43 @@ router.post("/lookbooks", async (req, res): Promise<void> => {
   const token = mintLookbookToken();
   const expiresAt = new Date(Date.now() + body.expiresInDays * MS_PER_DAY);
 
-  const [created] = await db
-    .insert(lookbooksTable)
-    .values({
-      organizationId: ctx.org.id,
-      shopId: body.shopId,
-      token,
-      purpose: body.purpose,
-      brideName: body.brideName ?? null,
-      brideEmail: body.brideEmail ?? null,
-      creditCap: body.creditCap,
-      creditsUsed: 0,
-      expiresAt,
-      status: "active",
-    })
-    .returning();
+  const created = await db.transaction(async (tx) => {
+    const [row] = await tx
+      .insert(lookbooksTable)
+      .values({
+        organizationId: ctx.org.id,
+        shopId: body.shopId,
+        token,
+        purpose: body.purpose,
+        brideName: body.brideName ?? null,
+        brideEmail: body.brideEmail ?? null,
+        legacyCreditCap: 0,
+        creditsUsed: 0,
+        expiresAt,
+        status: "active",
+      })
+      .returning();
 
-  await db.insert(lookbookDressesTable).values(
-    uniqueDressIds.map((dressId, index) => ({
-      lookbookId: created!.id,
-      dressId,
-      displayOrder: index,
-    })),
-  );
+    await tx.insert(lookbookDressesTable).values(
+      uniqueDressIds.map((dressId, index) => ({
+        lookbookId: row!.id,
+        dressId,
+        displayOrder: index,
+      })),
+    );
+    return row!;
+  });
 
   res.status(201).json({
-    id: created!.id,
-    token: created!.token,
-    url: `${getAppBaseUrl()}/try/${created!.token}`,
-    purpose: created!.purpose,
-    brideName: created!.brideName,
-    brideEmail: created!.brideEmail,
-    creditCap: created!.creditCap,
-    creditsUsed: created!.creditsUsed,
-    remainingCredits: lookbookRemainingCredits(created!),
-    expiresAt: created!.expiresAt,
-    status: created!.status,
+    id: created.id,
+    token: created.token,
+    url: `${getAppBaseUrl()}/try/${created.token}`,
+    purpose: created.purpose,
+    brideName: created.brideName,
+    brideEmail: created.brideEmail,
+    creditsUsed: created.creditsUsed,
+    expiresAt: created.expiresAt,
+    status: created.status,
     dressCount: uniqueDressIds.length,
   });
 });
@@ -182,10 +181,9 @@ router.get("/try/:lookbookToken", async (req, res): Promise<void> => {
     usable: usability.usable,
     reason: usability.usable ? null : usability.reason,
     purpose: lookbook.purpose,
-    remainingCredits: lookbookRemainingCredits(lookbook),
     shopName: shop?.name ?? "",
     shopSlug,
-    uploadToken: shopSlug ? createCoupleUploadToken(shopSlug) : "",
+    uploadToken: usability.usable && shopSlug ? createCoupleUploadToken(shopSlug) : "",
     disclaimer: VISUALIZATION_DISCLAIMER,
     dresses: dressRows.map((row) => ({
       id: row.id,

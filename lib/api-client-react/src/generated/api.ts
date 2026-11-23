@@ -2555,7 +2555,7 @@ export function useListLookbooks<
 }
 
 /**
- * @summary Create a curated, capped, expiring lookbook link
+ * @summary Create a curated, expiring lookbook link
  */
 export const getCreateLookbookUrl = () => {
   return `/api/lookbooks`;
@@ -2618,7 +2618,7 @@ export type CreateLookbookMutationBody = BodyType<CreateLookbookBody>;
 export type CreateLookbookMutationError = ErrorType<ErrorEnvelope>;
 
 /**
- * @summary Create a curated, capped, expiring lookbook link
+ * @summary Create a curated, expiring lookbook link
  */
 export const useCreateLookbook = <
   TError = ErrorType<ErrorEnvelope>,
@@ -2641,7 +2641,7 @@ export const useCreateLookbook = <
 };
 
 /**
- * The bride selects a dress from the lookbook and supplies her uploaded photo and explicit consent. Costs one credit (bounded by the lookbook cap and the shop's balance). Runs the garment-fidelity gate; a below-target look is withheld and the credit refunded.
+ * The bride selects a dress from the lookbook and supplies her uploaded photo and explicit consent. Uses one credit from the shop’s balance. Runs the garment-fidelity gate; a below-target look is withheld and the credit refunded.
  * @summary Generate a try-on look for a chosen dress (public, no account)
  */
 export const getGenerateTryonLookUrl = (lookbookToken: string) => {
@@ -2732,7 +2732,7 @@ export const useGenerateTryonLook = <
 };
 
 /**
- * The bride selects a dress from the lookbook and supplies her uploaded photo and explicit consent. Costs one credit (bounded by the lookbook cap and the shop's balance). Runs the garment-fidelity gate; a below-target look is withheld and the credit refunded.
+ * The bride selects a dress from the lookbook and supplies her uploaded photo and explicit consent. Uses one credit from the shop’s balance. Runs the garment-fidelity gate; a below-target look is withheld and the credit refunded.
  * @summary Start a try-on and return a token for polling the existing session endpoint
  */
 export const getStartTryonJobUrl = (lookbookToken: string) => {
@@ -2820,7 +2820,7 @@ export const useStartTryonJob = <
 };
 
 /**
- * Public entry for /try/:lookbookToken. Returns the shop's curated dresses to try. When the link is expired, revoked, or exhausted it returns a calm unusable state rather than an error.
+ * Public entry for /try/:lookbookToken. Returns the shop's curated dresses to try. When the link is expired or revoked it returns a calm unusable state rather than an error.
  * @summary Resolve a lookbook for the remote bride flow (public, no account)
  */
 export const getGetLookbookByTokenUrl = (lookbookToken: string) => {

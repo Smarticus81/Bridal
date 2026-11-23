@@ -11,9 +11,7 @@ export interface LookbookSummary {
   id: number;
   token: string;
   purpose: LookbookPurpose;
-  creditCap: number;
   creditsUsed: number;
-  remainingCredits: number;
   expiresAt: Date;
   status: string;
   /** Whether the link can still generate a look right now. */

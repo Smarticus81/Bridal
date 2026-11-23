@@ -32,7 +32,6 @@ const VISUALIZATION_DISCLAIMER =
 const UNUSABLE_MESSAGE: Record<string, string> = {
   expired: "This lookbook has expired. Ask your shop for a fresh link.",
   revoked: "This lookbook is no longer available.",
-  exhausted: "You've used all the tries on this lookbook. Ask your shop for more.",
 };
 
 function storageImageUrl(objectKey: string, shareToken?: string): string {
@@ -46,7 +45,13 @@ function dressLine(dress: TryDress): string {
 
 export default function TryLookbookPage() {
   const { lookbookToken } = useParams<{ lookbookToken: string }>();
-  const token = lookbookToken || "";
+  return <BrideLookbook key={lookbookToken} token={lookbookToken || ""} />;
+}
+
+type PhotoDraft = { file: File | null; email: string };
+
+function BrideLookbook({ token }: { token: string }) {
+  const [draft, setDraft] = useState<PhotoDraft>({ file: null, email: "" });
 
   const query = useGetLookbookByToken(token, {
     query: {
@@ -87,7 +92,7 @@ export default function TryLookbookPage() {
               <h1 className="mt-3 font-display text-5xl leading-tight">Your private fitting.</h1>
               {query.data.usable ? (
                 <p className="mt-2 text-muted-foreground">
-                  {query.data.remainingCredits} tries left. Choose a dress to see it on you.
+                  Choose a gown to see it on you. Come back to this lookbook to try another style.
                 </p>
               ) : (
                 <p className="mt-2 text-amber-800">
@@ -99,6 +104,7 @@ export default function TryLookbookPage() {
               <div className="invitation-count"><strong>{query.data.dresses.length}</strong><span>{query.data.dresses.length === 1 ? "selected gown" : "selected gowns"}</span></div>
             </header>
 
+            <p className="bride-help"><a href="/bride-guide" target="_blank" rel="noreferrer">Watch the bride’s fitting guides ↗</a> <span>Photo tips, trying more gowns, and contacting your stylist.</span></p>
             {lastJob && <a className="mb-8 inline-block rounded-none border border-neutral-600 px-5 py-3 text-sm" href={`/look/${lastJob}`}>Open your latest fitting →</a>}
             <section className="invitation-rail grid grid-cols-1 gap-8 sm:grid-cols-2">
               {query.data.dresses.map((dress) => (
@@ -154,6 +160,8 @@ export default function TryLookbookPage() {
         {activeDress && query.data && (
           <TryOnPanel
             key={activeDress.id}
+            draft={draft}
+            setDraft={setDraft}
             token={token}
             dress={activeDress}
             shopSlug={query.data.shopSlug}
@@ -170,6 +178,8 @@ export default function TryLookbookPage() {
 type TryOnStep = "form" | "generating" | "done" | "error";
 
 function TryOnPanel({
+  draft,
+  setDraft,
   token,
   dress,
   shopSlug,
@@ -177,6 +187,8 @@ function TryOnPanel({
   remember,
   onClose,
 }: {
+  draft: PhotoDraft;
+  setDraft: React.Dispatch<React.SetStateAction<PhotoDraft>>;
   token: string;
   dress: TryDress;
   shopSlug: string;
@@ -185,9 +197,8 @@ function TryOnPanel({
   onClose: () => void;
 }) {
   const [step, setStep] = useState<TryOnStep>("form");
-  const [email, setEmail] = useState("");
+  const { file, email } = draft;
   const [consent, setConsent] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<TryonLookResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -239,6 +250,8 @@ function TryOnPanel({
     if (!result) return;
     try {
       await forget.mutateAsync({ shareToken: result.shareToken });
+      setDraft({ file: null, email: "" });
+      remember("");
       setForgotten(true);
     } catch {
       // Non-fatal: leave the look on screen; the bride can retry the deletion.
@@ -318,13 +331,13 @@ function TryOnPanel({
           <form onSubmit={submit} className="space-y-5">
             <div>
               <label htmlFor="bride-photo" className="mb-2 block text-sm text-muted-foreground">Your full-length photo</label>
-              <input
-                id="bride-photo" type="file"
-                accept="image/jpeg,image/png,image/webp"
-                disabled={step === "generating"}
-                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                className="block w-full text-sm text-muted-foreground file:mr-4 file:rounded-none file:border-0 file:bg-primary file:px-4 file:py-2 file:text-sm file:font-medium file:text-primary-foreground hover:file:bg-primary"
-              />
+              <label className="flex flex-wrap items-center gap-2 text-sm cursor-pointer has-[:focus-visible]:ring-2">
+                <span className="bg-primary px-3 py-2 text-primary-foreground">{file ? "Change photo" : "Choose photo"}</span>
+                <span>{file ? file.name : "JPG, PNG, or WebP"}</span>
+                <input id="bride-photo" type="file" className="sr-only" aria-label="Your full-length photo"
+                  accept="image/jpeg,image/png,image/webp" disabled={step === "generating"}
+                  onChange={(e) => { const photo = e.target.files?.[0]; if (photo) setDraft(prev => ({ ...prev, file: photo })); }} />
+              </label>
               <p className="mt-2 text-xs text-muted-foreground">
                 Stand alone in even light, facing the camera with your arms clear of your waist. Include your head and feet.
               </p>
@@ -340,7 +353,7 @@ function TryOnPanel({
                 required
                 value={email}
                 disabled={step === "generating"}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => { const value = e.target.value; setDraft(prev => ({ ...prev, email: value })); }}
                 placeholder="you@example.com"
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-neutral-400 focus:outline-none"
               />
@@ -410,9 +423,10 @@ function TryOnPanel({
               />
             </div>
             <p className="text-xs text-muted-foreground">{result.disclaimer}</p>
+            <p className="text-sm">Choose <strong>Try another dress</strong> to keep exploring. Your photo and email stay filled in while this lookbook is open.</p>
             <div className="rounded-sm border border-input p-4">
               <h3 className="font-display text-xl">Try it in the boutique</h3>
-              <p className="mt-1 text-sm text-muted-foreground">Ask your stylist to email you about an in-person fitting.</p>
+              <p className="mt-1 text-sm text-muted-foreground">Ask your stylist to email you about an in-person fitting. You’ll agree on a time together.</p>
               <button type="button" disabled={lead.isPending || lead.isSuccess}
                 onClick={() => lead.mutate({ data: { lookbookToken: token, email: email.trim() } })}
                 className="mt-3 underline underline-offset-4">

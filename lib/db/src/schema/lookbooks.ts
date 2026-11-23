@@ -3,8 +3,7 @@ import { dressesTable } from "./dresses";
 
 /**
  * A lookbook is a curated dress set the shop sends a bride for the remote
- * `/try/:lookbookToken` flow. Every lookbook has a credit cap and an expiry —
- * we never ship an uncapped, unexpiring link (spec §6.1). The purpose tag drives
+ * `/try/:lookbookToken` flow. Every lookbook has an expiry. The purpose tag drives
  * the funnel: pre-appointment lead gen, post-appointment closing, or open catalog.
  */
 
@@ -26,9 +25,8 @@ export const lookbooksTable = pgTable(
     purpose: text("purpose").notNull(),
     brideName: text("bride_name"),
     brideEmail: text("bride_email"),
-    // Hard cap on looks generated through this link, and a hard expiry. Both
-    // NOT NULL by design so a link can never be uncapped or unexpiring.
-    creditCap: integer("credit_cap").notNull(),
+    // Existing deployments require this column on insert. Its historical values no longer restrict try-ons.
+    legacyCreditCap: integer("credit_cap").notNull(),
     creditsUsed: integer("credits_used").notNull().default(0),
     expiresAt: timestamp("expires_at").notNull(),
     status: text("status").notNull().default("active"),

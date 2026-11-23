@@ -225,7 +225,7 @@ export const REQUIRED_DATABASE_NOT_NULL_COLUMNS = {
     "created_at",
   ],
   dress_media: ["id", "dress_id", "object_key", "coverage", "display_order", "created_at"],
-  // credit_cap and expires_at NOT NULL enforce "never uncapped, never unexpiring".
+  // credit_cap is retained for compatibility with existing installations.
   lookbooks: [
     "id",
     "organization_id",

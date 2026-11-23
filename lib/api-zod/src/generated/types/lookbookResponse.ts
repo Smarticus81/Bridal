@@ -15,9 +15,7 @@ export interface LookbookResponse {
   purpose: LookbookPurpose;
   brideName?: string | null;
   brideEmail?: string | null;
-  creditCap: number;
   creditsUsed: number;
-  remainingCredits: number;
   expiresAt: Date;
   status: string;
   dressCount: number;

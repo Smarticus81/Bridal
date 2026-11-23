@@ -22,7 +22,7 @@ import {
   dressMediaTable,
   lookbookDressesTable,
 } from "@workspace/db";
-import { rateLimit, clientKey } from "../lib/rateLimit";
+import { reserveUploadSlot, clientKey } from "../lib/rateLimit";
 import { getCallerOrgDbId, requireOrgVenue } from "../lib/orgAuth.js";
 import { verifyCoupleUploadToken } from "../lib/uploadToken";
 import { canReadVenueMediaReference } from "../lib/objectAccess";
@@ -68,7 +68,8 @@ router.post("/storage/uploads/request-url", async (req: Request, res: Response) 
       res.status(400).json({ error: "Upload must be a JPG, PNG, or WebP image up to 50MB." });
       return;
     }
-    if (!rateLimit(`upload:${clientKey(req)}`, 120, 60 * 60 * 1000)) {
+    const trackBridePhoto = reserveUploadSlot(clientKey(req));
+    if (!trackBridePhoto) {
       res.status(429).json({ error: "Too many uploads. Try again later." });
       return;
     }
@@ -119,6 +120,8 @@ router.post("/storage/uploads/request-url", async (req: Request, res: Response) 
       sizeBytes: size,
       expiresAt: new Date(Date.now() + UPLOAD_INTENT_TTL_MS),
     });
+
+    if (purpose === "couple") trackBridePhoto(objectPath);
 
     res.json(
       RequestUploadUrlResponse.parse({

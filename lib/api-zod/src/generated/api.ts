@@ -988,9 +988,7 @@ export const ListLookbooksResponse = zod.object({
         "post_appointment",
         "open_catalog",
       ]),
-      creditCap: zod.number(),
       creditsUsed: zod.number(),
-      remainingCredits: zod.number(),
       expiresAt: zod.coerce.date(),
       status: zod.string(),
       usable: zod
@@ -1001,9 +999,8 @@ export const ListLookbooksResponse = zod.object({
 });
 
 /**
- * @summary Create a curated, capped, expiring lookbook link
+ * @summary Create a curated, expiring lookbook link
  */
-
 export const createLookbookBodyExpiresInDaysMax = 365;
 
 export const CreateLookbookBody = zod.object({
@@ -1013,10 +1010,6 @@ export const CreateLookbookBody = zod.object({
   purpose: zod.enum(["pre_appointment", "post_appointment", "open_catalog"]),
   brideName: zod.string().optional(),
   brideEmail: zod.string().email().optional(),
-  creditCap: zod
-    .number()
-    .min(1)
-    .describe("Hard cap on looks generated through this link. Never uncapped."),
   expiresInDays: zod
     .number()
     .min(1)
@@ -1026,7 +1019,7 @@ export const CreateLookbookBody = zod.object({
 });
 
 /**
- * The bride selects a dress from the lookbook and supplies her uploaded photo and explicit consent. Costs one credit (bounded by the lookbook cap and the shop's balance). Runs the garment-fidelity gate; a below-target look is withheld and the credit refunded.
+ * The bride selects a dress from the lookbook and supplies her uploaded photo and explicit consent. Uses one credit from the shop’s balance. Runs the garment-fidelity gate; a below-target look is withheld and the credit refunded.
  * @summary Generate a try-on look for a chosen dress (public, no account)
  */
 export const GenerateTryonLookParams = zod.object({
@@ -1045,7 +1038,7 @@ export const GenerateTryonLookBody = zod.object({
 });
 
 /**
- * The bride selects a dress from the lookbook and supplies her uploaded photo and explicit consent. Costs one credit (bounded by the lookbook cap and the shop's balance). Runs the garment-fidelity gate; a below-target look is withheld and the credit refunded.
+ * The bride selects a dress from the lookbook and supplies her uploaded photo and explicit consent. Uses one credit from the shop’s balance. Runs the garment-fidelity gate; a below-target look is withheld and the credit refunded.
  * @summary Start a try-on and return a token for polling the existing session endpoint
  */
 export const StartTryonJobParams = zod.object({
@@ -1064,7 +1057,7 @@ export const StartTryonJobBody = zod.object({
 });
 
 /**
- * Public entry for /try/:lookbookToken. Returns the shop's curated dresses to try. When the link is expired, revoked, or exhausted it returns a calm unusable state rather than an error.
+ * Public entry for /try/:lookbookToken. Returns the shop's curated dresses to try. When the link is expired or revoked it returns a calm unusable state rather than an error.
  * @summary Resolve a lookbook for the remote bride flow (public, no account)
  */
 export const GetLookbookByTokenParams = zod.object({
@@ -1074,11 +1067,10 @@ export const GetLookbookByTokenParams = zod.object({
 export const GetLookbookByTokenResponse = zod.object({
   usable: zod.boolean(),
   reason: zod
-    .enum(["expired", "revoked", "exhausted"])
+    .enum(["expired", "revoked"])
     .nullish()
     .describe("Why the link is not usable, when usable is false."),
   purpose: zod.enum(["pre_appointment", "post_appointment", "open_catalog"]),
-  remainingCredits: zod.number(),
   shopName: zod.string(),
   shopSlug: zod
     .string()
