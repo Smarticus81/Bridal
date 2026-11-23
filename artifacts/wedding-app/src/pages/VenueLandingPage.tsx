@@ -369,19 +369,8 @@ export default function VenueLandingPage() {
             ))}
           </div>
         </section>
-        <section className="pricing" id="pricing">
+        <section className="pricing" id="pricing" aria-label="Pricing">
           <div className="aw-wrap">
-            <div className="section-intro">
-              <div>
-                <p className="aw-kicker violet">Shop pricing</p>
-                <h2>Plan for your floor.</h2>
-              </div>
-              <p>
-                One delivered fitting uses one credit.
-                <br />
-                Your locations share a balance.
-              </p>
-            </div>
             <div className="price-table">
               {[
                 ["Starter", "25 credits per month", "149", "/ month"],
@@ -389,7 +378,7 @@ export default function VenueLandingPage() {
                 ["Credit pack", "10 additional credits", "49", "one time"],
               ].map(([name, detail, price, period]) => (
                 <div className="price-row" key={name}>
-                  <h3>{name}</h3>
+                  <h2>{name}</h2>
                   <p>{detail}</p>
                   <div>
                     <strong>${price}</strong>
